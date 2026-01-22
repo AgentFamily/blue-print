@@ -5310,21 +5310,14 @@ When there is prior conversation, refine at least one point from the previous ro
           render();
         }
 
-        function openOnline() {
-          let raw = (state.onlineUrl || DEFAULT_ONLINE_URL).trim();
-          if (isLegacyOnlineUrl(raw)) raw = DEFAULT_ONLINE_URL;
-          if (!raw) {
-            setStatusRight("Set an online URL in Settings.", true);
-            return;
-          }
-
-          const url = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
-          try {
-            window.open(url, "_blank", "noopener,noreferrer");
-          } catch {
-            window.location.href = url;
-          }
-        }
+	        function openOnline() {
+	          const url = "https://doi.org/10.5281/zenodo.18334441";
+	          try {
+	            window.open(url, "_blank", "noopener,noreferrer");
+	          } catch {
+	            window.location.href = url;
+	          }
+	        }
 
 	        async function refreshModels({ quiet = false } = {}) {
 	          if (!quiet) setStatusRight("Loading models…");
