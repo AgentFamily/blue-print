@@ -1,3 +1,3 @@
 # The Agent Family
 
-This repository contains the `AgentC.app` macOS app bundle.
+This repository is the `AgentC .app` macOS app bundle (the bundle root is the repo root).
