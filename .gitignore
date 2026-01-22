@@ -1,0 +1,11 @@
+.DS_Store
+._*
+.AppleDouble
+.LSOverride
+
+*.log
+*.swp
+*.swo
+
+.Spotlight-V100
+.Trashes
