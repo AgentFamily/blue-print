@@ -1821,12 +1821,8 @@
 	        </div>
         <div class="field">
           <label for="onlineUrlInput">Online URL</label>
-          <input
-            id="onlineUrlInput"
-            type="text"
-            placeholder="https://chatgpt.com/g/g-696650381b248191ab2ca39f3a8112f6-engineer12"
-          />
-        </div>
+	          <input id="onlineUrlInput" type="text" placeholder="https://doi.org/10.5281/zenodo.18334441" />
+	        </div>
         <div class="field full" id="lanAccessField">
           <label>LAN Party (iPhone Access)</label>
           <div class="hint">Turn this on to open the UI on your iPhone on the same Wi‑Fi. Tools stay local‑only.</div>
@@ -2274,17 +2270,18 @@
         // If the UI is loaded via file/app/custom scheme, default to the CORS-enabled local proxy.
         const DEFAULT_ENDPOINT = IS_HTTP_ORIGIN ? "" : "http://127.0.0.1:3030";
         const FALLBACK_ENDPOINT = "http://127.0.0.1:3030";
-        const LEGACY_DEFAULT_ONLINE_URLS = new Set([
-          "https://chatgpt.com",
-          "https://chatgpt.com/",
-          "chatgpt.com",
-          "chatgpt.com/",
-          "https://chat.openai.com",
-          "https://chat.openai.com/",
-          "chat.openai.com",
-          "chat.openai.com/"
-        ]);
-        const DEFAULT_ONLINE_URL = "https://chatgpt.com/g/g-696650381b248191ab2ca39f3a8112f6-engineer12";
+	        const LEGACY_DEFAULT_ONLINE_URLS = new Set([
+	          "https://chatgpt.com",
+	          "https://chatgpt.com/",
+	          "chatgpt.com",
+	          "chatgpt.com/",
+	          "https://chat.openai.com",
+	          "https://chat.openai.com/",
+	          "chat.openai.com",
+	          "chat.openai.com/",
+	          "https://chatgpt.com/g/g-696650381b248191ab2ca39f3a8112f6-engineer12"
+	        ]);
+	        const DEFAULT_ONLINE_URL = "https://doi.org/10.5281/zenodo.18334441";
         const DEFAULT_OPTIONS = { numCtx: 512, numPredict: 128 };
         const TOOL_TOKEN = typeof window.__MK_TOOL_TOKEN === "string" ? window.__MK_TOOL_TOKEN : null;
 
