@@ -268,15 +268,20 @@
         box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.14);
       }
 
-      .dot.online {
-        background: linear-gradient(135deg, rgba(37, 99, 235, 0.95), rgba(236, 72, 153, 0.95));
-        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.14);
-      }
+	      .dot.online {
+	        background: linear-gradient(135deg, rgba(37, 99, 235, 0.95), rgba(236, 72, 153, 0.95));
+	        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.14);
+	      }
 
-      .dot.tools {
-        background: rgba(15, 23, 42, 0.82);
-        box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.10);
-      }
+	      .dot.download {
+	        background: linear-gradient(135deg, rgba(16, 185, 129, 0.95), rgba(59, 130, 246, 0.95));
+	        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.14);
+	      }
+
+	      .dot.tools {
+	        background: rgba(15, 23, 42, 0.82);
+	        box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.10);
+	      }
 
       .pill-btn[aria-pressed="false"] .dot.context {
         background: rgba(100, 116, 139, 0.9);
@@ -1668,11 +1673,15 @@
             <span class="dot tools" aria-hidden="true"></span>
             <span>Tools</span>
           </button>
-          <button class="pill pill-btn" id="onlineBtn" type="button" title="Open online mode">
-            <span class="dot online" aria-hidden="true"></span>
-            <span>Online</span>
-          </button>
-        </div>
+	          <button class="pill pill-btn" id="onlineBtn" type="button" title="Open online mode">
+	            <span class="dot online" aria-hidden="true"></span>
+	            <span>Online</span>
+	          </button>
+	          <button class="pill pill-btn" id="downloadBtn" type="button" title="Download paper">
+	            <span class="dot download" aria-hidden="true"></span>
+	            <span>Download</span>
+	          </button>
+	        </div>
 
         <div class="brand" aria-label="AgentX and AgentC">
           <div class="agent-title">
@@ -5310,14 +5319,23 @@ When there is prior conversation, refine at least one point from the previous ro
           render();
         }
 
-	        function openOnline() {
-	          const url = "https://doi.org/10.5281/zenodo.18334441";
-	          try {
-	            window.open(url, "_blank", "noopener,noreferrer");
-	          } catch {
-	            window.location.href = url;
-	          }
-	        }
+		        function openOnline() {
+		          const url = "https://chatgpt.com/g/g-696650381b248191ab2ca39f3a8112f6-engineer12";
+		          try {
+		            window.open(url, "_blank", "noopener,noreferrer");
+		          } catch {
+		            window.location.href = url;
+		          }
+		        }
+
+		        function openDownload() {
+		          const url = "https://doi.org/10.5281/zenodo.18334441";
+		          try {
+		            window.open(url, "_blank", "noopener,noreferrer");
+		          } catch {
+		            window.location.href = url;
+		          }
+		        }
 
 	        async function refreshModels({ quiet = false } = {}) {
 	          if (!quiet) setStatusRight("Loading models…");
@@ -5546,14 +5564,15 @@ When there is prior conversation, refine at least one point from the previous ro
 	            e.preventDefault();
 	            closeTopModal();
 	          });
-	          updateModalLayerState();
+		          updateModalLayerState();
 
-	          el("onlineBtn").addEventListener("click", openOnline);
-          el("toolsBtn").addEventListener("click", () => {
-            if (!toolsAvailable()) {
-              setStatusRight("Tools unavailable. Run `python3 ./scripts/dev_server.py` and reload.", true);
-              return;
-            }
+		          el("onlineBtn").addEventListener("click", openOnline);
+		          el("downloadBtn")?.addEventListener("click", openDownload);
+	          el("toolsBtn").addEventListener("click", () => {
+	            if (!toolsAvailable()) {
+	              setStatusRight("Tools unavailable. Run `python3 ./scripts/dev_server.py` and reload.", true);
+	              return;
+	            }
             state.toolsEnabled = !state.toolsEnabled;
             localStorage.setItem(STORAGE.toolsEnabled, state.toolsEnabled ? "true" : "false");
             render();
