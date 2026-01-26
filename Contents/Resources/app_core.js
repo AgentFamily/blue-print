@@ -170,14 +170,10 @@
 	          .mk-magic-bubble:disabled{opacity:.6;cursor:not-allowed}
 	          .mk-magic-bubble:hover{transform:translateY(-1px)}
 	          .mk-magic-bubble:active{transform:translateY(0)}
-	          .mk-magic-avatar{position:relative;width:72px;height:72px;border-radius:999px;overflow:hidden;display:block;background:rgba(12,12,14,.84);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.14);box-shadow:0 18px 60px rgba(0,0,0,.55)}
-	          .mk-magic-avatar-img{width:100%;height:100%;object-fit:cover;display:block}
-	          .mk-magic-avatar-fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:18px;letter-spacing:.2px}
-	          .mk-magic-avatar-c{position:absolute;top:8px;left:50%;transform:translateX(-50%);font-weight:950;font-size:22px;letter-spacing:-.02em;text-shadow:0 2px 12px rgba(0,0,0,.65), 0 0 0.75px rgba(0,0,0,.55);color:#ef4444;transition:color 180ms ease}
-	          .mk-magic-bubble.signed-in .mk-magic-avatar-c{color:#22c55e}
-	          .mk-magic-ring{position:absolute;inset:-2px;border-radius:999px;pointer-events:none;border:2px solid rgba(239,68,68,.55)}
-	          .mk-magic-bubble.signed-in .mk-magic-ring{border-color:rgba(34,197,94,.65)}
-	          .mk-magic-ring{transition:border-color 180ms ease}
+	          .mk-magic-status{border-radius:18px}
+	          .mk-magic-status-inner{position:relative;display:block;width:min(360px,calc(100vw - 36px));max-width:220px}
+	          .mk-magic-status-img{width:100%;height:auto;display:block;filter:drop-shadow(0 18px 38px rgba(0,0,0,.55))}
+	          .mk-magic-status-fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;letter-spacing:.2px}
 	          .mk-magic-panel{position:fixed;right:18px;bottom:86px;z-index:999999;width:min(760px,calc(100vw - 36px));border-radius:16px;border:1px solid rgba(255,255,255,.14);background:rgba(12,12,14,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:#e5e7eb;box-shadow:0 18px 60px rgba(0,0,0,.6);padding:14px;display:none}
 	          .mk-magic-panel.open{display:block}
 	          .mk-magic-title{display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:650;margin-bottom:10px}
@@ -210,61 +206,57 @@
 	      const bubbles = document.createElement("div");
 	      bubbles.className = "mk-magic-bubbles";
 
-	      const loginBubble = document.createElement("button");
-	      loginBubble.type = "button";
-	      loginBubble.className = "mk-magic-bubble mk-magic-bubble-login";
-	      loginBubble.title = "Log in / Account";
-	      loginBubble.setAttribute("aria-label", "Log in / Account");
-	      loginBubble.innerHTML = `
-	        <span class="mk-magic-avatar">
-	          <span class="mk-magic-ring" aria-hidden="true"></span>
-	          <img class="mk-magic-avatar-img" alt="AgentC" src="agentc_bubble.png" />
-	          <span class="mk-magic-avatar-c" aria-hidden="true">C</span>
-	          <span class="mk-magic-avatar-fallback" aria-hidden="true">C</span>
+	      const statusBubble = document.createElement("button");
+	      statusBubble.type = "button";
+	      statusBubble.className = "mk-magic-bubble mk-magic-status";
+	      statusBubble.title = "Log in / Log out";
+	      statusBubble.setAttribute("aria-label", "Log in / Log out");
+	      statusBubble.innerHTML = `
+	        <span class="mk-magic-status-inner">
+	          <img class="mk-magic-status-img" alt="AgentC login status" src="ChatGPT_Image_Jan_26__2026_at_07_41_19_PM-removebg-preview.png" />
+	          <span class="mk-magic-status-fallback" aria-hidden="true">AgentC</span>
 	        </span>
 	      `;
 
-	      const logoutBubble = document.createElement("button");
-	      logoutBubble.type = "button";
-	      logoutBubble.className = "mk-magic-bubble mk-magic-bubble-logout";
-	      logoutBubble.title = "Log out";
-	      logoutBubble.setAttribute("aria-label", "Log out");
-	      logoutBubble.innerHTML = `
-	        <span class="mk-magic-avatar">
-	          <span class="mk-magic-ring" aria-hidden="true"></span>
-	          <img class="mk-magic-avatar-img" alt="AgenT101" src="agent101_bubble.png" />
-	          <span class="mk-magic-avatar-fallback" aria-hidden="true">T</span>
-	        </span>
-	      `;
+	      const statusImg = statusBubble.querySelector(".mk-magic-status-img");
+	      const statusFallback = statusBubble.querySelector(".mk-magic-status-fallback");
+	      const OFFLINE_PNG = "ChatGPT_Image_Jan_26__2026_at_07_41_19_PM-removebg-preview.png";
+	      const OFFLINE_SVG = "ChatGPT_Image_Jan_26__2026_at_07_41_19_PM-removebg-preview.svg";
+	      const ONLINE_PNG = "ChatGPT_Image_Jan_26__2026_at_07_41_21_PM-removebg-preview.png";
+	      const ONLINE_SVG = "ChatGPT_Image_Jan_26__2026_at_07_41_21_PM-removebg-preview.svg";
 
-	      const wireFallback = (btnEl, pngName, svgName) => {
-	        try {
-	          const img = btnEl.querySelector(".mk-magic-avatar-img");
-	          const fallback = btnEl.querySelector(".mk-magic-avatar-fallback");
-	          if (fallback) fallback.style.display = "none";
-	          img?.addEventListener("error", () => {
-	            if (!img) return;
-	            const src = String(img.getAttribute("src") || "");
-	            if (src.endsWith(".png")) {
-	              img.setAttribute("src", svgName);
+	      const setStatusImg = (signedIn) => {
+	        if (!statusImg) return;
+	        const png = signedIn ? ONLINE_PNG : OFFLINE_PNG;
+	        const svg = signedIn ? ONLINE_SVG : OFFLINE_SVG;
+	        statusImg.dataset.fallback = svg;
+	        statusImg.setAttribute("src", png);
+	      };
+
+	      try {
+	        if (statusFallback) statusFallback.style.display = "none";
+	        statusImg?.addEventListener("load", () => {
+	          if (statusImg) statusImg.style.display = "block";
+	          if (statusFallback) statusFallback.style.display = "none";
+	        });
+	        statusImg?.addEventListener("error", () => {
+	          if (!statusImg) return;
+	          const src = String(statusImg.getAttribute("src") || "");
+	          if (src.endsWith(".png")) {
+	            const fb = String(statusImg.dataset.fallback || "");
+	            if (fb) {
+	              statusImg.setAttribute("src", fb);
 	              return;
 	            }
-	            img.style.display = "none";
-	            if (fallback) fallback.style.display = "flex";
-	          });
-	          img?.addEventListener("load", () => {
-	            if (img) img.style.display = "block";
-	            if (fallback) fallback.style.display = "none";
-	          });
-	        } catch {
-	          // ignore
-	        }
-	      };
-	      wireFallback(loginBubble, "agentc_bubble.png", "agentc_bubble.svg");
-	      wireFallback(logoutBubble, "agent101_bubble.png", "agent101_bubble.svg");
+	          }
+	          statusImg.style.display = "none";
+	          if (statusFallback) statusFallback.style.display = "flex";
+	        });
+	      } catch {
+	        // ignore
+	      }
 
-	      bubbles.appendChild(loginBubble);
-	      bubbles.appendChild(logoutBubble);
+	      bubbles.appendChild(statusBubble);
 
 	      const panel = document.createElement("div");
 	      panel.className = "mk-magic-panel";
@@ -333,28 +325,29 @@
 	      document.body.appendChild(panel);
 
       const close = panel.querySelector(".mk-magic-close");
-	      loginBubble.addEventListener("click", async () => {
+	      statusBubble.addEventListener("click", async () => {
 	        if (state.loading) return;
-	        if (!state.jwt) {
-	          const email = String(state.email || "").trim();
-	          if (email) {
-	            await loginWithEmailOtp({ showUI: true });
-	            return;
-	          }
+	        const signedIn = Boolean(state.jwt);
+	        if (signedIn) {
+	          await logout();
+	          state.open = false;
+	          render();
+	          return;
 	        }
-	        state.open = !state.open;
+
+	        const email = String(state.email || "").trim();
+	        if (email) {
+	          await loginWithEmailOtp({ showUI: true });
+	          return;
+	        }
+
+	        state.open = true;
 	        render();
 	        try {
 	          panel.querySelector("#mkMagicEmail")?.focus();
 	        } catch {
 	          // ignore
 	        }
-	      });
-	      logoutBubble.addEventListener("click", async () => {
-	        if (state.loading) return;
-	        await logout();
-	        state.open = false;
-	        render();
 	      });
       close?.addEventListener("click", () => {
         state.open = false;
@@ -411,8 +404,9 @@
 
 	      el = {
 	        bubbles,
-	        loginBubble,
-	        logoutBubble,
+	        statusBubble,
+	        statusImg,
+	        setStatusImg,
 	        panel,
 	        status: panel.querySelector("#mkMagicStatus"),
 	        email: emailInput,
@@ -449,9 +443,11 @@
 		      if (!el) return;
 		      el.panel.classList.toggle("open", Boolean(state.open));
 		      const signedIn = Boolean(state.jwt);
-		      el.loginBubble.classList.toggle("signed-in", signedIn);
-		      el.logoutBubble.classList.toggle("signed-in", signedIn);
-		      el.logoutBubble.style.display = signedIn ? "block" : "none";
+		      try {
+		        el.setStatusImg?.(signedIn);
+		      } catch {
+		        // ignore
+		      }
 		      if (el.status) el.status.textContent = signedIn ? "Signed in" : "Signed out";
 		      if (el.address) el.address.textContent = state.address ? state.address : "—";
 		      if (el.embedded) el.embedded.textContent = state.embeddedAddress ? state.embeddedAddress : "—";
