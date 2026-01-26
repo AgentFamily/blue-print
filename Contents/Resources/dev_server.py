@@ -343,9 +343,10 @@ def _handle_magic_wallet(handler: http.server.BaseHTTPRequestHandler, body: byte
         _json_response(handler, 400, {"error": "Missing jwt"})
         return
 
-    magic_api_key = os.getenv("MAGIC_API_KEY") or os.getenv("MAGIC_PUBLISHABLE_KEY") or ""
-    if not magic_api_key:
-        _json_response(handler, 500, {"error": "Missing MAGIC_PUBLISHABLE_KEY (or MAGIC_API_KEY)."})
+    magic_secret_key = os.getenv("MAGIC_SECRET_KEY") or os.getenv("X_MAGIC_SECRET_KEY") or ""
+    magic_publishable_key = os.getenv("MAGIC_PUBLISHABLE_KEY") or os.getenv("MAGIC_API_KEY") or ""
+    if not magic_secret_key and not magic_publishable_key:
+        _json_response(handler, 500, {"error": "Missing MAGIC_SECRET_KEY (preferred) or MAGIC_PUBLISHABLE_KEY."})
         return
 
     provider_id = (
@@ -366,7 +367,10 @@ def _handle_magic_wallet(handler: http.server.BaseHTTPRequestHandler, body: byte
     req.add_header("Content-Type", "application/json")
     req.add_header("Accept", "application/json")
     req.add_header("Authorization", f"Bearer {jwt.strip()}")
-    req.add_header("X-Magic-API-Key", str(magic_api_key).strip())
+    if magic_secret_key:
+        req.add_header("X-Magic-Secret-Key", str(magic_secret_key).strip())
+    else:
+        req.add_header("X-Magic-API-Key", str(magic_publishable_key).strip())
     req.add_header("X-OIDC-Provider-ID", provider_id)
     req.add_header("X-Magic-Chain", chain)
 
