@@ -213,24 +213,20 @@
 	      statusBubble.setAttribute("aria-label", "Log in / Log out");
 	      statusBubble.innerHTML = `
 	        <span class="mk-magic-status-inner">
-	          <img class="mk-magic-status-img" alt="AgentC login status" src="ChatGPT_Image_Jan_26__2026_at_07_41_19_PM-removebg-preview.png" />
+	          <img class="mk-magic-status-img" alt="AgentC login status" src="ChatGPT_Image_Jan_26__2026_at_07_41_19_PM-removebg-preview.svg" />
 	          <span class="mk-magic-status-fallback" aria-hidden="true">AgentC</span>
 	        </span>
 	      `;
 
 	      const statusImg = statusBubble.querySelector(".mk-magic-status-img");
 	      const statusFallback = statusBubble.querySelector(".mk-magic-status-fallback");
-	      const OFFLINE_PNG = "ChatGPT_Image_Jan_26__2026_at_07_41_19_PM-removebg-preview.png";
 	      const OFFLINE_SVG = "ChatGPT_Image_Jan_26__2026_at_07_41_19_PM-removebg-preview.svg";
-	      const ONLINE_PNG = "ChatGPT_Image_Jan_26__2026_at_07_41_21_PM-removebg-preview.png";
 	      const ONLINE_SVG = "ChatGPT_Image_Jan_26__2026_at_07_41_21_PM-removebg-preview.svg";
 
 	      const setStatusImg = (signedIn) => {
 	        if (!statusImg) return;
-	        const png = signedIn ? ONLINE_PNG : OFFLINE_PNG;
 	        const svg = signedIn ? ONLINE_SVG : OFFLINE_SVG;
-	        statusImg.dataset.fallback = svg;
-	        statusImg.setAttribute("src", png);
+	        statusImg.setAttribute("src", svg);
 	      };
 
 	      try {
@@ -241,14 +237,6 @@
 	        });
 	        statusImg?.addEventListener("error", () => {
 	          if (!statusImg) return;
-	          const src = String(statusImg.getAttribute("src") || "");
-	          if (src.endsWith(".png")) {
-	            const fb = String(statusImg.dataset.fallback || "");
-	            if (fb) {
-	              statusImg.setAttribute("src", fb);
-	              return;
-	            }
-	          }
 	          statusImg.style.display = "none";
 	          if (statusFallback) statusFallback.style.display = "flex";
 	        });
