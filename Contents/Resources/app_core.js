@@ -165,16 +165,19 @@
 	        const style = document.createElement("style");
 	        style.id = styleId;
 	        style.textContent = `
-	          .mk-magic-btn{position:fixed;right:18px;bottom:18px;z-index:999999;display:flex;align-items:center;justify-content:center;width:96px;height:124px;border-radius:18px;border:0;background:transparent;color:#fff;cursor:pointer;padding:0}
-	          .mk-magic-btn:hover{transform:translateY(-1px)}
-	          .mk-magic-btn:active{transform:translateY(0)}
-	          .mk-magic-avatar{position:relative;width:96px;height:124px;display:block}
-	          .mk-magic-avatar-img{width:100%;height:100%;object-fit:contain;display:block;filter:drop-shadow(0 18px 38px rgba(0,0,0,.65))}
+	          .mk-magic-bubbles{position:fixed;right:18px;bottom:18px;z-index:999999;display:flex;flex-direction:column;gap:10px;align-items:flex-end}
+	          .mk-magic-bubble{appearance:none;border:0;background:transparent;color:#fff;cursor:pointer;padding:0;display:block}
+	          .mk-magic-bubble:disabled{opacity:.6;cursor:not-allowed}
+	          .mk-magic-bubble:hover{transform:translateY(-1px)}
+	          .mk-magic-bubble:active{transform:translateY(0)}
+	          .mk-magic-avatar{position:relative;width:72px;height:72px;border-radius:999px;overflow:hidden;display:block;background:rgba(12,12,14,.84);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.14);box-shadow:0 18px 60px rgba(0,0,0,.55)}
+	          .mk-magic-avatar-img{width:100%;height:100%;object-fit:cover;display:block}
 	          .mk-magic-avatar-fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:18px;letter-spacing:.2px}
-	          .mk-magic-avatar-c{position:absolute;top:14px;left:50%;transform:translateX(-50%);font-weight:950;font-size:28px;letter-spacing:-.02em;text-shadow:0 2px 12px rgba(0,0,0,.65), 0 0 0.75px rgba(0,0,0,.55)}
-	          .mk-magic-avatar-c{color:#ef4444}
-	          .mk-magic-btn.signed-in .mk-magic-avatar-c{color:#22c55e}
-	          .mk-magic-avatar-c{transition:color 180ms ease}
+	          .mk-magic-avatar-c{position:absolute;top:8px;left:50%;transform:translateX(-50%);font-weight:950;font-size:22px;letter-spacing:-.02em;text-shadow:0 2px 12px rgba(0,0,0,.65), 0 0 0.75px rgba(0,0,0,.55);color:#ef4444;transition:color 180ms ease}
+	          .mk-magic-bubble.signed-in .mk-magic-avatar-c{color:#22c55e}
+	          .mk-magic-ring{position:absolute;inset:-2px;border-radius:999px;pointer-events:none;border:2px solid rgba(239,68,68,.55)}
+	          .mk-magic-bubble.signed-in .mk-magic-ring{border-color:rgba(34,197,94,.65)}
+	          .mk-magic-ring{transition:border-color 180ms ease}
 	          .mk-magic-panel{position:fixed;right:18px;bottom:86px;z-index:999999;width:min(760px,calc(100vw - 36px));border-radius:16px;border:1px solid rgba(255,255,255,.14);background:rgba(12,12,14,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:#e5e7eb;box-shadow:0 18px 60px rgba(0,0,0,.6);padding:14px;display:none}
 	          .mk-magic-panel.open{display:block}
 	          .mk-magic-title{display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:650;margin-bottom:10px}
@@ -204,35 +207,64 @@
 	        document.head.appendChild(style);
 	      }
 
-	      const btn = document.createElement("button");
-	      btn.type = "button";
-	      btn.className = "mk-magic-btn";
-	      btn.title = "Login / Wallet";
-	      btn.setAttribute("aria-label", "Login / Wallet");
-	      btn.innerHTML = `
+	      const bubbles = document.createElement("div");
+	      bubbles.className = "mk-magic-bubbles";
+
+	      const loginBubble = document.createElement("button");
+	      loginBubble.type = "button";
+	      loginBubble.className = "mk-magic-bubble mk-magic-bubble-login";
+	      loginBubble.title = "Log in / Account";
+	      loginBubble.setAttribute("aria-label", "Log in / Account");
+	      loginBubble.innerHTML = `
 	        <span class="mk-magic-avatar">
-	          <img class="mk-magic-avatar-img" alt="AgentC" src="agentc_button.png" />
+	          <span class="mk-magic-ring" aria-hidden="true"></span>
+	          <img class="mk-magic-avatar-img" alt="AgentC" src="agentc_bubble.png" />
 	          <span class="mk-magic-avatar-c" aria-hidden="true">C</span>
 	          <span class="mk-magic-avatar-fallback" aria-hidden="true">C</span>
 	        </span>
 	      `;
-	      try {
-	        const img = btn.querySelector(".mk-magic-avatar-img");
-	        const fallback = btn.querySelector(".mk-magic-avatar-fallback");
-	        if (fallback) fallback.style.display = "none";
-	        img?.addEventListener("error", () => {
-	          if (!img) return;
-	          const src = String(img.getAttribute("src") || "");
-	          if (src.endsWith(".png")) {
-	            img.setAttribute("src", "agentc_button.svg");
-	            return;
-	          }
-	          img.style.display = "none";
-	          if (fallback) fallback.style.display = "flex";
-	        });
-	      } catch {
-	        // ignore
-	      }
+
+	      const logoutBubble = document.createElement("button");
+	      logoutBubble.type = "button";
+	      logoutBubble.className = "mk-magic-bubble mk-magic-bubble-logout";
+	      logoutBubble.title = "Log out";
+	      logoutBubble.setAttribute("aria-label", "Log out");
+	      logoutBubble.innerHTML = `
+	        <span class="mk-magic-avatar">
+	          <span class="mk-magic-ring" aria-hidden="true"></span>
+	          <img class="mk-magic-avatar-img" alt="AgenT101" src="agent101_bubble.png" />
+	          <span class="mk-magic-avatar-fallback" aria-hidden="true">T</span>
+	        </span>
+	      `;
+
+	      const wireFallback = (btnEl, pngName, svgName) => {
+	        try {
+	          const img = btnEl.querySelector(".mk-magic-avatar-img");
+	          const fallback = btnEl.querySelector(".mk-magic-avatar-fallback");
+	          if (fallback) fallback.style.display = "none";
+	          img?.addEventListener("error", () => {
+	            if (!img) return;
+	            const src = String(img.getAttribute("src") || "");
+	            if (src.endsWith(".png")) {
+	              img.setAttribute("src", svgName);
+	              return;
+	            }
+	            img.style.display = "none";
+	            if (fallback) fallback.style.display = "flex";
+	          });
+	          img?.addEventListener("load", () => {
+	            if (img) img.style.display = "block";
+	            if (fallback) fallback.style.display = "none";
+	          });
+	        } catch {
+	          // ignore
+	        }
+	      };
+	      wireFallback(loginBubble, "agentc_bubble.png", "agentc_bubble.svg");
+	      wireFallback(logoutBubble, "agent101_bubble.png", "agent101_bubble.svg");
+
+	      bubbles.appendChild(loginBubble);
+	      bubbles.appendChild(logoutBubble);
 
 	      const panel = document.createElement("div");
 	      panel.className = "mk-magic-panel";
@@ -297,14 +329,33 @@
 	        <div id="mkMagicError" class="mk-magic-error" style="display:none"></div>
 	      `;
 
-      document.body.appendChild(btn);
-      document.body.appendChild(panel);
+	      document.body.appendChild(bubbles);
+	      document.body.appendChild(panel);
 
       const close = panel.querySelector(".mk-magic-close");
-      btn.addEventListener("click", () => {
-        state.open = !state.open;
-        render();
-      });
+	      loginBubble.addEventListener("click", async () => {
+	        if (state.loading) return;
+	        if (!state.jwt) {
+	          const email = String(state.email || "").trim();
+	          if (email) {
+	            await loginWithEmailOtp({ showUI: true });
+	            return;
+	          }
+	        }
+	        state.open = !state.open;
+	        render();
+	        try {
+	          panel.querySelector("#mkMagicEmail")?.focus();
+	        } catch {
+	          // ignore
+	        }
+	      });
+	      logoutBubble.addEventListener("click", async () => {
+	        if (state.loading) return;
+	        await logout();
+	        state.open = false;
+	        render();
+	      });
       close?.addEventListener("click", () => {
         state.open = false;
         render();
@@ -359,7 +410,9 @@
 	      });
 
 	      el = {
-	        btn,
+	        bubbles,
+	        loginBubble,
+	        logoutBubble,
 	        panel,
 	        status: panel.querySelector("#mkMagicStatus"),
 	        email: emailInput,
@@ -392,22 +445,24 @@
       el.error.textContent = state.lastError;
     }
 
-	    function render() {
-	      if (!el) return;
-	      el.panel.classList.toggle("open", Boolean(state.open));
-	      const signedIn = Boolean(state.jwt);
-	      el.btn.classList.toggle("signed-in", signedIn);
-	      if (el.status) el.status.textContent = signedIn ? "Signed in" : "Signed out";
-	      if (el.address) el.address.textContent = state.address ? state.address : "—";
-	      if (el.embedded) el.embedded.textContent = state.embeddedAddress ? state.embeddedAddress : "—";
+		    function render() {
+		      if (!el) return;
+		      el.panel.classList.toggle("open", Boolean(state.open));
+		      const signedIn = Boolean(state.jwt);
+		      el.loginBubble.classList.toggle("signed-in", signedIn);
+		      el.logoutBubble.classList.toggle("signed-in", signedIn);
+		      el.logoutBubble.style.display = signedIn ? "block" : "none";
+		      if (el.status) el.status.textContent = signedIn ? "Signed in" : "Signed out";
+		      if (el.address) el.address.textContent = state.address ? state.address : "—";
+		      if (el.embedded) el.embedded.textContent = state.embeddedAddress ? state.embeddedAddress : "—";
 	      if (el.email && typeof el.email.value === "string" && el.email.value !== state.email) el.email.value = state.email;
 	      if (el.jwt && typeof el.jwt.value === "string" && el.jwt.value !== state.jwt) el.jwt.value = state.jwt;
-	      if (el.logoutBtn) el.logoutBtn.disabled = state.loading || !signedIn;
-	      if (el.otpRegularBtn) el.otpRegularBtn.disabled = state.loading;
-	      if (el.otpWhiteBtn) el.otpWhiteBtn.disabled = state.loading;
-	      if (el.oauthRedirectBtn) el.oauthRedirectBtn.disabled = state.loading;
-	      if (el.oauthPopupBtn) el.oauthPopupBtn.disabled = state.loading;
-	      if (el.getServerWalletBtn) el.getServerWalletBtn.disabled = state.loading || !signedIn;
+		      if (el.logoutBtn) el.logoutBtn.disabled = state.loading || !signedIn;
+		      if (el.otpRegularBtn) el.otpRegularBtn.disabled = state.loading;
+		      if (el.otpWhiteBtn) el.otpWhiteBtn.disabled = state.loading;
+		      if (el.oauthRedirectBtn) el.oauthRedirectBtn.disabled = state.loading;
+		      if (el.oauthPopupBtn) el.oauthPopupBtn.disabled = state.loading;
+		      if (el.getServerWalletBtn) el.getServerWalletBtn.disabled = state.loading || !signedIn;
 	      if (el.chain && typeof el.chain.value === "string" && el.chain.value !== state.chain) el.chain.value = state.chain;
 	      if (el.providerId && typeof el.providerId.value === "string" && el.providerId.value !== state.providerId)
 	        el.providerId.value = state.providerId;
@@ -516,7 +571,7 @@
 	      }
 	    }
 
-	    async function loginWithEmailOtp({ showUI }) {
+		    async function loginWithEmailOtp({ showUI }) {
 	      ensureDom();
 	      setError("");
 	      state.loading = true;
@@ -527,9 +582,13 @@
 	        if (!sdk) throw new Error("Missing MAGIC_PUBLISHABLE_KEY (or Magic SDK failed to load).");
 	        const email = String(state.email || "").trim();
 	        if (!email) throw new Error("Enter an email address.");
-	        await sdk.auth.loginWithMagicLink({ email, showUI: Boolean(showUI) });
-	        await refreshFromMagic();
-	        saveToStorage();
+		        if (sdk.auth?.loginWithEmailOTP) {
+		          await sdk.auth.loginWithEmailOTP({ email });
+		        } else {
+		          await sdk.auth.loginWithMagicLink({ email, showUI: Boolean(showUI) });
+		        }
+		        await refreshFromMagic();
+		        saveToStorage();
 	      } catch (e) {
 	        setError(e?.message || "Login failed");
 	      } finally {
