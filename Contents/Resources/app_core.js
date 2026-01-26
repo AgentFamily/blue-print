@@ -95,7 +95,27 @@
 
     function hasPublishableKey() {
       const pk = getPublishableKey();
-      return Boolean(pk && /^pk_(live|test)_/i.test(pk));
+      return Boolean(pk);
+    }
+
+    function looksLikePublishableKey() {
+      const pk = getPublishableKey();
+      return Boolean(pk && /^pk_/i.test(pk));
+    }
+
+    function formatMagicError(err) {
+      const message =
+        String(err?.message || err?.reason || err?.error || "").trim() || "Login failed";
+      const lower = message.toLowerCase();
+      if (lower.includes("prohibited")) {
+        try {
+          const origin = String(window?.location?.origin || "").trim();
+          return `${message} (Magic is likely blocking this domain/key; ensure ${origin || "this domain"} is allowlisted in Magic and the publishable key matches.)`;
+        } catch {
+          return `${message} (Magic is likely blocking this domain/key; ensure this domain is allowlisted in Magic and the publishable key matches.)`;
+        }
+      }
+      return message;
     }
 
     function loadFromStorage() {
@@ -535,6 +555,7 @@
 		        publishableKey = getPublishableKey();
 		      }
 		      if (!publishableKey) return null;
+		      if (!/^pk_/i.test(publishableKey)) throw new Error("Invalid Magic publishable key (expected pk_…).");
 		      global.__MAGIC_PUBLISHABLE_KEY = publishableKey;
 
 		      if (!global.Magic) {
@@ -598,31 +619,48 @@
 	      }
 	    }
 
-		    async function loginWithEmailOtp({ showUI }) {
-	      ensureDom();
-	      setError("");
-	      state.loading = true;
+			    async function loginWithEmailOtp({ showUI }) {
+		      ensureDom();
+		      setError("");
+		      state.loading = true;
 	      render();
 
-	      try {
-	        const sdk = await ensureMagicSdk();
-	        if (!sdk) throw new Error("Missing MAGIC_PUBLISHABLE_KEY (or Magic SDK failed to load).");
-	        const email = String(state.email || "").trim();
-	        if (!email) throw new Error("Enter an email address.");
-			        if (sdk.auth?.loginWithEmailOTP) {
-			          await sdk.auth.loginWithEmailOTP({ email, showUI: Boolean(showUI) });
-			        } else {
-			          await sdk.auth.loginWithMagicLink({ email, showUI: Boolean(showUI) });
-			        }
-			        await refreshFromMagic();
-			        saveToStorage();
-		      } catch (e) {
-	        setError(e?.message || "Login failed");
-	      } finally {
-	        state.loading = false;
-	        render();
-	      }
-	    }
+		      try {
+		        const sdk = await ensureMagicSdk();
+		        if (!sdk) throw new Error("Missing MAGIC_PUBLISHABLE_KEY (or Magic SDK failed to load).");
+		        if (!looksLikePublishableKey()) throw new Error("Invalid Magic publishable key (expected pk_…).");
+		        const email = String(state.email || "").trim();
+		        if (!email) throw new Error("Enter an email address.");
+		        const doMagicLink = async () => {
+		          if (!sdk.auth?.loginWithMagicLink) throw new Error("Magic Link login not available in this SDK build.");
+		          await sdk.auth.loginWithMagicLink({ email, showUI: Boolean(showUI) });
+		        };
+		        if (sdk.auth?.loginWithEmailOTP) {
+		          try {
+		            await sdk.auth.loginWithEmailOTP({ email });
+		          } catch (otpErr) {
+		            try {
+		              await doMagicLink();
+		            } catch (mlErr) {
+		              const otpMsg = String(otpErr?.message || otpErr?.reason || "").trim();
+		              const mlMsg = String(mlErr?.message || mlErr?.reason || "").trim();
+		              throw new Error(
+		                `Email OTP failed${otpMsg ? `: ${otpMsg}` : ""}. Magic Link also failed${mlMsg ? `: ${mlMsg}` : ""}.`
+		              );
+		            }
+		          }
+		        } else {
+		          await doMagicLink();
+		        }
+				        await refreshFromMagic();
+				        saveToStorage();
+			      } catch (e) {
+		        setError(formatMagicError(e));
+		      } finally {
+		        state.loading = false;
+		        render();
+		      }
+		    }
 
 	    async function loginWithOAuth({ flow }) {
 	      ensureDom();
@@ -633,12 +671,19 @@
 	        const sdk = await ensureMagicSdk();
 	        if (!sdk) throw new Error("Missing MAGIC_PUBLISHABLE_KEY (or Magic SDK failed to load).");
 	        if (!sdk.oauth) throw new Error("Magic OAuth not available in this SDK build.");
-	        const provider = "google";
-	        if (flow === "redirect") {
-	          if (!sdk.oauth.loginWithRedirect) throw new Error("loginWithRedirect not available.");
-	          await sdk.oauth.loginWithRedirect({ provider, redirectURI: window.location.href });
-	          return;
-	        }
+		        const provider = "google";
+		        if (flow === "redirect") {
+		          if (!sdk.oauth.loginWithRedirect) throw new Error("loginWithRedirect not available.");
+		          const redirectURI = (() => {
+		            try {
+		              return String(window.location.origin + window.location.pathname);
+		            } catch {
+		              return String(window.location.href);
+		            }
+		          })();
+		          await sdk.oauth.loginWithRedirect({ provider, redirectURI });
+		          return;
+		        }
 	        if (!sdk.oauth.loginWithPopup) throw new Error("loginWithPopup not available.");
 	        await sdk.oauth.loginWithPopup({ provider });
 	        await refreshFromMagic();
