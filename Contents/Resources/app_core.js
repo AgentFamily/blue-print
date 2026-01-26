@@ -267,8 +267,23 @@
 		      const ONLINE_SVG = "ChatGPT_Image_Jan_26__2026_at_07_41_21_PM-removebg-preview.svg";
 		      const OFFLINE_PNG_CACHE = "mkMagicStatusPngOfflineV1";
 		      const ONLINE_PNG_CACHE = "mkMagicStatusPngOnlineV1";
+		      const PNG_VERSION_KEY = "mkMagicStatusPngVersionV1";
+		      const PNG_CACHE_VERSION = "r2026-01-26b";
+
+		      const ensurePngCacheVersion = () => {
+		        try {
+		          const cur = String(localStorage.getItem(PNG_VERSION_KEY) || "");
+		          if (cur === PNG_CACHE_VERSION) return;
+		          localStorage.removeItem(OFFLINE_PNG_CACHE);
+		          localStorage.removeItem(ONLINE_PNG_CACHE);
+		          localStorage.setItem(PNG_VERSION_KEY, PNG_CACHE_VERSION);
+		        } catch {
+		          // ignore
+		        }
+		      };
 
 		      const getCachedPng = (key) => {
+		        ensurePngCacheVersion();
 		        try {
 		          const v = String(localStorage.getItem(key) || "");
 		          if (v.startsWith("data:image/png")) return v;
@@ -883,11 +898,11 @@
 
   api.createMagicAuthWidget = createMagicAuthWidget;
 
-  try {
-    Object.defineProperty(api, "__version", { value: "r2026-01-26a", enumerable: true });
-  } catch {
-    api.__version = "r2026-01-26a";
-  }
+	  try {
+	    Object.defineProperty(api, "__version", { value: "r2026-01-26b", enumerable: true });
+	  } catch {
+	    api.__version = "r2026-01-26b";
+	  }
 
   try {
     global.MKCore = api;
