@@ -165,13 +165,13 @@
 	        const style = document.createElement("style");
 	        style.id = styleId;
 	        style.textContent = `
-	          .mk-magic-btn{position:fixed;right:18px;bottom:18px;z-index:999999;display:flex;align-items:center;justify-content:center;width:64px;height:64px;border-radius:999px;border:1px solid rgba(255,255,255,.16);background:rgba(12,12,14,.84);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#fff;cursor:pointer;box-shadow:0 18px 60px rgba(0,0,0,.55);padding:0}
+	          .mk-magic-btn{position:fixed;right:18px;bottom:18px;z-index:999999;display:flex;align-items:center;justify-content:center;width:96px;height:124px;border-radius:18px;border:0;background:transparent;color:#fff;cursor:pointer;padding:0}
 	          .mk-magic-btn:hover{transform:translateY(-1px)}
 	          .mk-magic-btn:active{transform:translateY(0)}
-	          .mk-magic-avatar{position:relative;width:56px;height:56px;border-radius:999px;overflow:hidden;display:block}
-	          .mk-magic-avatar-img{width:100%;height:100%;object-fit:contain;display:block;filter:drop-shadow(0 10px 26px rgba(0,0,0,.45))}
-	          .mk-magic-avatar-fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;letter-spacing:.2px}
-	          .mk-magic-avatar-c{position:absolute;top:7px;left:50%;transform:translateX(-50%);font-weight:950;font-size:18px;letter-spacing:-.02em;text-shadow:0 2px 10px rgba(0,0,0,.55), 0 0 0.5px rgba(0,0,0,.4)}
+	          .mk-magic-avatar{position:relative;width:96px;height:124px;display:block}
+	          .mk-magic-avatar-img{width:100%;height:100%;object-fit:contain;display:block;filter:drop-shadow(0 18px 38px rgba(0,0,0,.65))}
+	          .mk-magic-avatar-fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:18px;letter-spacing:.2px}
+	          .mk-magic-avatar-c{position:absolute;top:14px;left:50%;transform:translateX(-50%);font-weight:950;font-size:28px;letter-spacing:-.02em;text-shadow:0 2px 12px rgba(0,0,0,.65), 0 0 0.75px rgba(0,0,0,.55)}
 	          .mk-magic-avatar-c{color:#ef4444}
 	          .mk-magic-btn.signed-in .mk-magic-avatar-c{color:#22c55e}
 	          .mk-magic-avatar-c{transition:color 180ms ease}
