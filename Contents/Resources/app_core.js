@@ -865,12 +865,12 @@
       }
     }
 
-	    function init() {
-	      if (typeof document === "undefined") return;
-	      loadFromStorage();
-	      if (!state.providerId) state.providerId = String(global.__MAGIC_PROVIDER_ID || "").trim();
-	      if (String(global.__MAGIC_CHAIN || "").trim() && state.chain === "ETH") state.chain = String(global.__MAGIC_CHAIN || "").trim();
-	      ensureDom();
+		    function init() {
+		      if (typeof document === "undefined") return;
+		      loadFromStorage();
+		      if (!state.providerId) state.providerId = String(global.__MAGIC_PROVIDER_ID || "").trim();
+		      if (String(global.__MAGIC_CHAIN || "").trim() && state.chain === "ETH") state.chain = String(global.__MAGIC_CHAIN || "").trim();
+		      ensureDom();
 	      fetchMagicConfig()
 	        .catch(() => null)
 	        .finally(() => {
@@ -884,15 +884,42 @@
 	        .finally(() => {
 	          render();
 	        });
-	      render();
-	    }
+		      render();
+		    }
 
-	    return {
-	      init,
-	      loginWithEmailOtp,
-	      loginWithOAuth,
-	      logout,
-	      getOrCreateServerWallet
+		    return {
+		      init,
+		      openPanel: () => {
+		        ensureDom();
+		        if (state.loading) return;
+		        state.open = true;
+		        render();
+		        try {
+		          el?.panel?.querySelector?.("#mkMagicEmail")?.focus?.();
+		        } catch {
+		          // ignore
+		        }
+		      },
+		      closePanel: () => {
+		        ensureDom();
+		        if (state.loading) return;
+		        state.open = false;
+		        render();
+		      },
+		      getAuth: () => {
+		        return {
+		          signedIn: Boolean(state.jwt),
+		          jwt: String(state.jwt || ""),
+		          embeddedAddress: String(state.embeddedAddress || ""),
+		          serverAddress: String(state.address || ""),
+		          chain: String(state.chain || "ETH"),
+		          providerId: String(state.providerId || "")
+		        };
+		      },
+		      loginWithEmailOtp,
+		      loginWithOAuth,
+		      logout,
+		      getOrCreateServerWallet
 	    };
 	  }
 
@@ -910,15 +937,27 @@
     // ignore
   }
 
-  try {
-    if (typeof document !== "undefined") {
-      const boot = () => {
-        try {
-          api.createMagicAuthWidget().init();
-        } catch {
-          // ignore
-        }
-      };
+	  try {
+	    if (typeof document !== "undefined") {
+	      const boot = () => {
+	        try {
+	          if (global.MKMagicAuth && typeof global.MKMagicAuth.init === "function") return;
+	          const widget = api.createMagicAuthWidget();
+	          try {
+	            Object.defineProperty(api, "magicAuth", { value: widget, enumerable: true });
+	          } catch {
+	            api.magicAuth = widget;
+	          }
+	          try {
+	            global.MKMagicAuth = widget;
+	          } catch {
+	            // ignore
+	          }
+	          widget.init();
+	        } catch {
+	          // ignore
+	        }
+	      };
       if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot, { once: true });
       else boot();
     }

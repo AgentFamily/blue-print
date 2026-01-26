@@ -3334,6 +3334,62 @@ When there is prior conversation, refine at least one point from the previous ro
 	          return hasProfileHint;
 	        }
 
+	        function isMkIdentityPrompt(text) {
+	          const s = String(text || "")
+	            .trim()
+	            .toLowerCase()
+	            .replace(/[.]/g, "");
+	          return s === "i am mk" || s === "im mk" || s === "i'm mk";
+	        }
+
+	        function getMagicAuthSnapshot() {
+	          try {
+	            const jwt = String(sessionStorage.getItem("mkMagicJwtV1") || "");
+	            const embedded = String(localStorage.getItem("mkMagicEmbeddedAddressV1") || "");
+	            return { signedIn: Boolean(jwt), embeddedAddress: embedded, jwt };
+	          } catch {
+	            return { signedIn: false, embeddedAddress: "", jwt: "" };
+	          }
+	        }
+
+	        function openMagicAuthPanel() {
+	          try {
+	            if (window.MKMagicAuth?.openPanel) {
+	              window.MKMagicAuth.openPanel();
+	              return true;
+	            }
+	          } catch {
+	            // ignore
+	          }
+	          try {
+	            if (window.MKCore?.magicAuth?.openPanel) {
+	              window.MKCore.magicAuth.openPanel();
+	              return true;
+	            }
+	          } catch {
+	            // ignore
+	          }
+	          try {
+	            const panel = document.querySelector(".mk-magic-panel");
+	            if (panel) panel.classList.add("open");
+	            return Boolean(panel);
+	          } catch {
+	            return false;
+	          }
+	        }
+
+	        function magicAuthContextForLLM(prompt) {
+	          const snap = getMagicAuthSnapshot();
+	          if (snap.signedIn) {
+	            const addr = String(snap.embeddedAddress || "").trim();
+	            return `Auth: The user is signed in via Magic Link (embedded wallet).${addr ? ` publicAddress=${addr}.` : ""} The speaker label \"MK\" refers to the current authenticated user.`;
+	          }
+	          if (isMkIdentityPrompt(prompt)) {
+	            return 'Auth: The user says \"I am MK\" but is not authenticated. Treat \"MK\" as a preferred name only; do not assume privileged access.';
+	          }
+	          return "";
+	        }
+
         function paletteToPromptText(palette) {
           try {
             const p = palette && typeof palette === "object" ? palette : {};
@@ -4168,16 +4224,18 @@ When there is prior conversation, refine at least one point from the previous ro
           return { content: normalizeOutput(sys.content), model: sys.model };
         }
 
-        async function runDebate(topic) {
-          const prompt = String(topic || "").trim();
-          if (!prompt) throw new Error("Enter a topic to debate.");
+	        async function runDebate(topic) {
+	          const prompt = String(topic || "").trim();
+	          if (!prompt) throw new Error("Enter a topic to debate.");
 
-          const contextParts = [];
-          if (state.rounds.length) {
-            const recent = state.rounds.slice(-MAX_CONTEXT_ROUNDS);
-            const offset = state.rounds.length - recent.length;
-            const transcript = recent
-              .map((r, idx) => {
+	          const contextParts = [];
+	          const authCtx = magicAuthContextForLLM(prompt);
+	          if (authCtx) contextParts.push(authCtx);
+	          if (state.rounds.length) {
+	            const recent = state.rounds.slice(-MAX_CONTEXT_ROUNDS);
+	            const offset = state.rounds.length - recent.length;
+	            const transcript = recent
+	              .map((r, idx) => {
                 const n = offset + idx + 1;
                 const toolsLine = summarizeRoundToolsForContext(r);
                 const toolsBlock = toolsLine ? `${toolsLine}\n` : "";
@@ -4247,11 +4305,14 @@ When there is prior conversation, refine at least one point from the previous ro
 	          };
         }
 
-        async function runLoop() {
-          const last = state.rounds[state.rounds.length - 1];
-          if (!last) throw new Error("Start a debate first.");
+	        async function runLoop() {
+	          const last = state.rounds[state.rounds.length - 1];
+	          if (!last) throw new Error("Start a debate first.");
 
-          const contextParts = [`MK latest message: ${last.topic}`];
+	          const contextParts = [];
+	          const authCtx = magicAuthContextForLLM(String(last.topic || ""));
+	          if (authCtx) contextParts.push(authCtx);
+	          contextParts.push(`MK latest message: ${last.topic}`);
 
           if (state.autoContext) {
             const recent = state.rounds.slice(-MAX_CONTEXT_ROUNDS);
@@ -5391,17 +5452,30 @@ When there is prior conversation, refine at least one point from the previous ro
           }
         }
 
-	        async function startDebateFromUI() {
-	          await ensureEndpoint();
-	          const topic = el("topicInput").value.trim();
-	          if (!topic) return;
-          setComposerMoreOpen(false);
-	          setNotice(null);
-	          if (isExternalProfileIntent(topic)) {
-	            setNotice(EXTERNAL_BROWSE_BLOCKED_QUESTION);
+		        async function startDebateFromUI() {
+		          await ensureEndpoint();
+		          const topic = el("topicInput").value.trim();
+		          if (!topic) return;
+	          setComposerMoreOpen(false);
+		          setNotice(null);
+	          if (isMkIdentityPrompt(topic)) {
+	            const snap = getMagicAuthSnapshot();
+	            if (snap.signedIn) {
+	              const addr = String(snap.embeddedAddress || "").trim();
+	              setNotice(`Hi MK — you're signed in via Magic.${addr ? ` Wallet: ${addr}` : ""} Ask a technical topic to start the debate.`);
+	            } else {
+	              setNotice('To verify \"MK\", please sign in via Auth + Wallet (Magic Link).');
+	              openMagicAuthPanel();
+	            }
 	            setStatusRight("");
 	            render();
 	            return;
+	          }
+		          if (isExternalProfileIntent(topic)) {
+		            setNotice(EXTERNAL_BROWSE_BLOCKED_QUESTION);
+		            setStatusRight("");
+		            render();
+		            return;
 	          }
 
 	          state.forceScrollToBottomOnce = true;
