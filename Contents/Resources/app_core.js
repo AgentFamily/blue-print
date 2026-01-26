@@ -66,6 +66,7 @@
     const STORAGE = {
       jwt: "mkMagicJwtV1",
       email: "mkMagicEmailV1",
+      publishableKey: "mkMagicPublishableKeyV1",
       address: "mkMagicWalletAddressV1",
       embedded: "mkMagicEmbeddedAddressV1",
       chain: "mkMagicChainV1",
@@ -77,6 +78,7 @@
       loading: false,
       jwt: "",
       email: "",
+      publishableKey: "",
       address: "",
       embeddedAddress: "",
       chain: "ETH",
@@ -86,6 +88,15 @@
 
     let el = null;
     let magic = null;
+
+    function getPublishableKey() {
+      return String(state.publishableKey || global.__MAGIC_PUBLISHABLE_KEY || "").trim();
+    }
+
+    function hasPublishableKey() {
+      const pk = getPublishableKey();
+      return Boolean(pk && /^pk_(live|test)_/i.test(pk));
+    }
 
     function loadFromStorage() {
       try {
@@ -98,6 +109,12 @@
       } catch {
         state.email = "";
       }
+      try {
+        state.publishableKey = String(localStorage.getItem(STORAGE.publishableKey) || "").trim();
+      } catch {
+        state.publishableKey = "";
+      }
+      if (state.publishableKey) global.__MAGIC_PUBLISHABLE_KEY = state.publishableKey;
       try {
         state.address = String(localStorage.getItem(STORAGE.address) || "");
       } catch {
@@ -133,6 +150,12 @@
         // ignore
       }
       try {
+        if (state.publishableKey) localStorage.setItem(STORAGE.publishableKey, String(state.publishableKey));
+        else localStorage.removeItem(STORAGE.publishableKey);
+      } catch {
+        // ignore
+      }
+      try {
         if (state.address) localStorage.setItem(STORAGE.address, state.address);
         else localStorage.removeItem(STORAGE.address);
       } catch {
@@ -157,7 +180,7 @@
       }
     }
 
-	    function ensureDom() {
+    function ensureDom() {
 	      if (el) return el;
 
 	      const styleId = "mk-magic-auth-style";
@@ -259,12 +282,15 @@
 	            <div class="mk-magic-row" style="margin-bottom:10px">
 	              <input id="mkMagicEmail" class="mk-magic-input" type="email" placeholder="Enter your email address" autocomplete="email" />
 	            </div>
+	            <div class="mk-magic-row" style="margin-bottom:10px">
+	              <input id="mkMagicPublishableKey" class="mk-magic-input" type="text" placeholder="Magic publishable key (pk_…)" autocomplete="off" autocapitalize="none" spellcheck="false" />
+	            </div>
 	            <div class="mk-magic-split">
 	              <button id="mkMagicOtpRegular" class="mk-magic-bigbtn" type="button">Regular OTP</button>
 	              <button id="mkMagicOtpWhitelabel" class="mk-magic-bigbtn" type="button">Whitelabel OTP</button>
 	            </div>
 	            <div class="mk-magic-sub">
-	              Requires <span class="mk-magic-pill">MAGIC_PUBLISHABLE_KEY</span>.
+	              Requires <span class="mk-magic-pill">MAGIC_PUBLISHABLE_KEY</span> (or paste <span class="mk-magic-pill">pk_…</span> above).
 	            </div>
 	          </div>
 	          <div class="mk-magic-section">
@@ -313,24 +339,24 @@
 	      document.body.appendChild(panel);
 
       const close = panel.querySelector(".mk-magic-close");
-	      statusBubble.addEventListener("click", async () => {
-	        if (state.loading) return;
-	        const signedIn = Boolean(state.jwt);
-	        if (signedIn) {
-	          await logout();
-	          state.open = false;
-	          render();
-	          return;
-	        }
+		      statusBubble.addEventListener("click", async () => {
+		        if (state.loading) return;
+		        const signedIn = Boolean(state.jwt);
+		        if (signedIn) {
+		          await logout();
+		          state.open = false;
+		          render();
+		          return;
+		        }
 
-	        const email = String(state.email || "").trim();
-	        if (email) {
-	          await loginWithEmailOtp({ showUI: true });
-	          return;
-	        }
+		        const email = String(state.email || "").trim();
+		        if (email && hasPublishableKey()) {
+		          await loginWithEmailOtp({ showUI: true });
+		          return;
+		        }
 
-	        state.open = true;
-	        render();
+		        state.open = true;
+		        render();
 	        try {
 	          panel.querySelector("#mkMagicEmail")?.focus();
 	        } catch {
@@ -343,6 +369,7 @@
       });
 
 	      const emailInput = panel.querySelector("#mkMagicEmail");
+	      const publishableKeyInput = panel.querySelector("#mkMagicPublishableKey");
 	      const jwtInput = panel.querySelector("#mkMagicJwt");
 	      const logoutBtn = panel.querySelector("#mkMagicLogout");
 	      const otpRegularBtn = panel.querySelector("#mkMagicOtpRegular");
@@ -358,10 +385,16 @@
         state.email = String(e?.target?.value || "");
         saveToStorage();
       });
-	      jwtInput?.addEventListener("input", (e) => {
-	        state.jwt = String(e?.target?.value || "");
-	        saveToStorage();
-	      });
+		      publishableKeyInput?.addEventListener("input", (e) => {
+		        state.publishableKey = String(e?.target?.value || "").trim();
+		        if (state.publishableKey) global.__MAGIC_PUBLISHABLE_KEY = state.publishableKey;
+		        if (state.lastError && state.lastError.toLowerCase().includes("publishable key")) setError("");
+		        saveToStorage();
+		      });
+		      jwtInput?.addEventListener("input", (e) => {
+		        state.jwt = String(e?.target?.value || "");
+		        saveToStorage();
+		      });
 
 	      logoutBtn?.addEventListener("click", async () => {
 	        await logout();
@@ -390,19 +423,20 @@
 	        await getOrCreateServerWallet();
 	      });
 
-	      el = {
-	        bubbles,
-	        statusBubble,
-	        statusImg,
-	        setStatusImg,
-	        panel,
-	        status: panel.querySelector("#mkMagicStatus"),
-	        email: emailInput,
-	        jwt: jwtInput,
-	        logoutBtn,
-	        address: panel.querySelector("#mkMagicAddress"),
-	        embedded: embeddedSpan,
-	        providerId: providerIdInput,
+		      el = {
+		        bubbles,
+		        statusBubble,
+		        statusImg,
+		        setStatusImg,
+		        panel,
+		        status: panel.querySelector("#mkMagicStatus"),
+		        email: emailInput,
+		        publishableKey: publishableKeyInput,
+		        jwt: jwtInput,
+		        logoutBtn,
+		        address: panel.querySelector("#mkMagicAddress"),
+		        embedded: embeddedSpan,
+		        providerId: providerIdInput,
 	        chain: chainSelect,
 	        otpRegularBtn,
 	        otpWhiteBtn,
@@ -427,30 +461,38 @@
       el.error.textContent = state.lastError;
     }
 
-		    function render() {
-		      if (!el) return;
-		      el.panel.classList.toggle("open", Boolean(state.open));
-		      const signedIn = Boolean(state.jwt);
-		      try {
-		        el.setStatusImg?.(signedIn);
-		      } catch {
-		        // ignore
-		      }
+				    function render() {
+				      if (!el) return;
+				      el.panel.classList.toggle("open", Boolean(state.open));
+				      const signedIn = Boolean(state.jwt);
+				      const hasPk = hasPublishableKey();
+				      try {
+				        el.setStatusImg?.(signedIn);
+				      } catch {
+				        // ignore
+				      }
 		      if (el.status) el.status.textContent = signedIn ? "Signed in" : "Signed out";
 		      if (el.address) el.address.textContent = state.address ? state.address : "—";
 		      if (el.embedded) el.embedded.textContent = state.embeddedAddress ? state.embeddedAddress : "—";
-	      if (el.email && typeof el.email.value === "string" && el.email.value !== state.email) el.email.value = state.email;
-	      if (el.jwt && typeof el.jwt.value === "string" && el.jwt.value !== state.jwt) el.jwt.value = state.jwt;
-		      if (el.logoutBtn) el.logoutBtn.disabled = state.loading || !signedIn;
-		      if (el.otpRegularBtn) el.otpRegularBtn.disabled = state.loading;
-		      if (el.otpWhiteBtn) el.otpWhiteBtn.disabled = state.loading;
-		      if (el.oauthRedirectBtn) el.oauthRedirectBtn.disabled = state.loading;
-		      if (el.oauthPopupBtn) el.oauthPopupBtn.disabled = state.loading;
-		      if (el.getServerWalletBtn) el.getServerWalletBtn.disabled = state.loading || !signedIn;
-	      if (el.chain && typeof el.chain.value === "string" && el.chain.value !== state.chain) el.chain.value = state.chain;
-	      if (el.providerId && typeof el.providerId.value === "string" && el.providerId.value !== state.providerId)
-	        el.providerId.value = state.providerId;
-	    }
+		      if (el.email && typeof el.email.value === "string" && el.email.value !== state.email) el.email.value = state.email;
+		      if (el.publishableKey && typeof el.publishableKey.value === "string" && el.publishableKey.value !== state.publishableKey)
+		        el.publishableKey.value = state.publishableKey;
+		      if (el.jwt && typeof el.jwt.value === "string" && el.jwt.value !== state.jwt) el.jwt.value = state.jwt;
+			      if (el.logoutBtn) el.logoutBtn.disabled = state.loading || !signedIn;
+			      if (el.otpRegularBtn) el.otpRegularBtn.disabled = state.loading || !hasPk;
+			      if (el.otpWhiteBtn) el.otpWhiteBtn.disabled = state.loading || !hasPk;
+			      if (el.oauthRedirectBtn) el.oauthRedirectBtn.disabled = state.loading || !hasPk;
+			      if (el.oauthPopupBtn) el.oauthPopupBtn.disabled = state.loading || !hasPk;
+			      if (el.getServerWalletBtn) el.getServerWalletBtn.disabled = state.loading || !signedIn;
+		      if (el.chain && typeof el.chain.value === "string" && el.chain.value !== state.chain) el.chain.value = state.chain;
+		      if (el.providerId && typeof el.providerId.value === "string" && el.providerId.value !== state.providerId)
+		        el.providerId.value = state.providerId;
+			      if (!hasPk && state.open && !state.loading && !state.lastError) {
+			        const originOk = ["http:", "https:"].includes(String(window?.location?.protocol || ""));
+			        const originNote = originOk ? "" : " (This UI is not on http(s); Magic may require a browser-served URL.)";
+			        setError(`Magic login is disabled until a publishable key is set (MAGIC_PUBLISHABLE_KEY / pk_…).${originNote}`);
+			      }
+		    }
 
 	    function loadScript(src) {
 	      return new Promise((resolve, reject) => {
@@ -485,19 +527,20 @@
 	      }
 	    }
 
-	    async function ensureMagicSdk() {
-	      if (magic) return magic;
-	      let publishableKey = String(global.__MAGIC_PUBLISHABLE_KEY || "").trim();
-	      if (!publishableKey) {
-	        await fetchMagicConfig();
-	        publishableKey = String(global.__MAGIC_PUBLISHABLE_KEY || "").trim();
-	      }
-	      if (!publishableKey) return null;
+		    async function ensureMagicSdk() {
+		      if (magic) return magic;
+		      let publishableKey = getPublishableKey();
+		      if (!publishableKey) {
+		        await fetchMagicConfig();
+		        publishableKey = getPublishableKey();
+		      }
+		      if (!publishableKey) return null;
+		      global.__MAGIC_PUBLISHABLE_KEY = publishableKey;
 
-	      if (!global.Magic) {
-	        const urls = [
-	          "https://unpkg.com/magic-sdk/dist/magic.js",
-	          "https://cdn.jsdelivr.net/npm/magic-sdk/dist/magic.js"
+		      if (!global.Magic) {
+		        const urls = [
+		          "https://unpkg.com/magic-sdk/dist/magic.js",
+		          "https://cdn.jsdelivr.net/npm/magic-sdk/dist/magic.js"
 	        ];
 	        let loaded = false;
 	        for (const url of urls) {
@@ -566,14 +609,14 @@
 	        if (!sdk) throw new Error("Missing MAGIC_PUBLISHABLE_KEY (or Magic SDK failed to load).");
 	        const email = String(state.email || "").trim();
 	        if (!email) throw new Error("Enter an email address.");
-		        if (sdk.auth?.loginWithEmailOTP) {
-		          await sdk.auth.loginWithEmailOTP({ email });
-		        } else {
-		          await sdk.auth.loginWithMagicLink({ email, showUI: Boolean(showUI) });
-		        }
-		        await refreshFromMagic();
-		        saveToStorage();
-	      } catch (e) {
+			        if (sdk.auth?.loginWithEmailOTP) {
+			          await sdk.auth.loginWithEmailOTP({ email, showUI: Boolean(showUI) });
+			        } else {
+			          await sdk.auth.loginWithMagicLink({ email, showUI: Boolean(showUI) });
+			        }
+			        await refreshFromMagic();
+			        saveToStorage();
+		      } catch (e) {
 	        setError(e?.message || "Login failed");
 	      } finally {
 	        state.loading = false;
