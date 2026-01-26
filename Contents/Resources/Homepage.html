@@ -2248,7 +2248,7 @@
       </div>
     </dialog>
 
-		    <script src="app_core.js?v=r2026-01-26b"></script>
+		    <script src="app_core.js?v=r2026-01-26c"></script>
 		    <script>
 		      (async () => {
 	        const STORAGE = {
@@ -3353,7 +3353,6 @@ When there is prior conversation, refine at least one point from the previous ro
 	        }
 
 	        const MK_CLAIM_KEY = "mkMkClaimedV1";
-	        const MK_TRIAL_REMAINING_KEY = "mkMkFreePromptsRemainingV1";
 
 	        function hasMkClaim() {
 	          try {
@@ -3371,31 +3370,7 @@ When there is prior conversation, refine at least one point from the previous ro
 	          }
 	        }
 
-	        function getMkTrialRemaining() {
-	          try {
-	            const raw = String(localStorage.getItem(MK_TRIAL_REMAINING_KEY) || "0");
-	            const n = parseInt(raw, 10);
-	            return Number.isFinite(n) ? Math.max(0, n) : 0;
-	          } catch {
-	            return 0;
-	          }
-	        }
-
-	        function setMkTrialRemaining(n) {
-	          try {
-	            const v = Math.max(0, Number(n) || 0);
-	            localStorage.setItem(MK_TRIAL_REMAINING_KEY, String(v));
-	          } catch {
-	            // ignore
-	          }
-	        }
-
-	        function consumeMkTrialPrompt() {
-	          const n = getMkTrialRemaining();
-	          if (n <= 0) return false;
-	          setMkTrialRemaining(n - 1);
-	          return true;
-	        }
+	        // Note: login is optional by default; only the explicit code "I am MK" triggers a sign-in prompt.
 
 	        function openMagicAuthPanel() {
 	          try {
@@ -5503,54 +5478,31 @@ When there is prior conversation, refine at least one point from the previous ro
 		          if (!topic) return;
 	          setComposerMoreOpen(false);
 		          setNotice(null);
-	          if (isMkIdentityPrompt(topic)) {
-	            const snap = getMagicAuthSnapshot();
-	            if (snap.signedIn) {
-	              const addr = String(snap.embeddedAddress || "").trim();
-	              setNotice(
-	                `Hi MK — you're signed in via Magic.${addr ? ` Wallet: ${addr}` : ""} Ask a technical topic to start the debate.`
-	              );
-	            } else {
-	              // MK code: do not burn the trial on the code itself. Grant 1 free prompt after the claim.
-	              setMkClaim(true);
-	              setMkTrialRemaining(1);
-	              setNotice('Code accepted: \"MK\". You have 1 free prompt — enter your topic to continue (sign in later to keep chatting).');
-	            }
-	            try {
-	              el("topicInput").value = "";
-	            } catch {
+			          if (isMkIdentityPrompt(topic)) {
+			            const snap = getMagicAuthSnapshot();
+			            if (snap.signedIn) {
+			              const addr = String(snap.embeddedAddress || "").trim();
+			              setNotice(
+			                `Hi MK — you're signed in via Magic.${addr ? ` Wallet: ${addr}` : ""} Ask a technical topic to start the debate.`
+			              );
+			            } else {
+			              setMkClaim(true);
+			              setNotice('Hi MK — sign in via Auth + Wallet (Magic Link) to verify. You can also keep chatting without signing in.');
+			              openMagicAuthPanel();
+			            }
+			            try {
+			              el("topicInput").value = "";
+			            } catch {
 	              // ignore
 	            }
 	            setStatusRight("");
 	            render();
 	            return;
 	          }
-	          const snap = getMagicAuthSnapshot();
-	          const signedIn = Boolean(snap.signedIn);
-	          const trialBefore = getMkTrialRemaining();
-	          if (!signedIn) {
-	            const allowed = consumeMkTrialPrompt();
-	            if (!allowed) {
-	              const claimed = hasMkClaim();
-	              setNotice(
-	                claimed
-	                  ? 'Sign in via Auth + Wallet (Magic Link) to continue chatting as \"MK\".'
-	                  : 'Sign in via Auth + Wallet (Magic Link), or type \"I am MK\" to unlock 1 free prompt.'
-	              );
-	              openMagicAuthPanel();
-	              setStatusRight("");
-	              render();
-	              return;
-	            }
-	            // Trial used (decremented); keep UI smooth and do not force-open auth yet.
-	            if (trialBefore <= 1) {
-	              setNotice('Trial prompt used. Sign in via Auth + Wallet to keep chatting.');
-	            }
-	          }
-		          if (isExternalProfileIntent(topic)) {
-		            setNotice(EXTERNAL_BROWSE_BLOCKED_QUESTION);
-		            setStatusRight("");
-		            render();
+			          if (isExternalProfileIntent(topic)) {
+			            setNotice(EXTERNAL_BROWSE_BLOCKED_QUESTION);
+			            setStatusRight("");
+			            render();
 		            return;
 		          }
 
@@ -5595,32 +5547,10 @@ When there is prior conversation, refine at least one point from the previous ro
 	            render();
 	            return;
 	          }
-	          const snap = getMagicAuthSnapshot();
-	          const signedIn = Boolean(snap.signedIn);
-	          const trialBefore = getMkTrialRemaining();
-	          if (!signedIn) {
-	            const allowed = consumeMkTrialPrompt();
-	            if (!allowed) {
-	              const claimed = hasMkClaim();
-	              setNotice(
-	                claimed
-	                  ? 'Sign in via Auth + Wallet (Magic Link) to continue.'
-	                  : 'Sign in via Auth + Wallet (Magic Link), or type \"I am MK\" to unlock 1 free prompt.'
-	              );
-	              openMagicAuthPanel();
-	              setStatusRight("");
-	              render();
-	              return;
-	            }
-	            if (trialBefore <= 1) {
-	              setNotice('Trial prompt used. Sign in via Auth + Wallet to keep chatting.');
-	            }
-	          }
-
-	          state.forceScrollToBottomOnce = true;
-	          state.loading = true;
-	          setStatusRight("Continuing…");
-	          render();
+		          state.forceScrollToBottomOnce = true;
+		          state.loading = true;
+		          setStatusRight("Continuing…");
+		          render();
 
           try {
 	            const next = await runLoop();
