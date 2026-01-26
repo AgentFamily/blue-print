@@ -8,6 +8,9 @@ export default function TokenGateDemo() {
   const [tokens, setTokens] = useState(MAX_TOKENS);
   const [prompt, setPrompt] = useState("");
   const [events, setEvents] = useState([]);
+  const [result, setResult] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const newEvent = (event) => ({
     id: crypto.randomUUID(),
@@ -19,6 +22,9 @@ export default function TokenGateDemo() {
     setSignedIn(true);
     setTokens(MAX_TOKENS);
     setPrompt("");
+    setResult("");
+    setError("");
+    setLoading(false);
     setEvents([newEvent({ type: "sign_in", account: accountLabel })]);
   };
 
@@ -26,15 +32,44 @@ export default function TokenGateDemo() {
     setSignedIn(false);
     setTokens(MAX_TOKENS);
     setPrompt("");
+    setResult("");
+    setError("");
+    setLoading(false);
     setEvents((prev) => [...prev, newEvent({ type: "sign_out" })]);
   };
 
-  const submitPrompt = () => {
-    if (!signedIn || tokens === 0 || !prompt.trim()) return;
-    const hash = crypto.randomUUID(); // placeholder for SHA-256
-    setEvents((prev) => [...prev, newEvent({ type: "prompt_burn", hash })]);
-    setTokens(tokens - 1);
-    setPrompt("");
+  const submitPrompt = async () => {
+    if (!signedIn || tokens === 0 || !prompt.trim() || loading) return;
+    const promptToSend = prompt.trim();
+
+    setLoading(true);
+    setError("");
+    setResult("");
+
+    try {
+      const response = await fetch("/api/prompt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: promptToSend }),
+      });
+
+      const data = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(data?.error || "Request failed");
+      }
+
+      const text = String(data?.text ?? "");
+      const hash = crypto.randomUUID(); // placeholder for SHA-256
+
+      setResult(text);
+      setEvents((prev) => [...prev, newEvent({ type: "prompt_burn", hash })]);
+      setTokens((t) => t - 1);
+      setPrompt("");
+    } catch (e) {
+      setError(e?.message || "Request failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -68,18 +103,30 @@ export default function TokenGateDemo() {
                 tokens === 1 ? "Final prompt. Choose your words." : "Enter prompt"
               }
               className="w-full h-28 rounded-xl bg-neutral-800 p-3 text-sm"
-              disabled={tokens === 0}
+              disabled={tokens === 0 || loading}
             />
             <button
               onClick={submitPrompt}
-              disabled={tokens === 0}
+              disabled={tokens === 0 || loading}
               className="w-full py-3 rounded-xl bg-emerald-600 disabled:bg-neutral-700"
             >
-              Submit Prompt
+              {loading ? "Submitting…" : "Submit Prompt"}
             </button>
             {tokens === 0 && (
               <div className="text-xs text-neutral-400 text-center">
                 No prompts remaining
+              </div>
+            )}
+
+            {error && (
+              <div className="text-xs text-red-300 bg-red-950/40 border border-red-900 rounded-xl p-3">
+                {error}
+              </div>
+            )}
+
+            {result && (
+              <div className="text-xs text-neutral-200 bg-neutral-800/60 border border-neutral-700 rounded-xl p-3 whitespace-pre-wrap">
+                {result}
               </div>
             )}
           </div>
@@ -103,4 +150,3 @@ export default function TokenGateDemo() {
     </div>
   );
 }
-
