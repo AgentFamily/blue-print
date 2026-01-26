@@ -261,16 +261,102 @@
 	        </span>
 	      `;
 
-	      const statusImg = statusBubble.querySelector(".mk-magic-status-img");
-	      const statusFallback = statusBubble.querySelector(".mk-magic-status-fallback");
-	      const OFFLINE_SVG = "ChatGPT_Image_Jan_26__2026_at_07_41_19_PM-removebg-preview.svg";
-	      const ONLINE_SVG = "ChatGPT_Image_Jan_26__2026_at_07_41_21_PM-removebg-preview.svg";
+		      const statusImg = statusBubble.querySelector(".mk-magic-status-img");
+		      const statusFallback = statusBubble.querySelector(".mk-magic-status-fallback");
+		      const OFFLINE_SVG = "ChatGPT_Image_Jan_26__2026_at_07_41_19_PM-removebg-preview.svg";
+		      const ONLINE_SVG = "ChatGPT_Image_Jan_26__2026_at_07_41_21_PM-removebg-preview.svg";
+		      const OFFLINE_PNG_CACHE = "mkMagicStatusPngOfflineV1";
+		      const ONLINE_PNG_CACHE = "mkMagicStatusPngOnlineV1";
 
-	      const setStatusImg = (signedIn) => {
-	        if (!statusImg) return;
-	        const svg = signedIn ? ONLINE_SVG : OFFLINE_SVG;
-	        statusImg.setAttribute("src", svg);
-	      };
+		      const getCachedPng = (key) => {
+		        try {
+		          const v = String(localStorage.getItem(key) || "");
+		          if (v.startsWith("data:image/png")) return v;
+		        } catch {
+		          // ignore
+		        }
+		        return "";
+		      };
+
+		      const warmPngFromSvg = async (svgUrl, cacheKey) => {
+		        try {
+		          if (getCachedPng(cacheKey)) return;
+		        } catch {
+		          // ignore
+		        }
+		        try {
+		          const res = await fetch(svgUrl, { cache: "force-cache" });
+		          if (!res.ok) return;
+		          const svgText = await res.text();
+		          if (!svgText) return;
+
+		          let w = 640;
+		          let h = 288;
+		          const m = svgText.match(/viewBox\\s*=\\s*["']\\s*[-0-9.]+\\s+[-0-9.]+\\s+([0-9.]+)\\s+([0-9.]+)\\s*["']/i);
+		          if (m && m[1] && m[2]) {
+		            const mw = Number(m[1]);
+		            const mh = Number(m[2]);
+		            if (Number.isFinite(mw) && mw > 0) w = mw;
+		            if (Number.isFinite(mh) && mh > 0) h = mh;
+		          }
+
+		          const blob = new Blob([svgText], { type: "image/svg+xml" });
+		          const objUrl = URL.createObjectURL(blob);
+		          const img = new Image();
+		          img.decoding = "async";
+		          img.src = objUrl;
+
+		          await new Promise((resolve, reject) => {
+		            img.onload = resolve;
+		            img.onerror = reject;
+		          });
+		          try {
+		            URL.revokeObjectURL(objUrl);
+		          } catch {
+		            // ignore
+		          }
+
+		          const canvas = document.createElement("canvas");
+		          canvas.width = Math.round(w);
+		          canvas.height = Math.round(h);
+		          const ctx = canvas.getContext("2d");
+		          if (!ctx) return;
+		          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+		          const png = canvas.toDataURL("image/png");
+		          if (!png || !png.startsWith("data:image/png")) return;
+		          try {
+		            localStorage.setItem(cacheKey, png);
+		          } catch {
+		            // ignore
+		          }
+		          try {
+		            if (statusImg && String(statusImg.getAttribute("src") || "") === svgUrl) {
+		              statusImg.setAttribute("src", png);
+		            }
+		          } catch {
+		            // ignore
+		          }
+		        } catch {
+		          // ignore
+		        }
+		      };
+
+		      const setStatusImg = (signedIn) => {
+		        if (!statusImg) return;
+		        const cacheKey = signedIn ? ONLINE_PNG_CACHE : OFFLINE_PNG_CACHE;
+		        const png = getCachedPng(cacheKey);
+		        const svg = signedIn ? ONLINE_SVG : OFFLINE_SVG;
+		        statusImg.setAttribute("src", png || svg);
+		      };
+
+		      // Prefer PNG button rendering when possible (render SVG → PNG once, cache in localStorage).
+		      try {
+		        void warmPngFromSvg(OFFLINE_SVG, OFFLINE_PNG_CACHE);
+		        void warmPngFromSvg(ONLINE_SVG, ONLINE_PNG_CACHE);
+		      } catch {
+		        // ignore
+		      }
 
 	      try {
 	        if (statusFallback) statusFallback.style.display = "none";
