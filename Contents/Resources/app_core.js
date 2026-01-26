@@ -157,19 +157,24 @@
       }
     }
 
-    function ensureDom() {
-      if (el) return el;
+	    function ensureDom() {
+	      if (el) return el;
 
-      const styleId = "mk-magic-auth-style";
-      if (!document.getElementById(styleId)) {
-        const style = document.createElement("style");
-        style.id = styleId;
+	      const styleId = "mk-magic-auth-style";
+	      if (!document.getElementById(styleId)) {
+	        const style = document.createElement("style");
+	        style.id = styleId;
 	        style.textContent = `
-	          .mk-magic-btn{position:fixed;right:18px;bottom:18px;z-index:999999;display:flex;align-items:center;justify-content:center;width:54px;height:54px;border-radius:999px;border:1px solid rgba(255,255,255,.16);background:rgba(12,12,14,.84);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#fff;cursor:pointer;box-shadow:0 18px 60px rgba(0,0,0,.55)}
+	          .mk-magic-btn{position:fixed;right:18px;bottom:18px;z-index:999999;display:flex;align-items:center;justify-content:center;width:64px;height:64px;border-radius:999px;border:1px solid rgba(255,255,255,.16);background:rgba(12,12,14,.84);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#fff;cursor:pointer;box-shadow:0 18px 60px rgba(0,0,0,.55);padding:0}
 	          .mk-magic-btn:hover{transform:translateY(-1px)}
 	          .mk-magic-btn:active{transform:translateY(0)}
-	          .mk-magic-btn .dot{width:10px;height:10px;border-radius:50%;background:#ef4444;margin-left:10px;box-shadow:0 0 0 3px rgba(239,68,68,.18)}
-	          .mk-magic-btn.signed-in .dot{background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.18)}
+	          .mk-magic-avatar{position:relative;width:56px;height:56px;border-radius:999px;overflow:hidden;display:block}
+	          .mk-magic-avatar-img{width:100%;height:100%;object-fit:contain;display:block;filter:drop-shadow(0 10px 26px rgba(0,0,0,.45))}
+	          .mk-magic-avatar-fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;letter-spacing:.2px}
+	          .mk-magic-avatar-c{position:absolute;top:7px;left:50%;transform:translateX(-50%);font-weight:950;font-size:18px;letter-spacing:-.02em;text-shadow:0 2px 10px rgba(0,0,0,.55), 0 0 0.5px rgba(0,0,0,.4)}
+	          .mk-magic-avatar-c{color:#ef4444}
+	          .mk-magic-btn.signed-in .mk-magic-avatar-c{color:#22c55e}
+	          .mk-magic-avatar-c{transition:color 180ms ease}
 	          .mk-magic-panel{position:fixed;right:18px;bottom:86px;z-index:999999;width:min(760px,calc(100vw - 36px));border-radius:16px;border:1px solid rgba(255,255,255,.14);background:rgba(12,12,14,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:#e5e7eb;box-shadow:0 18px 60px rgba(0,0,0,.6);padding:14px;display:none}
 	          .mk-magic-panel.open{display:block}
 	          .mk-magic-title{display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:650;margin-bottom:10px}
@@ -199,11 +204,35 @@
 	        document.head.appendChild(style);
 	      }
 
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "mk-magic-btn";
-      btn.title = "Login / Wallet";
-      btn.innerHTML = `<span style="font-weight:800;font-size:16px;letter-spacing:.2px">C</span><span class="dot"></span>`;
+	      const btn = document.createElement("button");
+	      btn.type = "button";
+	      btn.className = "mk-magic-btn";
+	      btn.title = "Login / Wallet";
+	      btn.setAttribute("aria-label", "Login / Wallet");
+	      btn.innerHTML = `
+	        <span class="mk-magic-avatar">
+	          <img class="mk-magic-avatar-img" alt="AgentC" src="agentc_button.png" />
+	          <span class="mk-magic-avatar-c" aria-hidden="true">C</span>
+	          <span class="mk-magic-avatar-fallback" aria-hidden="true">C</span>
+	        </span>
+	      `;
+	      try {
+	        const img = btn.querySelector(".mk-magic-avatar-img");
+	        const fallback = btn.querySelector(".mk-magic-avatar-fallback");
+	        if (fallback) fallback.style.display = "none";
+	        img?.addEventListener("error", () => {
+	          if (!img) return;
+	          const src = String(img.getAttribute("src") || "");
+	          if (src.endsWith(".png")) {
+	            img.setAttribute("src", "agentc_button.svg");
+	            return;
+	          }
+	          img.style.display = "none";
+	          if (fallback) fallback.style.display = "flex";
+	        });
+	      } catch {
+	        // ignore
+	      }
 
 	      const panel = document.createElement("div");
 	      panel.className = "mk-magic-panel";
