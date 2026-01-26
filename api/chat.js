@@ -23,6 +23,32 @@ const firstEnv = (...names) => {
   return "";
 };
 
+const parseCookieHeader = (header) => {
+  const out = {};
+  const raw = String(header || "");
+  if (!raw) return out;
+  for (const part of raw.split(";")) {
+    const idx = part.indexOf("=");
+    if (idx === -1) continue;
+    const key = part.slice(0, idx).trim();
+    const value = part.slice(idx + 1).trim();
+    if (!key) continue;
+    out[key] = decodeURIComponent(value);
+  }
+  return out;
+};
+
+const getLastUserContent = (messages) => {
+  if (!Array.isArray(messages) || !messages.length) return "";
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const m = messages[i];
+    if (m && m.role === "user" && typeof m.content === "string") return m.content;
+  }
+  return "";
+};
+
+const ADMIN_COOKIE = "mk_admin";
+
 const callChatCompletions = async ({ baseUrl, apiKey, model, messages, temperature }) => {
   const cleanBase = String(baseUrl || "").trim().replace(/\/+$/, "");
   const url = `${cleanBase}/chat/completions`;
@@ -60,6 +86,33 @@ module.exports = async (req, res) => {
     return;
   }
 
+  const cookies = parseCookieHeader(req?.headers?.cookie);
+  const isAdminCookie = String(cookies[ADMIN_COOKIE] || "") === "1";
+
+  const body = await readJsonBody(req);
+  const messages = Array.isArray(body?.messages) ? body.messages : null;
+
+  // Admin sign-in code: "I am MK" (must be the only user message) sets an admin cookie and never hits the model.
+  const adminCode = firstEnv("MK_ADMIN_CODE") || "I am MK";
+  const lastUser = String(getLastUserContent(messages) || "").trim();
+  if (
+    Array.isArray(messages) &&
+    messages.length === 1 &&
+    messages[0]?.role === "user" &&
+    String(messages[0]?.content || "").trim() === adminCode &&
+    lastUser === adminCode
+  ) {
+    res.statusCode = 200;
+    res.setHeader("Content-Type", "application/json");
+    res.setHeader("Cache-Control", "no-store");
+    res.setHeader(
+      "Set-Cookie",
+      `${ADMIN_COOKIE}=1; Path=/; Max-Age=${60 * 60 * 24 * 30}; HttpOnly; SameSite=Lax; Secure`
+    );
+    res.end(JSON.stringify({ message: { role: "assistant", content: "OK" } }));
+    return;
+  }
+
   const openKey = firstEnv("open", "OPEN", "OPENAI_API_KEY", "OPEN_AI_API_KEY", "OPEN_API_KEY");
   const gatewayKey = firstEnv("AI_GATEWAY_API_KEY");
 
@@ -76,8 +129,6 @@ module.exports = async (req, res) => {
     return;
   }
 
-  const body = await readJsonBody(req);
-  const messages = Array.isArray(body?.messages) ? body.messages : null;
   if (!messages || messages.length === 0) {
     res.statusCode = 400;
     res.setHeader("Content-Type", "application/json");
@@ -91,12 +142,22 @@ module.exports = async (req, res) => {
   const gatewayModel = firstEnv("AI_GATEWAY_MODEL") || "gpt-4o-mini";
   const temperature = typeof body?.options?.temperature === "number" ? body.options.temperature : 0.2;
 
+  const effectiveMessages = isAdminCookie
+    ? [
+        {
+          role: "system",
+          content: "Auth: The user is MK (admin) authenticated via code. Treat MK as the admin user.",
+        },
+        ...messages,
+      ]
+    : messages;
+
   try {
     const open = await callChatCompletions({
       baseUrl: openBaseUrl,
       apiKey: openKey,
       model: openModel,
-      messages,
+      messages: effectiveMessages,
       temperature,
     });
 
@@ -109,7 +170,7 @@ module.exports = async (req, res) => {
       {
         role: "user",
         content:
-          `Conversation messages:\n${JSON.stringify(messages, null, 2)}\n\n` +
+          `Conversation messages:\n${JSON.stringify(effectiveMessages, null, 2)}\n\n` +
           `Candidate assistant response:\n${open.content}`,
       },
     ];
@@ -142,4 +203,3 @@ module.exports = async (req, res) => {
     );
   }
 };
-

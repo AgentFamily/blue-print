@@ -3352,25 +3352,82 @@ When there is prior conversation, refine at least one point from the previous ro
 	          }
 	        }
 
-	        const MK_CLAIM_KEY = "mkMkClaimedV1";
+		        const MK_CLAIM_KEY = "mkMkClaimedV1";
+		        const MK_ADMIN_KEY = "mkMkAdminV1";
+		        const FREE_PROMPTS_KEY = "mkFreePromptsRemainingV1";
+		        const FREE_PROMPTS_DEFAULT = 1;
 
-	        function hasMkClaim() {
-	          try {
-	            return String(localStorage.getItem(MK_CLAIM_KEY) || "") === "true";
-	          } catch {
+		        function hasMkClaim() {
+		          try {
+		            return String(localStorage.getItem(MK_CLAIM_KEY) || "") === "true";
+		          } catch {
 	            return false;
 	          }
 	        }
 
-	        function setMkClaim(value) {
-	          try {
-	            localStorage.setItem(MK_CLAIM_KEY, value ? "true" : "false");
-	          } catch {
-	            // ignore
-	          }
-	        }
+		        function setMkClaim(value) {
+		          try {
+		            localStorage.setItem(MK_CLAIM_KEY, value ? "true" : "false");
+		          } catch {
+		            // ignore
+		          }
+		        }
 
-	        // Note: login is optional by default; only the explicit code "I am MK" triggers a sign-in prompt.
+		        function hasMkAdmin() {
+		          try {
+		            return String(localStorage.getItem(MK_ADMIN_KEY) || "") === "true";
+		          } catch {
+		            return false;
+		          }
+		        }
+
+		        function setMkAdmin(value) {
+		          try {
+		            localStorage.setItem(MK_ADMIN_KEY, value ? "true" : "false");
+		          } catch {
+		            // ignore
+		          }
+		        }
+
+		        function getFreePromptsRemaining() {
+		          try {
+		            const raw = localStorage.getItem(FREE_PROMPTS_KEY);
+		            if (raw == null) return FREE_PROMPTS_DEFAULT;
+		            const n = parseInt(String(raw), 10);
+		            return Number.isFinite(n) ? Math.max(0, n) : 0;
+		          } catch {
+		            return FREE_PROMPTS_DEFAULT;
+		          }
+		        }
+
+		        function setFreePromptsRemaining(n) {
+		          try {
+		            localStorage.setItem(FREE_PROMPTS_KEY, String(Math.max(0, Number(n) || 0)));
+		          } catch {
+		            // ignore
+		          }
+		        }
+
+		        function consumeFreePrompt() {
+		          const n = getFreePromptsRemaining();
+		          if (n <= 0) return false;
+		          setFreePromptsRemaining(n - 1);
+		          return true;
+		        }
+
+		        async function mkAdminSignIn() {
+		          // This is a server-recognized code. It must not be forwarded to the model.
+		          const json = await fetchJSON("/api/chat", {
+		            method: "POST",
+		            headers: { "Content-Type": "application/json" },
+		            body: JSON.stringify({ messages: [{ role: "user", content: "I am MK" }] })
+		          });
+		          const ok = String(json?.message?.content || "").trim().toLowerCase() === "ok";
+		          if (!ok) throw new Error("MK code rejected");
+		          setMkClaim(true);
+		          setMkAdmin(true);
+		          return true;
+		        }
 
 	        function openMagicAuthPanel() {
 	          try {
@@ -3398,13 +3455,16 @@ When there is prior conversation, refine at least one point from the previous ro
 	          }
 	        }
 
-	        function magicAuthContextForLLM(prompt) {
-	          const snap = getMagicAuthSnapshot();
-	          if (snap.signedIn) {
-	            const addr = String(snap.embeddedAddress || "").trim();
-	            return `Auth: The user is signed in via Magic Link (embedded wallet).${addr ? ` publicAddress=${addr}.` : ""} The speaker label \"MK\" refers to the current authenticated user.`;
-	          }
-	          if (hasMkClaim()) {
+		        function magicAuthContextForLLM(prompt) {
+		          const snap = getMagicAuthSnapshot();
+		          if (hasMkAdmin()) {
+		            return 'Auth: The user is MK (admin) authenticated via code. Treat \"MK\" as the admin user.';
+		          }
+		          if (snap.signedIn) {
+		            const addr = String(snap.embeddedAddress || "").trim();
+		            return `Auth: The user is signed in via Magic Link (embedded wallet).${addr ? ` publicAddress=${addr}.` : ""} The speaker label \"MK\" refers to the current authenticated user.`;
+		          }
+		          if (hasMkClaim()) {
 	            return 'Auth: The user claims they are \"MK\" but is not authenticated. Treat \"MK\" as a preferred name only; do not assume privileged access.';
 	          }
 	          return "";
@@ -5479,30 +5539,48 @@ When there is prior conversation, refine at least one point from the previous ro
 	          setComposerMoreOpen(false);
 		          setNotice(null);
 			          if (isMkIdentityPrompt(topic)) {
-			            const snap = getMagicAuthSnapshot();
-			            if (snap.signedIn) {
-			              const addr = String(snap.embeddedAddress || "").trim();
-			              setNotice(
-			                `Hi MK — you're signed in via Magic.${addr ? ` Wallet: ${addr}` : ""} Ask a technical topic to start the debate.`
-			              );
+			            if (hasMkAdmin()) {
+			              setNotice("MK admin is already enabled. Enter a technical topic to continue.");
 			            } else {
-			              setMkClaim(true);
-			              setNotice('Hi MK — sign in via Auth + Wallet (Magic Link) to verify. You can also keep chatting without signing in.');
-			              openMagicAuthPanel();
+			              setNotice("Checking MK code…");
+			              render();
+			              try {
+			                await mkAdminSignIn();
+			                setNotice("MK admin enabled. Enter a technical topic to continue.");
+			              } catch (err) {
+			                setNotice(String(err?.message || err) || "MK code rejected");
+			              }
 			            }
 			            try {
 			              el("topicInput").value = "";
 			            } catch {
-	              // ignore
-	            }
+		              // ignore
+		            }
 	            setStatusRight("");
 	            render();
 	            return;
-	          }
-			          if (isExternalProfileIntent(topic)) {
-			            setNotice(EXTERNAL_BROWSE_BLOCKED_QUESTION);
-			            setStatusRight("");
-			            render();
+			          }
+
+		          // Global 1-free-prompt gating (admin and Magic-signed-in bypass).
+		          const snap = getMagicAuthSnapshot();
+		          if (!snap.signedIn && !hasMkAdmin()) {
+		            const before = getFreePromptsRemaining();
+		            const ok = consumeFreePrompt();
+		            if (!ok) {
+		              setNotice('Sign in via Auth + Wallet (Magic Link) to continue, or use the admin code \"I am MK\".');
+		              openMagicAuthPanel();
+		              setStatusRight("");
+		              render();
+		              return;
+		            }
+		            if (before <= 1) {
+		              setNotice('Free prompt used. Sign in via Auth + Wallet to keep chatting.');
+		            }
+		          }
+				          if (isExternalProfileIntent(topic)) {
+					            setNotice(EXTERNAL_BROWSE_BLOCKED_QUESTION);
+					            setStatusRight("");
+					            render();
 		            return;
 		          }
 
@@ -5538,19 +5616,34 @@ When there is prior conversation, refine at least one point from the previous ro
 	          }
 	        }
 
-	        async function nextRound() {
-	          const last = state.rounds[state.rounds.length - 1];
-	          setNotice(null);
-	          if (last && isExternalProfileIntent(last.topic)) {
-	            setNotice(EXTERNAL_BROWSE_BLOCKED_QUESTION);
-	            setStatusRight("");
-	            render();
-	            return;
-	          }
-		          state.forceScrollToBottomOnce = true;
-		          state.loading = true;
-		          setStatusRight("Continuing…");
-		          render();
+		        async function nextRound() {
+		          const last = state.rounds[state.rounds.length - 1];
+		          setNotice(null);
+		          if (last && isExternalProfileIntent(last.topic)) {
+		            setNotice(EXTERNAL_BROWSE_BLOCKED_QUESTION);
+		            setStatusRight("");
+		            render();
+		            return;
+		          }
+		          const snap = getMagicAuthSnapshot();
+		          if (!snap.signedIn && !hasMkAdmin()) {
+		            const before = getFreePromptsRemaining();
+		            const ok = consumeFreePrompt();
+		            if (!ok) {
+		              setNotice('Sign in via Auth + Wallet (Magic Link) to continue, or use the admin code \"I am MK\".');
+		              openMagicAuthPanel();
+		              setStatusRight("");
+		              render();
+		              return;
+		            }
+		            if (before <= 1) {
+		              setNotice('Free prompt used. Sign in via Auth + Wallet to keep chatting.');
+		            }
+		          }
+			          state.forceScrollToBottomOnce = true;
+			          state.loading = true;
+			          setStatusRight("Continuing…");
+			          render();
 
           try {
 	            const next = await runLoop();
@@ -5587,6 +5680,21 @@ When there is prior conversation, refine at least one point from the previous ro
 	            setStatusRight("");
 	            render();
 	            return;
+	          }
+	          const snap = getMagicAuthSnapshot();
+	          if (!snap.signedIn && !hasMkAdmin()) {
+	            const before = getFreePromptsRemaining();
+	            const ok = consumeFreePrompt();
+	            if (!ok) {
+	              setNotice('Sign in via Auth + Wallet (Magic Link) to continue, or use the admin code \"I am MK\".');
+	              openMagicAuthPanel();
+	              setStatusRight("");
+	              render();
+	              return;
+	            }
+	            if (before <= 1) {
+	              setNotice('Free prompt used. Sign in via Auth + Wallet to keep chatting.');
+	            }
 	          }
 
 	          state.forceScrollToBottomOnce = true;
