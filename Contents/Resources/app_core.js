@@ -399,17 +399,15 @@
 	        </div>
 	        <div class="mk-magic-grid">
 	          <div class="mk-magic-section">
-	            <div class="mk-magic-h">Email OTP Authentication</div>
+	            <div class="mk-magic-h">Email Sign-in (Magic Link)</div>
 	            <div class="mk-magic-row" style="margin-bottom:10px">
 	              <input id="mkMagicEmail" class="mk-magic-input" type="email" placeholder="Enter your email address" autocomplete="email" />
 	            </div>
-	            <div class="mk-magic-row" style="margin-bottom:10px">
+	            <div id="mkMagicPublishableKeyRow" class="mk-magic-row" style="margin-bottom:10px">
 	              <input id="mkMagicPublishableKey" class="mk-magic-input" type="text" placeholder="Magic publishable key (pk_…)" autocomplete="off" autocapitalize="none" spellcheck="false" />
 	            </div>
-	            <div class="mk-magic-split">
-	              <button id="mkMagicOtpRegular" class="mk-magic-bigbtn" type="button">Regular OTP</button>
-	              <button id="mkMagicOtpWhitelabel" class="mk-magic-bigbtn" type="button">Whitelabel OTP</button>
-	            </div>
+	            <button id="mkMagicOtpRegular" class="mk-magic-bigbtn" type="button">Send Magic Link</button>
+	            <button id="mkMagicOtpWhitelabel" class="mk-magic-bigbtn" type="button" style="display:none">Whitelabel OTP</button>
 	            <div class="mk-magic-sub">
 	              Requires <span class="mk-magic-pill">MAGIC_PUBLISHABLE_KEY</span> (or paste <span class="mk-magic-pill">pk_…</span> above).
 	            </div>
@@ -491,6 +489,7 @@
 
 	      const emailInput = panel.querySelector("#mkMagicEmail");
 	      const publishableKeyInput = panel.querySelector("#mkMagicPublishableKey");
+	      const publishableKeyRow = panel.querySelector("#mkMagicPublishableKeyRow");
 	      const jwtInput = panel.querySelector("#mkMagicJwt");
 	      const logoutBtn = panel.querySelector("#mkMagicLogout");
 	      const otpRegularBtn = panel.querySelector("#mkMagicOtpRegular");
@@ -553,6 +552,7 @@
 		        status: panel.querySelector("#mkMagicStatus"),
 		        email: emailInput,
 		        publishableKey: publishableKeyInput,
+		        publishableKeyRow,
 		        jwt: jwtInput,
 		        logoutBtn,
 		        address: panel.querySelector("#mkMagicAddress"),
@@ -586,18 +586,21 @@
 				      if (!el) return;
 				      el.panel.classList.toggle("open", Boolean(state.open));
 				      const signedIn = Boolean(state.jwt);
-				      const hasPk = hasPublishableKey();
-				      try {
-				        el.setStatusImg?.(signedIn);
-				      } catch {
-				        // ignore
-				      }
+			      const hasPk = hasPublishableKey();
+			      try {
+			        el.setStatusImg?.(signedIn);
+			      } catch {
+			        // ignore
+			      }
 		      if (el.status) el.status.textContent = signedIn ? "Signed in" : "Signed out";
 		      if (el.address) el.address.textContent = state.address ? state.address : "—";
 		      if (el.embedded) el.embedded.textContent = state.embeddedAddress ? state.embeddedAddress : "—";
 		      if (el.email && typeof el.email.value === "string" && el.email.value !== state.email) el.email.value = state.email;
 		      if (el.publishableKey && typeof el.publishableKey.value === "string" && el.publishableKey.value !== state.publishableKey)
 		        el.publishableKey.value = state.publishableKey;
+			      if (el.publishableKeyRow && el.publishableKeyRow.style) {
+			        el.publishableKeyRow.style.display = hasPk ? "none" : "flex";
+			      }
 		      if (el.jwt && typeof el.jwt.value === "string" && el.jwt.value !== state.jwt) el.jwt.value = state.jwt;
 			      if (el.logoutBtn) el.logoutBtn.disabled = state.loading || !signedIn;
 			      if (el.otpRegularBtn) el.otpRegularBtn.disabled = state.loading || !hasPk;
