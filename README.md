@@ -31,3 +31,8 @@
 │ Purpose: reduce LAN visibility & residual data retention                    │
 └────────────────────────────────────────────────────────────────────────────┘
 
+## Token Gate Demo (Vercel)
+
+- UI: `token-gate.html` (calls `POST /api/prompt`)
+- Serverless: `api/prompt.js` (reads `AI_GATEWAY_API_KEY`)
+- Optional env: `AI_GATEWAY_BASE_URL`, `AI_MODEL`
