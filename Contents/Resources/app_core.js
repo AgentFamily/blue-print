@@ -413,30 +413,92 @@
 	        el.providerId.value = state.providerId;
 	    }
 
-    function loadScript(src) {
-      return new Promise((resolve, reject) => {
-        const s = document.createElement("script");
-        s.async = true;
-        s.src = src;
-        s.onload = () => resolve();
-        s.onerror = () => reject(new Error(`Failed to load script: ${src}`));
-        document.head.appendChild(s);
-      });
-    }
+	    function loadScript(src) {
+	      return new Promise((resolve, reject) => {
+	        const s = document.createElement("script");
+	        s.async = true;
+	        s.src = src;
+	        s.onload = () => resolve();
+	        s.onerror = () => reject(new Error(`Failed to load script: ${src}`));
+	        document.head.appendChild(s);
+	      });
+	    }
 
-    async function ensureMagicSdk() {
-      if (magic) return magic;
-      const publishableKey = String(global.__MAGIC_PUBLISHABLE_KEY || "").trim();
-      if (!publishableKey) return null;
+	    async function fetchMagicConfig() {
+	      try {
+	        const res = await fetch("/api/magic/config", { cache: "no-store" });
+	        const json = await res.json().catch(() => null);
+	        if (!res.ok) return null;
+	        if (!json || typeof json !== "object") return null;
 
-      if (!global.Magic) {
-        await loadScript("https://unpkg.com/magic-sdk/dist/magic.js");
-      }
-      if (!global.Magic) return null;
+	        if (typeof json.publishableKey === "string" && json.publishableKey.trim()) {
+	          global.__MAGIC_PUBLISHABLE_KEY = json.publishableKey.trim();
+	        }
+	        if (typeof json.providerId === "string" && json.providerId.trim()) {
+	          global.__MAGIC_PROVIDER_ID = json.providerId.trim();
+	        }
+	        if (typeof json.chain === "string" && json.chain.trim()) {
+	          global.__MAGIC_CHAIN = json.chain.trim();
+	        }
+	        return json;
+	      } catch {
+	        return null;
+	      }
+	    }
 
-      magic = new global.Magic(publishableKey);
-      return magic;
-    }
+	    async function ensureMagicSdk() {
+	      if (magic) return magic;
+	      let publishableKey = String(global.__MAGIC_PUBLISHABLE_KEY || "").trim();
+	      if (!publishableKey) {
+	        await fetchMagicConfig();
+	        publishableKey = String(global.__MAGIC_PUBLISHABLE_KEY || "").trim();
+	      }
+	      if (!publishableKey) return null;
+
+	      if (!global.Magic) {
+	        const urls = [
+	          "https://unpkg.com/magic-sdk/dist/magic.js",
+	          "https://cdn.jsdelivr.net/npm/magic-sdk/dist/magic.js"
+	        ];
+	        let loaded = false;
+	        for (const url of urls) {
+	          try {
+	            await loadScript(url);
+	            loaded = true;
+	            break;
+	          } catch {
+	            // try next
+	          }
+	        }
+	        if (!loaded) throw new Error("Failed to load Magic SDK.");
+	      }
+	      if (!global.Magic) return null;
+
+	      magic = new global.Magic(publishableKey);
+	      return magic;
+	    }
+
+	    async function maybeCompleteOAuthRedirect() {
+	      const sdk = await ensureMagicSdk();
+	      if (!sdk || !sdk.oauth || typeof sdk.oauth.getRedirectResult !== "function") return false;
+
+	      try {
+	        const result = await sdk.oauth.getRedirectResult();
+	        if (!result) return false;
+	        await refreshFromMagic();
+	        saveToStorage();
+	        try {
+	          const url = new URL(window.location.href);
+	          url.search = "";
+	          window.history.replaceState({}, "", url.toString());
+	        } catch {
+	          // ignore
+	        }
+	        return true;
+	      } catch {
+	        return false;
+	      }
+	    }
 
 	    async function refreshFromMagic() {
 	      const sdk = await ensureMagicSdk();
@@ -577,6 +639,14 @@
 	      if (!state.providerId) state.providerId = String(global.__MAGIC_PROVIDER_ID || "").trim();
 	      if (String(global.__MAGIC_CHAIN || "").trim() && state.chain === "ETH") state.chain = String(global.__MAGIC_CHAIN || "").trim();
 	      ensureDom();
+	      fetchMagicConfig()
+	        .catch(() => null)
+	        .finally(() => {
+	          if (!state.providerId) state.providerId = String(global.__MAGIC_PROVIDER_ID || "").trim();
+	          if (String(global.__MAGIC_CHAIN || "").trim() && state.chain === "ETH") state.chain = String(global.__MAGIC_CHAIN || "").trim();
+	          render();
+	        });
+	      maybeCompleteOAuthRedirect().catch(() => null);
 	      refreshFromMagic()
 	        .catch(() => null)
 	        .finally(() => {
