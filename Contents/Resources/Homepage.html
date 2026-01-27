@@ -268,15 +268,23 @@
         box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.14);
       }
 
-	      .dot.online {
-	        background: linear-gradient(135deg, rgba(37, 99, 235, 0.95), rgba(236, 72, 153, 0.95));
-	        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.14);
-	      }
+		      .dot.online {
+		        background: linear-gradient(135deg, rgba(37, 99, 235, 0.95), rgba(236, 72, 153, 0.95));
+		        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.14);
+		      }
 
-	      .dot.download {
-	        background: linear-gradient(135deg, rgba(16, 185, 129, 0.95), rgba(59, 130, 246, 0.95));
-	        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.14);
-	      }
+		      .online-status-img {
+		        width: 28px;
+		        height: 28px;
+		        object-fit: contain;
+		        filter: drop-shadow(0 10px 18px rgba(2, 6, 23, 0.12));
+		        flex: 0 0 auto;
+		      }
+
+		      .dot.download {
+		        background: linear-gradient(135deg, rgba(16, 185, 129, 0.95), rgba(59, 130, 246, 0.95));
+		        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.14);
+		      }
 
 	      .dot.tools {
 	        background: rgba(15, 23, 42, 0.82);
@@ -1674,7 +1682,12 @@
             <span>Tools</span>
           </button>
 		          <button class="pill pill-btn" id="onlineBtn" type="button" aria-pressed="false" title="Sign in / Sign out">
-		            <span class="dot online" aria-hidden="true"></span>
+		            <img
+		              id="onlineStatusImg"
+		              class="online-status-img"
+		              src="ChatGPT_Image_Jan_26__2026_at_07_41_19_PM-removebg-preview.svg"
+		              alt="Logged out"
+		            />
 		            <span id="onlineLabel">Sign in</span>
 		          </button>
 	          <button class="pill pill-btn" id="downloadBtn" type="button" title="Download paper">
@@ -4752,6 +4765,7 @@ When there is prior conversation, refine at least one point from the previous ro
 
 	          const onlineBtn = el("onlineBtn");
 	          const onlineLabel = el("onlineLabel");
+	          const onlineStatusImg = el("onlineStatusImg");
 	          if (onlineBtn && onlineLabel) {
 	            const snap = getMagicAuthSnapshot();
 	            const signedIn = Boolean(snap && snap.signedIn);
@@ -4759,6 +4773,23 @@ When there is prior conversation, refine at least one point from the previous ro
 	            onlineBtn.setAttribute("aria-pressed", signedIn ? "true" : "false");
 	            onlineBtn.title = signedIn ? "Sign out" : "Sign in";
 	            onlineLabel.textContent = signedIn ? "Log out" : "Sign in";
+	            if (onlineStatusImg) {
+	              const LOGGED_OUT_SVG = "ChatGPT_Image_Jan_26__2026_at_07_41_19_PM-removebg-preview.svg";
+	              const LOGGED_IN_SVG = "ChatGPT_Image_Jan_26__2026_at_07_41_21_PM-removebg-preview.svg";
+	              const LOGGED_OUT_PNG_CACHE = "mkMagicStatusPngOfflineV1";
+	              const LOGGED_IN_PNG_CACHE = "mkMagicStatusPngOnlineV1";
+	              const key = signedIn ? LOGGED_IN_PNG_CACHE : LOGGED_OUT_PNG_CACHE;
+	              let src = "";
+	              try {
+	                const cached = String(localStorage.getItem(key) || "");
+	                if (cached.startsWith("data:image/png")) src = cached;
+	              } catch {
+	                // ignore
+	              }
+	              if (!src) src = signedIn ? LOGGED_IN_SVG : LOGGED_OUT_SVG;
+	              onlineStatusImg.src = src;
+	              onlineStatusImg.alt = signedIn ? "Logged in" : "Logged out";
+	            }
 	          }
 
           if (state.visibleStart > 0) {
