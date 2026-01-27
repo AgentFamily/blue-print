@@ -1801,7 +1801,7 @@
 	          <div class="status">
 	            <div id="statusLeft">
 	              Endpoint <code id="endpointCode"></code> • Model <code id="modelCode">auto</code> • Tools <code id="toolsCode">off</code> • UI
-		              <code id="uiRev">r2026-01-27e</code>
+		              <code id="uiRev">r2026-01-27f</code>
 	            </div>
 	            <div id="statusRight"></div>
 	          </div>
@@ -2261,7 +2261,7 @@
       </div>
     </dialog>
 
-		    <script src="app_core.js?v=r2026-01-27e"></script>
+		    <script src="app_core.js?v=r2026-01-27f"></script>
 		    <script>
 		      (async () => {
 	        const STORAGE = {
@@ -6194,6 +6194,11 @@ When there is prior conversation, refine at least one point from the previous ro
             await ensureEndpoint();
 	            await refreshHealth();
 	            render();
+              try {
+                window.MKCore?.magicAuth?.showSavedToast?.("Saved", 2000);
+              } catch {
+                // ignore
+              }
 	            closeSettings();
 	          });
 	        }

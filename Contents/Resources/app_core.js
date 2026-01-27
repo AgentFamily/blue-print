@@ -88,6 +88,9 @@
 
     let el = null;
     let magic = null;
+    let suppressNextStatusClick = false;
+    let toastTimer = null;
+    let toastHideTimer = null;
 
     function getPublishableKey() {
       return String(state.publishableKey || global.__MAGIC_PUBLISHABLE_KEY || "").trim();
@@ -208,7 +211,7 @@
 	        const style = document.createElement("style");
 	        style.id = styleId;
 	        style.textContent = `
-	          .mk-magic-bubbles{position:fixed;right:18px;bottom:18px;z-index:999999;display:flex;flex-direction:column;gap:10px;align-items:flex-end}
+	          .mk-magic-bubbles{position:fixed;right:18px;bottom:18px;z-index:999999;display:flex;flex-direction:column;gap:10px;align-items:flex-end;touch-action:none}
 	          .mk-magic-bubble{appearance:none;border:0;background:transparent;color:#fff;cursor:pointer;padding:0;display:block}
 	          .mk-magic-bubble:disabled{opacity:.6;cursor:not-allowed}
 	          .mk-magic-bubble:hover{transform:translateY(-1px)}
@@ -217,6 +220,9 @@
 	          .mk-magic-status-inner{position:relative;display:block;width:min(360px,calc(100vw - 36px));max-width:220px}
 	          .mk-magic-status-img{width:100%;height:auto;display:block;filter:drop-shadow(0 18px 38px rgba(0,0,0,.55))}
 	          .mk-magic-status-fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;letter-spacing:.2px}
+	          .mk-magic-toast{position:fixed;z-index:1000000;max-width:220px;background:rgba(12,12,14,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:10px 12px;color:#fff;font-weight:800;font-size:13px;box-shadow:0 14px 40px rgba(0,0,0,.55);opacity:0;transform:translateY(6px);transition:opacity .18s ease,transform .18s ease;pointer-events:none;display:none}
+	          .mk-magic-toast.open{opacity:1;transform:translateY(0)}
+	          .mk-magic-toast:after{content:"";position:absolute;right:22px;bottom:-8px;width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:8px solid rgba(12,12,14,.92)}
 		          .mk-magic-panel{position:fixed;right:18px;bottom:86px;z-index:999999;width:min(640px,calc(100vw - 24px));max-height:min(640px,calc(100vh - 120px));overflow:auto;border-radius:16px;border:1px solid rgba(255,255,255,.14);background:rgba(12,12,14,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:#e5e7eb;box-shadow:0 18px 60px rgba(0,0,0,.6);padding:14px;display:none;resize:both;min-width:320px;min-height:240px}
 		          .mk-magic-panel.open{display:block}
 		          @media (max-width: 720px){.mk-magic-panel{right:10px;bottom:78px;width:calc(100vw - 20px);max-height:calc(100vh - 110px);resize:none;min-width:0}}
@@ -271,7 +277,7 @@
 		      const OFFLINE_PNG_CACHE = "mkMagicStatusPngOfflineV1";
 		      const ONLINE_PNG_CACHE = "mkMagicStatusPngOnlineV1";
 		      const PNG_VERSION_KEY = "mkMagicStatusPngVersionV1";
-		      const PNG_CACHE_VERSION = "r2026-01-27e";
+		      const PNG_CACHE_VERSION = "r2026-01-27f";
 
 		      const ensurePngCacheVersion = () => {
 		        try {
@@ -393,6 +399,10 @@
 
 	      bubbles.appendChild(statusBubble);
 
+	      const toast = document.createElement("div");
+	      toast.className = "mk-magic-toast";
+	      toast.textContent = "Saved";
+
 	      const panel = document.createElement("div");
 	      panel.className = "mk-magic-panel";
 	      panel.innerHTML = `
@@ -468,10 +478,147 @@
 		      `;
 
 	      document.body.appendChild(bubbles);
+	      document.body.appendChild(toast);
 	      document.body.appendChild(panel);
 
       const close = panel.querySelector(".mk-magic-close");
+
+		      // Drag-to-move the AgentC head bubble. Double-click to reset.
+		      try {
+		        const BUBBLES_LAYOUT_KEY = "mkMagicBubblesLayoutV1";
+		        const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
+		        const applyLayout = () => {
+		          try {
+		            const raw = localStorage.getItem(BUBBLES_LAYOUT_KEY);
+		            if (!raw) return;
+		            const obj = JSON.parse(raw);
+		            const left = typeof obj?.left === "number" ? obj.left : null;
+		            const top = typeof obj?.top === "number" ? obj.top : null;
+		            if (left == null || top == null) return;
+		            const rect = bubbles.getBoundingClientRect();
+		            const maxLeft = Math.max(12, window.innerWidth - rect.width - 12);
+		            const maxTop = Math.max(12, window.innerHeight - rect.height - 12);
+		            const nextLeft = clamp(left, 12, maxLeft);
+		            const nextTop = clamp(top, 12, maxTop);
+		            bubbles.style.left = `${Math.round(nextLeft)}px`;
+		            bubbles.style.top = `${Math.round(nextTop)}px`;
+		            bubbles.style.right = "auto";
+		            bubbles.style.bottom = "auto";
+		          } catch {
+		            // ignore
+		          }
+		        };
+
+		        const resetLayout = () => {
+		          try {
+		            localStorage.removeItem(BUBBLES_LAYOUT_KEY);
+		          } catch {
+		            // ignore
+		          }
+		          bubbles.style.left = "";
+		          bubbles.style.top = "";
+		          bubbles.style.right = "";
+		          bubbles.style.bottom = "";
+		        };
+
+		        applyLayout();
+		        window.addEventListener("resize", applyLayout, { passive: true });
+
+		        let dragArmed = false;
+		        let dragging = false;
+		        let startX = 0;
+		        let startY = 0;
+		        let baseLeft = 0;
+		        let baseTop = 0;
+		        let bubbleW = 0;
+		        let bubbleH = 0;
+
+		        statusBubble.addEventListener(
+		          "pointerdown",
+		          (e) => {
+		            if (e.button !== 0) return;
+		            dragArmed = true;
+		            try {
+		              statusBubble.setPointerCapture(e.pointerId);
+		            } catch {
+		              // ignore
+		            }
+		            dragging = false;
+		            startX = e.clientX;
+		            startY = e.clientY;
+		            const rect = bubbles.getBoundingClientRect();
+		            baseLeft = rect.left;
+		            baseTop = rect.top;
+		            bubbleW = rect.width;
+		            bubbleH = rect.height;
+		          },
+		          { passive: true }
+		        );
+
+		        statusBubble.addEventListener(
+		          "pointermove",
+		          (e) => {
+		            if (!dragArmed) return;
+		            const dx = e.clientX - startX;
+		            const dy = e.clientY - startY;
+		            const dist = Math.hypot(dx, dy);
+		            if (!dragging) {
+		              if (dist < 6) return;
+		              dragging = true;
+		            }
+		            e.preventDefault();
+		            const maxLeft = Math.max(12, window.innerWidth - bubbleW - 12);
+		            const maxTop = Math.max(12, window.innerHeight - bubbleH - 12);
+		            const nextLeft = clamp(baseLeft + dx, 12, maxLeft);
+		            const nextTop = clamp(baseTop + dy, 12, maxTop);
+		            bubbles.style.left = `${Math.round(nextLeft)}px`;
+		            bubbles.style.top = `${Math.round(nextTop)}px`;
+		            bubbles.style.right = "auto";
+		            bubbles.style.bottom = "auto";
+		          },
+		          { passive: false }
+		        );
+
+		        statusBubble.addEventListener(
+		          "pointerup",
+		          () => {
+		            dragArmed = false;
+		            if (!dragging) {
+		              startX = 0;
+		              startY = 0;
+		              return;
+		            }
+		            suppressNextStatusClick = true;
+		            setTimeout(() => {
+		              suppressNextStatusClick = false;
+		            }, 0);
+		            dragging = false;
+		            startX = 0;
+		            startY = 0;
+		            try {
+		              const rect = bubbles.getBoundingClientRect();
+		              localStorage.setItem(BUBBLES_LAYOUT_KEY, JSON.stringify({ left: rect.left, top: rect.top }));
+		            } catch {
+		              // ignore
+		            }
+		          },
+		          { passive: true }
+		        );
+
+		        statusBubble.addEventListener("dblclick", (e) => {
+		          e.preventDefault();
+		          suppressNextStatusClick = true;
+		          setTimeout(() => {
+		            suppressNextStatusClick = false;
+		          }, 0);
+		          resetLayout();
+		        });
+		      } catch {
+		        // ignore
+		      }
+
 		      statusBubble.addEventListener("click", async () => {
+		        if (suppressNextStatusClick) return;
 		        if (state.loading) return;
 		        const signedIn = Boolean(state.jwt);
 		        if (signedIn) {
@@ -495,10 +642,10 @@
 	          // ignore
 	        }
 	      });
-	      close?.addEventListener("click", () => {
-	        state.open = false;
-	        render();
-	      });
+		      close?.addEventListener("click", () => {
+		        state.open = false;
+		        render();
+		      });
 
 	      // Drag-to-move panel (desktop). Double-click title bar to reset position.
 	      try {
@@ -721,6 +868,7 @@
 		        statusBubble,
 		        statusImg,
 		        setStatusImg,
+		        toast,
 		        panel,
 		        status: panel.querySelector("#mkMagicStatus"),
 		        email: emailInput,
@@ -1032,6 +1180,58 @@
 			      }
 			    }
 
+    function showSavedToast(text = "Saved", durationMs = 2000) {
+      ensureDom();
+      if (!el?.toast || !el?.statusBubble) return;
+      const toastEl = el.toast;
+      try {
+        if (toastHideTimer) clearTimeout(toastHideTimer);
+        if (toastTimer) clearTimeout(toastTimer);
+      } catch {
+        // ignore
+      }
+      toastEl.textContent = String(text || "Saved");
+      toastEl.style.display = "block";
+
+      const position = () => {
+        try {
+          const headRect = el.statusBubble.getBoundingClientRect();
+          toastEl.style.left = "12px";
+          toastEl.style.top = "12px";
+          toastEl.style.visibility = "hidden";
+          toastEl.classList.add("open");
+          const tRect = toastEl.getBoundingClientRect();
+          let left = headRect.right - tRect.width;
+          let top = headRect.top - tRect.height - 12;
+          left = Math.min(window.innerWidth - tRect.width - 12, Math.max(12, left));
+          top = Math.min(window.innerHeight - tRect.height - 12, Math.max(12, top));
+          toastEl.style.left = `${Math.round(left)}px`;
+          toastEl.style.top = `${Math.round(top)}px`;
+          toastEl.style.visibility = "visible";
+        } catch {
+          // ignore
+        }
+      };
+
+      position();
+      requestAnimationFrame(position);
+
+      toastTimer = setTimeout(() => {
+        try {
+          toastEl.classList.remove("open");
+        } catch {
+          // ignore
+        }
+        toastHideTimer = setTimeout(() => {
+          try {
+            toastEl.style.display = "none";
+          } catch {
+            // ignore
+          }
+        }, 220);
+      }, Math.max(200, Number(durationMs) || 2000));
+    }
+
 	    async function loginWithOAuth({ flow }) {
 	      ensureDom();
 	      setError("");
@@ -1233,6 +1433,7 @@
 		      loginWithEmailOtp,
 		      loginWithOAuth,
 		      logout,
+		      showSavedToast,
 		      getOrCreateServerWallet
 	    };
 	  }
@@ -1240,10 +1441,18 @@
   api.createMagicAuthWidget = createMagicAuthWidget;
 
 		  try {
-		    Object.defineProperty(api, "__version", { value: "r2026-01-27e", enumerable: true });
+		    Object.defineProperty(api, "__version", { value: "r2026-01-27f", enumerable: true });
 			  } catch {
-		    api.__version = "r2026-01-27e";
+		    api.__version = "r2026-01-27f";
 			  }
+
+  api.showSavedToast = (text, durationMs) => {
+    try {
+      api.magicAuth?.showSavedToast?.(text, durationMs);
+    } catch {
+      // ignore
+    }
+  };
 
   try {
     global.MKCore = api;
