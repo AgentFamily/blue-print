@@ -820,9 +820,9 @@
 	      }
 	    }
 
-	    async function ensureMagicSdk() {
-	      if (magic) return magic;
-	      let publishableKey = getPublishableKey();
+		    async function ensureMagicSdk() {
+		      if (magic) return magic;
+		      let publishableKey = getPublishableKey();
 		      if (!publishableKey) {
 		        await fetchMagicConfig();
 		        publishableKey = getPublishableKey();
@@ -847,12 +847,29 @@
 	          }
 	        }
 	        if (!loaded) throw new Error("Failed to load Magic SDK.");
-	      }
-	      if (!global.Magic) return null;
+		      }
+		      if (!global.Magic) return null;
 
-	      magic = new global.Magic(publishableKey, {
-	        useStorageCache: true
-	      });
+		      // Optional OAuth2 extension (Google login) — best-effort load for static HTML builds.
+		      try {
+		        if (!global.OAuthExtension) {
+		          await loadScript("https://cdn.jsdelivr.net/npm/@magic-ext/oauth2/dist/extension.js");
+		        }
+		      } catch {
+		        // ignore
+		      }
+
+		      const magicOptions = { useStorageCache: true };
+		      try {
+		        const OAuthExt = global.OAuthExtension || global.OAuthExtension?.OAuthExtension;
+		        if (typeof OAuthExt === "function") {
+		          magicOptions.extensions = [new OAuthExt()];
+		        }
+		      } catch {
+		        // ignore
+		      }
+
+		      magic = new global.Magic(publishableKey, magicOptions);
 	      try {
 	        if (magic?.user?.onUserLoggedOut) {
 	          magic.user.onUserLoggedOut((isLoggedOut) => {
@@ -870,15 +887,16 @@
 	      return magic;
 	    }
 
-	    async function maybeCompleteOAuthRedirect() {
-	      const sdk = await ensureMagicSdk();
-	      if (!sdk || !sdk.oauth || typeof sdk.oauth.getRedirectResult !== "function") return false;
+		    async function maybeCompleteOAuthRedirect() {
+		      const sdk = await ensureMagicSdk();
+		      const oauth = sdk?.oauth2 && typeof sdk.oauth2.getRedirectResult === "function" ? sdk.oauth2 : sdk?.oauth;
+		      if (!sdk || !oauth || typeof oauth.getRedirectResult !== "function") return false;
 
-	      try {
-	        const result = await sdk.oauth.getRedirectResult();
-	        if (!result) return false;
-	        await refreshFromMagic();
-	        saveToStorage();
+		      try {
+		        const result = await oauth.getRedirectResult();
+		        if (!result) return false;
+		        await refreshFromMagic();
+		        saveToStorage();
 	        try {
 	          const url = new URL(window.location.href);
 	          url.search = "";
@@ -1011,22 +1029,23 @@
 	      try {
 	        const sdk = await ensureMagicSdk();
 	        if (!sdk) throw new Error("Missing MAGIC_PUBLISHABLE_KEY (or Magic SDK failed to load).");
-	        if (!sdk.oauth) throw new Error("Magic OAuth not available in this SDK build.");
-		        const provider = "google";
-		        if (flow === "redirect") {
-		          if (!sdk.oauth.loginWithRedirect) throw new Error("loginWithRedirect not available.");
-		          const redirectURI = (() => {
-		            try {
-		              return String(window.location.origin + window.location.pathname);
-		            } catch {
-		              return String(window.location.href);
-		            }
-		          })();
-		          await sdk.oauth.loginWithRedirect({ provider, redirectURI });
-		          return;
-		        }
-	        if (!sdk.oauth.loginWithPopup) throw new Error("loginWithPopup not available.");
-	        await sdk.oauth.loginWithPopup({ provider });
+	        const oauth = sdk?.oauth2 || sdk?.oauth;
+	        if (!oauth) throw new Error("Magic OAuth not available in this SDK build.");
+	        const provider = "google";
+	        const redirectURI = (() => {
+	          try {
+	            return new URL("/oauth/callback", window.location.origin).toString();
+	          } catch {
+	            return String(window.location.href);
+	          }
+	        })();
+	        if (flow === "redirect") {
+	          if (!oauth.loginWithRedirect) throw new Error("loginWithRedirect not available.");
+	          await oauth.loginWithRedirect({ provider, redirectURI, scope: ["user:email"] });
+	          return;
+	        }
+	        if (!oauth.loginWithPopup) throw new Error("loginWithPopup not available.");
+	        await oauth.loginWithPopup({ provider, scope: ["user:email"] });
 	        await refreshFromMagic();
 	        saveToStorage();
 	      } catch (e) {
