@@ -623,20 +623,6 @@
         font-size: 12px;
       }
 
-      .btn.jump-latest {
-        margin-top: 8px;
-        border-color: rgba(79, 70, 229, 0.20);
-        background: rgba(255, 255, 255, 0.78);
-        box-shadow: var(--shadow-soft);
-        backdrop-filter: blur(18px);
-        -webkit-backdrop-filter: blur(18px);
-      }
-
-      .btn.jump-latest[data-has-unseen="true"] {
-        border-color: rgba(124, 58, 237, 0.38);
-        box-shadow: 0 10px 26px rgba(124, 58, 237, 0.20);
-      }
-
       .empty {
         padding: 22px 14px;
         border-radius: var(--radius-md);
@@ -836,9 +822,9 @@
         box-shadow: 0 -20px 46px rgba(2, 6, 23, 0.10);
       }
 
-      .composer-inner {
-        padding: 10px 0 calc(12px + env(safe-area-inset-bottom));
-      }
+	      .composer-inner {
+	        padding: 8px 0 calc(10px + env(safe-area-inset-bottom));
+	      }
 
 	      .composer-row {
 	        display: grid;
@@ -1240,13 +1226,6 @@
 	        word-break: break-word;
 	      }
 
-	      .composer-foot {
-	        display: flex;
-	        justify-content: flex-end;
-	        align-items: center;
-	        min-width: 0;
-	      }
-
       .error {
         color: rgb(153, 27, 27);
       }
@@ -1358,8 +1337,7 @@
 
       html.dialog-fallback body.modal-open header,
       html.dialog-fallback body.modal-open main,
-      html.dialog-fallback body.modal-open .composer,
-      html.dialog-fallback body.modal-open .btn.jump-latest {
+      html.dialog-fallback body.modal-open .composer {
         pointer-events: none;
       }
 
@@ -1849,9 +1827,6 @@
 	            </div>
 	            <div id="statusRight"></div>
 	          </div>
-          <div class="composer-foot" aria-label="Navigation">
-            <button class="btn jump-latest" id="jumpLatestBtn" type="button" hidden>Jump to latest</button>
-          </div>
         </form>
       </div>
     </div>
@@ -6509,7 +6484,7 @@
 	          render();
 	        }
 
-		        async function wire() {
+		        function wire() {
 		          setComposerMoreOpen(false);
 		          loadOptions();
 		          loadProfile();
@@ -6522,9 +6497,7 @@
 	          refreshTeachingsPre();
 	          // First-run notice: non-blocking and shown only once (persisted in localStorage).
 	          maybeShowFirstRunNotice();
-          await loadEmojiPalette();
-          await validateManualEndpointOnLoad();
-          await ensureEndpoint();
+
           // Watch Magic auth changes that occur outside this script (Magic panel writes sessionStorage).
           (() => {
             let lastJwt = "";
@@ -6550,10 +6523,6 @@
             }, 1000);
           })();
           render();
-	          await refreshHealth();
-	          await refreshModels({ quiet: true });
-	          updateModelDownloadUI();
-            refreshCoordinationUi({ quiet: true }).catch(() => {});
 
 		          wireDialogLifecycle("settingsModal", { onClose: () => setStatusRight("") });
 		          wireDialogLifecycle("privacyModal", { onClose: () => setStatusRight("") });
@@ -6864,7 +6833,7 @@
 	          el("cancelTeachBtn").addEventListener("click", closeTeachModal);
 	          el("saveTeachBtn").addEventListener("click", saveTeachingFromModal);
 
-		          el("jumpLatestBtn").addEventListener("click", jumpToLatest);
+		          el("jumpLatestBtn")?.addEventListener("click", jumpToLatest);
 		          window.addEventListener("scroll", handleScrollPositionChange, { passive: true });
 		          el("conversation").addEventListener("scroll", handleScrollPositionChange, { passive: true });
 	            handleScrollPositionChange();
@@ -7091,7 +7060,7 @@
               localStorage.removeItem(STORAGE.autoModel);
             }
 
-            await ensureEndpoint();
+          await ensureEndpoint();
 	            await refreshHealth();
 	            render();
               try {
@@ -7103,7 +7072,39 @@
 	          });
 	        }
 
-        await wire();
+        wire();
+        // Background startup (don’t block UI actions like Sign in).
+        (async () => {
+          try {
+            await loadEmojiPalette();
+          } catch {
+            // ignore
+          }
+          try {
+            await validateManualEndpointOnLoad();
+          } catch {
+            // ignore
+          }
+          try {
+            await ensureEndpoint();
+          } catch {
+            // ignore
+          }
+          render();
+          try {
+            await refreshHealth();
+          } catch {
+            // ignore
+          }
+          try {
+            await refreshModels({ quiet: true });
+          } catch {
+            // ignore
+          }
+          updateModelDownloadUI();
+          refreshCoordinationUi({ quiet: true }).catch(() => {});
+          render();
+        })();
       })();
     </script>
   </body>
