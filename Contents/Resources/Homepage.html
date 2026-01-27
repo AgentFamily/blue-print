@@ -296,6 +296,11 @@
 		        box-shadow: 0 0 0 4px rgba(236, 72, 153, 0.12);
 		      }
 
+		      .dot.coins {
+		        background: linear-gradient(135deg, rgba(250, 204, 21, 0.95), rgba(245, 158, 11, 0.95));
+		        box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.12);
+		      }
+
       .pill-btn[aria-pressed="false"] .dot.context {
         background: rgba(100, 116, 139, 0.9);
         box-shadow: 0 0 0 4px rgba(100, 116, 139, 0.12);
@@ -307,6 +312,11 @@
 	      }
 	
 	      .pill-btn[aria-pressed="false"] .dot.memory {
+	        background: rgba(100, 116, 139, 0.9);
+	        box-shadow: 0 0 0 4px rgba(100, 116, 139, 0.12);
+	      }
+
+	      .pill-btn[aria-pressed="false"] .dot.coins {
 	        background: rgba(100, 116, 139, 0.9);
 	        box-shadow: 0 0 0 4px rgba(100, 116, 139, 0.12);
 	      }
@@ -1709,6 +1719,16 @@
 		            />
 		            <span id="onlineLabel">Sign in</span>
 		          </button>
+		          <button
+		            class="pill pill-btn"
+		            id="coinsBtn"
+		            type="button"
+		            aria-pressed="false"
+		            title="Buy AgentC-oins (1 C-oin = 1 prompt)"
+		          >
+		            <span class="dot coins" aria-hidden="true"></span>
+		            <span id="coinsLabel">C-oins</span>
+		          </button>
 	          <button class="pill pill-btn" id="downloadBtn" type="button" title="Download paper">
 	            <span class="dot download" aria-hidden="true"></span>
 	            <span>Download</span>
@@ -2823,6 +2843,9 @@
 	          pullLog: "",
 	          rounds: [],
 	          loading: false,
+	          coins: null,
+	          coinsLoading: false,
+	          coinsUserId: "",
 	          error: null,
 	          lastRenderedCount: 0,
 	          visibleStart: 0,
@@ -3519,6 +3542,116 @@
 	          }
 	        }
 
+	        const STRIPE_BUY_AGENTC_OINS_URL = "https://buy.stripe.com/6oUeVc3Ijc1X8Zx4a1grS00";
+
+	        function decodeJwtPayload(jwt) {
+	          const raw = String(jwt || "").trim();
+	          const parts = raw.split(".");
+	          if (parts.length < 2) return null;
+	          const b64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+	          const pad = b64.length % 4 ? "=".repeat(4 - (b64.length % 4)) : "";
+	          try {
+	            const json = atob(b64 + pad);
+	            return JSON.parse(json);
+	          } catch {
+	            return null;
+	          }
+	        }
+
+	        function magicUserIdFromJwt(jwt) {
+	          const payload = decodeJwtPayload(jwt);
+	          const sub = String(payload?.sub || "").trim();
+	          return sub || "";
+	        }
+
+	        function buildStripeBuyUrlForCurrentUser() {
+	          const snap = getMagicAuthSnapshot();
+	          const base = STRIPE_BUY_AGENTC_OINS_URL;
+	          if (!snap?.signedIn) return base;
+
+	          const userId = magicUserIdFromJwt(snap.jwt);
+	          if (!userId) return base;
+
+	          let email = "";
+	          try {
+	            email = String(localStorage.getItem("mkMagicEmailV1") || "").trim();
+	          } catch {
+	            email = "";
+	          }
+
+	          const url = new URL(base);
+	          url.searchParams.set("client_reference_id", userId);
+	          if (email) url.searchParams.set("prefilled_email", email);
+	          return url.toString();
+	        }
+
+	        async function refreshCoinsBalance({ quiet = false } = {}) {
+	          const snap = getMagicAuthSnapshot();
+	          const signedIn = Boolean(snap && snap.signedIn);
+	          const userId = signedIn ? magicUserIdFromJwt(snap.jwt) : "";
+
+	          if (!signedIn || !userId) {
+	            state.coins = null;
+	            state.coinsLoading = false;
+	            state.coinsUserId = "";
+	            if (!quiet) render();
+	            return;
+	          }
+
+	          if (state.coinsLoading && state.coinsUserId === userId) return;
+	          state.coinsLoading = true;
+	          state.coinsUserId = userId;
+	          if (!quiet) render();
+	          try {
+	            const jwt = String(snap?.jwt || "").trim();
+	            const headers = jwt ? { Authorization: `Bearer ${jwt}` } : {};
+	            const useSameOrigin =
+	              String(window?.location?.protocol || "").startsWith("http");
+	            const url = useSameOrigin ? "/api/tokens/balance" : `${state.endpoint}/api/tokens/balance`;
+	            const res = await fetch(url, { method: "GET", cache: "no-store", headers });
+	            const text = await res.text();
+	            let json = {};
+	            try {
+	              json = JSON.parse(String(text || "")) ?? {};
+	            } catch {
+	              json = {};
+	            }
+	            if (!res.ok) throw new Error(String(json?.error || text || `HTTP ${res.status}`));
+	            const n = parseInt(String(json?.tokens ?? ""), 10);
+	            state.coins = Number.isFinite(n) ? Math.max(0, n) : 0;
+	          } catch {
+	            state.coins = 0;
+	          } finally {
+	            state.coinsLoading = false;
+	            if (!quiet) render();
+	          }
+	        }
+
+	        function maybeRefreshCoinsBalance() {
+	          const snap = getMagicAuthSnapshot();
+	          const signedIn = Boolean(snap && snap.signedIn);
+	          const userId = signedIn ? magicUserIdFromJwt(snap.jwt) : "";
+	          if (!signedIn || !userId) return;
+	          if (state.coinsUserId !== userId || state.coins == null) refreshCoinsBalance({ quiet: true });
+	        }
+
+	        function openCoinsPurchase() {
+	          const snap = getMagicAuthSnapshot();
+	          if (!snap?.signedIn) {
+	            setNotice("Sign in via Auth + Wallet (Magic Link) to buy AgentC-oins.");
+	            openMagicAuthPanel();
+	            render();
+	            return;
+	          }
+
+	          const url = buildStripeBuyUrlForCurrentUser();
+	          try {
+	            window.open(url, "_blank", "noopener,noreferrer");
+	          } catch {
+	            window.location.href = url;
+	          }
+	        }
+
 		        const MK_CLAIM_KEY = "mkMkClaimedV1";
 		        const MK_ADMIN_KEY = "mkMkAdminV1";
 		        const FREE_PROMPTS_KEY = "mkFreePromptsRemainingV1";
@@ -4006,7 +4139,24 @@
 
         async function fetchJSON(path, init) {
           const url = `${state.endpoint}${path}`;
-          const res = await fetch(url, { cache: "no-store", ...init });
+          const shouldAttachAuth = (() => {
+            if (!String(path || "").startsWith("/api/")) return false;
+            try {
+              const u = new URL(url, window.location.href);
+              return u.origin === window.location.origin;
+            } catch {
+              return false;
+            }
+          })();
+
+          const headers = new Headers(init?.headers || {});
+          if (shouldAttachAuth) {
+            const snap = getMagicAuthSnapshot();
+            const jwt = String(snap?.jwt || "").trim();
+            if (jwt) headers.set("Authorization", `Bearer ${jwt}`);
+          }
+
+          const res = await fetch(url, { cache: "no-store", ...init, headers });
           const text = await res.text();
           let json = null;
           try {
@@ -4020,8 +4170,19 @@
               msg =
                 "Endpoint returned 404 (not found). Your Ollama Endpoint/IP is likely wrong. Open Settings and clear “Ollama Endpoint” to use auto.";
             }
+            if (res.status === 402) {
+              state.coins = 0;
+              setNotice("No AgentC-oins remaining. Buy more to continue.");
+              render();
+            }
             if (maybeRecoverFromToolTokenError(msg)) throw new Error("Tool token expired.");
             throw new Error(msg);
+          }
+
+          // Keep AgentC-oins UI in sync when the server returns an updated token balance.
+          if (shouldAttachAuth && json && typeof json.tokens !== "undefined") {
+            const n = parseInt(String(json.tokens ?? ""), 10);
+            state.coins = Number.isFinite(n) ? Math.max(0, n) : 0;
           }
           return json ?? {};
         }
@@ -4856,10 +5017,10 @@
 	          if (sys) sys.value = effectiveModeFor("system");
 	        }
 
-	        function render() {
-	          document.body.classList.toggle("has-rounds", state.rounds.length > 0);
-	          syncModeQuickSelects();
-	          el("endpointCode").textContent = displayEndpoint();
+        function render() {
+          document.body.classList.toggle("has-rounds", state.rounds.length > 0);
+          syncModeQuickSelects();
+          el("endpointCode").textContent = displayEndpoint();
 	          const rawModelLabel = state.modelOverride ? state.modelOverride : state.autoModelName || "auto";
 	          el("modelCode").textContent = rawModelLabel === "auto" ? "auto" : displayModelLabel(rawModelLabel) || rawModelLabel;
 	          const toolsStatus = toolsAvailable() ? (state.toolsEnabled ? "on" : "off") : "n/a";
@@ -4887,6 +5048,60 @@
 	            memoryBtn.setAttribute("aria-pressed", hasMemory ? "true" : "false");
 	            memoryBtn.title = hasMemory ? "Memory (saved)" : "Memory";
 	          }
+
+	          // Auth + coins header (rendered even when there are no rounds yet).
+	          (() => {
+	            const snap = getMagicAuthSnapshot();
+	            const signedIn = Boolean(snap && snap.signedIn);
+
+	            const onlineBtn = el("onlineBtn");
+	            const onlineLabel = el("onlineLabel");
+	            const onlineStatusImg = el("onlineStatusImg");
+	            if (onlineBtn && onlineLabel) {
+	              onlineBtn.disabled = Boolean(state.loading);
+	              onlineBtn.setAttribute("aria-pressed", signedIn ? "true" : "false");
+	              onlineBtn.title = signedIn ? "Sign out" : "Sign in";
+	              onlineLabel.textContent = signedIn ? "Log out" : "Sign in";
+	              if (onlineStatusImg) {
+	                const LOGGED_OUT_SVG = "ChatGPT_Image_Jan_26__2026_at_07_41_19_PM-removebg-preview.svg";
+	                const LOGGED_IN_SVG = "ChatGPT_Image_Jan_26__2026_at_07_41_21_PM-removebg-preview.svg";
+	                const LOGGED_OUT_PNG_CACHE = "mkMagicStatusPngOfflineV1";
+	                const LOGGED_IN_PNG_CACHE = "mkMagicStatusPngOnlineV1";
+	                const key = signedIn ? LOGGED_IN_PNG_CACHE : LOGGED_OUT_PNG_CACHE;
+	                let src = "";
+	                try {
+	                  const cached = String(localStorage.getItem(key) || "");
+	                  if (cached.startsWith("data:image/png")) src = cached;
+	                } catch {
+	                  // ignore
+	                }
+	                if (!src) src = signedIn ? LOGGED_IN_SVG : LOGGED_OUT_SVG;
+	                onlineStatusImg.src = src;
+	                onlineStatusImg.alt = signedIn ? "Logged in" : "Logged out";
+	              }
+	            }
+
+	            const coinsBtn = el("coinsBtn");
+	            const coinsLabel = el("coinsLabel");
+	            if (coinsBtn && coinsLabel) {
+	              if (!signedIn) {
+	                coinsBtn.disabled = Boolean(state.loading);
+	                coinsBtn.setAttribute("aria-pressed", "false");
+	                coinsBtn.title = "Sign in to buy AgentC-oins";
+	                coinsLabel.textContent = "C-oins";
+	                state.coins = null;
+	                state.coinsLoading = false;
+	                state.coinsUserId = "";
+	              } else {
+	                coinsBtn.disabled = Boolean(state.loading) || Boolean(state.coinsLoading);
+	                const tokens = state.coins == null ? null : Math.max(0, Number(state.coins) || 0);
+	                coinsBtn.setAttribute("aria-pressed", tokens && tokens > 0 ? "true" : "false");
+	                coinsBtn.title = tokens && tokens > 0 ? `AgentC-oins: ${tokens}` : "Buy AgentC-oins (1 C-oin = 1 prompt)";
+	                coinsLabel.textContent = state.coinsLoading ? "C-oins…" : `C-oins ${tokens ?? 0}`;
+	                maybeRefreshCoinsBalance();
+	              }
+	            }
+	          })();
 
           el("nextRoundBtn").disabled = state.loading || state.rounds.length === 0;
           el("refineBtn").disabled = state.loading || state.rounds.length === 0;
@@ -4955,35 +5170,6 @@
               state.initialScrollDone = false;
               updateJumpLatestButton();
 	            return;
-	          }
-
-	          const onlineBtn = el("onlineBtn");
-	          const onlineLabel = el("onlineLabel");
-	          const onlineStatusImg = el("onlineStatusImg");
-	          if (onlineBtn && onlineLabel) {
-	            const snap = getMagicAuthSnapshot();
-	            const signedIn = Boolean(snap && snap.signedIn);
-	            onlineBtn.disabled = Boolean(state.loading);
-	            onlineBtn.setAttribute("aria-pressed", signedIn ? "true" : "false");
-	            onlineBtn.title = signedIn ? "Sign out" : "Sign in";
-	            onlineLabel.textContent = signedIn ? "Log out" : "Sign in";
-	            if (onlineStatusImg) {
-	              const LOGGED_OUT_SVG = "ChatGPT_Image_Jan_26__2026_at_07_41_19_PM-removebg-preview.svg";
-	              const LOGGED_IN_SVG = "ChatGPT_Image_Jan_26__2026_at_07_41_21_PM-removebg-preview.svg";
-	              const LOGGED_OUT_PNG_CACHE = "mkMagicStatusPngOfflineV1";
-	              const LOGGED_IN_PNG_CACHE = "mkMagicStatusPngOnlineV1";
-	              const key = signedIn ? LOGGED_IN_PNG_CACHE : LOGGED_OUT_PNG_CACHE;
-	              let src = "";
-	              try {
-	                const cached = String(localStorage.getItem(key) || "");
-	                if (cached.startsWith("data:image/png")) src = cached;
-	              } catch {
-	                // ignore
-	              }
-	              if (!src) src = signedIn ? LOGGED_IN_SVG : LOGGED_OUT_SVG;
-	              onlineStatusImg.src = src;
-	              onlineStatusImg.alt = signedIn ? "Logged in" : "Logged out";
-	            }
 	          }
 
           if (state.visibleStart > 0) {
@@ -6339,6 +6525,30 @@
           await loadEmojiPalette();
           await validateManualEndpointOnLoad();
           await ensureEndpoint();
+          // Watch Magic auth changes that occur outside this script (Magic panel writes sessionStorage).
+          (() => {
+            let lastJwt = "";
+            try {
+              lastJwt = String(sessionStorage.getItem("mkMagicJwtV1") || "");
+            } catch {
+              lastJwt = "";
+            }
+            setInterval(() => {
+              let jwt = "";
+              try {
+                jwt = String(sessionStorage.getItem("mkMagicJwtV1") || "");
+              } catch {
+                jwt = "";
+              }
+              if (jwt === lastJwt) return;
+              lastJwt = jwt;
+              state.coins = null;
+              state.coinsLoading = false;
+              state.coinsUserId = "";
+              refreshCoinsBalance({ quiet: true });
+              render();
+            }, 1000);
+          })();
           render();
 	          await refreshHealth();
 	          await refreshModels({ quiet: true });
@@ -6360,6 +6570,7 @@
 		          updateModalLayerState();
 
 		          el("onlineBtn").addEventListener("click", () => toggleAuth());
+		          el("coinsBtn")?.addEventListener("click", () => openCoinsPurchase());
 		          el("downloadBtn")?.addEventListener("click", openDownload);
 		          el("memoryBtn")?.addEventListener("click", openMemoryModal);
 		          el("toolsBtn").addEventListener("click", () => {

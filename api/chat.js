@@ -15,6 +15,9 @@ const readJsonBody = async (req) => {
   }
 };
 
+const { getMagicJwtFromRequest, magicUserEmailFromJwt, getMagicUserIdFromRequest } = require("./_lib/magic_user");
+const { kvIncrBy, kvSet } = require("./_lib/upstash_kv");
+
 const firstEnv = (...names) => {
   for (const name of names) {
     const value = process.env[name];
@@ -48,6 +51,8 @@ const getLastUserContent = (messages) => {
 };
 
 const ADMIN_COOKIE = "mk_admin";
+const tokenKey = (userId) => `agentc:tokens:${userId}`;
+const emailKey = (email) => `agentc:email_to_user:${String(email || "").trim().toLowerCase()}`;
 
 const truthyEnv = (value) => {
   const v = String(value || "").trim().toLowerCase();
@@ -212,6 +217,41 @@ module.exports = async (req, res) => {
       ]
     : messages;
 
+  // Token gating: charge 1 AgentC-oin per /api/chat call for Magic-signed-in users.
+  const magicUserId = !isAdminCookie ? getMagicUserIdFromRequest(req) : "";
+  let tokenCharged = false;
+  let tokens = null;
+  if (magicUserId) {
+    try {
+      const jwt = getMagicJwtFromRequest(req);
+      const email = jwt ? magicUserEmailFromJwt(jwt) : "";
+      if (email) {
+        try {
+          await kvSet(emailKey(email), magicUserId);
+        } catch {
+          // ignore mapping failures
+        }
+      }
+      const next = await kvIncrBy(tokenKey(magicUserId), -1);
+      if (next < 0) {
+        await kvIncrBy(tokenKey(magicUserId), 1);
+        res.statusCode = 402;
+        res.setHeader("Content-Type", "application/json");
+        res.setHeader("Cache-Control", "no-store");
+        res.end(JSON.stringify({ error: "No AgentC-oins remaining.", tokens: 0 }));
+        return;
+      }
+      tokenCharged = true;
+      tokens = next;
+    } catch (err) {
+      res.statusCode = err?.status || 500;
+      res.setHeader("Content-Type", "application/json");
+      res.setHeader("Cache-Control", "no-store");
+      res.end(JSON.stringify({ error: err?.message || "Token store error" }));
+      return;
+    }
+  }
+
   try {
     // Preferred mode: use AI Gateway directly when configured.
     // Optional: enable a two-step "OpenAI -> Gateway evaluator" flow via env `AI_GATEWAY_EVAL=1`.
@@ -257,6 +297,7 @@ module.exports = async (req, res) => {
             message: { role: "assistant", content: gateway.content },
             open: { model: openModel, content: open.content },
             gateway: { model: gatewayModel, content: gateway.content },
+            ...(tokens == null ? {} : { tokens }),
           })
         );
         return;
@@ -274,6 +315,7 @@ module.exports = async (req, res) => {
               provider: gatewayErr?.provider,
               details: gatewayErr?.details,
             },
+            ...(tokens == null ? {} : { tokens }),
           })
         );
         return;
@@ -297,6 +339,7 @@ module.exports = async (req, res) => {
           JSON.stringify({
             message: { role: "assistant", content: gateway.content },
             gateway: { model: gatewayModel, content: gateway.content },
+            ...(tokens == null ? {} : { tokens }),
           })
         );
         return;
@@ -324,6 +367,7 @@ module.exports = async (req, res) => {
               provider: gatewayErr?.provider,
               details: gatewayErr?.details,
             },
+            ...(tokens == null ? {} : { tokens }),
           })
         );
         return;
@@ -342,8 +386,21 @@ module.exports = async (req, res) => {
 
     res.statusCode = 200;
     res.setHeader("Content-Type", "application/json");
-    res.end(JSON.stringify({ message: { role: "assistant", content: open.content }, open: { model: openModel } }));
+    res.end(
+      JSON.stringify({
+        message: { role: "assistant", content: open.content },
+        open: { model: openModel },
+        ...(tokens == null ? {} : { tokens }),
+      })
+    );
   } catch (err) {
+    if (tokenCharged && magicUserId) {
+      try {
+        await kvIncrBy(tokenKey(magicUserId), 1);
+      } catch {
+        // ignore refund failures
+      }
+    }
     res.statusCode = err?.status || 502;
     res.setHeader("Content-Type", "application/json");
     res.end(
@@ -352,6 +409,7 @@ module.exports = async (req, res) => {
         status: err?.status,
         provider: err?.provider,
         details: err?.details,
+        ...(tokens == null ? {} : { tokens }),
       })
     );
   }

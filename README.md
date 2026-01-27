@@ -36,3 +36,16 @@
 - UI: `token-gate.html` (calls `POST /api/prompt`)
 - Serverless: `api/prompt.js` (reads `AI_GATEWAY_API_KEY`)
 - Optional env: `AI_GATEWAY_BASE_URL`, `AI_MODEL`
+
+## AgentC-oins (Stripe + Magic)
+
+- UI: `Contents/Resources/Homepage.html` (shows balance + opens Stripe Payment Link)
+- Balance API: `GET /api/tokens/balance` (requires `Authorization: Bearer <Magic ID token>`)
+- Webhook: `POST /api/stripe/webhook` (Stripe `checkout.session.completed` → credits tokens)
+
+Required env (Vercel/Node serverless):
+- `KV_REST_API_URL` and `KV_REST_API_TOKEN` (or `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`)
+- `STRIPE_WEBHOOK_SECRET`
+- One of:
+  - `STRIPE_ALLOWED_PAYMENT_LINKS` (JSON map of `payment_link_id` → tokens, e.g. `{"plink_...":200}`)
+  - or `STRIPE_PAYMENT_LINK_ID` + optional `STRIPE_PAYMENT_LINK_TOKENS` (defaults to `200`)

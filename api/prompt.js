@@ -1,3 +1,9 @@
+const { getMagicJwtFromRequest, magicUserEmailFromJwt, getMagicUserIdFromRequest } = require("./_lib/magic_user");
+const { kvIncrBy, kvSet } = require("./_lib/upstash_kv");
+
+const tokenKey = (userId) => `agentc:tokens:${userId}`;
+const emailKey = (email) => `agentc:email_to_user:${String(email || "").trim().toLowerCase()}`;
+
 module.exports = async (req, res) => {
   if (req.method !== "POST") {
     res.statusCode = 405;
@@ -42,6 +48,40 @@ module.exports = async (req, res) => {
     res.setHeader("Content-Type", "application/json");
     res.end(JSON.stringify({ error: "Missing prompt" }));
     return;
+  }
+
+  const magicUserId = getMagicUserIdFromRequest(req);
+  let tokenCharged = false;
+  let tokens = null;
+  if (magicUserId) {
+    try {
+      const jwt = getMagicJwtFromRequest(req);
+      const email = jwt ? magicUserEmailFromJwt(jwt) : "";
+      if (email) {
+        try {
+          await kvSet(emailKey(email), magicUserId);
+        } catch {
+          // ignore mapping failures
+        }
+      }
+      const next = await kvIncrBy(tokenKey(magicUserId), -1);
+      if (next < 0) {
+        await kvIncrBy(tokenKey(magicUserId), 1);
+        res.statusCode = 402;
+        res.setHeader("Content-Type", "application/json");
+        res.setHeader("Cache-Control", "no-store");
+        res.end(JSON.stringify({ error: "No AgentC-oins remaining.", tokens: 0 }));
+        return;
+      }
+      tokenCharged = true;
+      tokens = next;
+    } catch (err) {
+      res.statusCode = err?.status || 500;
+      res.setHeader("Content-Type", "application/json");
+      res.setHeader("Cache-Control", "no-store");
+      res.end(JSON.stringify({ error: err?.message || "Token store error" }));
+      return;
+    }
   }
 
   const looksLikeOpenAIKey = (apiKey) => {
@@ -146,6 +186,7 @@ module.exports = async (req, res) => {
             status: gatewayRes.status || 502,
             details: gatewayData,
           },
+          ...(tokens == null ? {} : { tokens }),
         })
       );
       return;
@@ -154,14 +195,22 @@ module.exports = async (req, res) => {
     const evalText = String(gatewayData?.choices?.[0]?.message?.content ?? "");
     res.statusCode = 200;
     res.setHeader("Content-Type", "application/json");
-    res.end(JSON.stringify({ text: evalText, open_text: openText }));
+    res.end(JSON.stringify({ text: evalText, open_text: openText, ...(tokens == null ? {} : { tokens }) }));
   } catch (err) {
+    if (tokenCharged && magicUserId) {
+      try {
+        await kvIncrBy(tokenKey(magicUserId), 1);
+      } catch {
+        // ignore refund failures
+      }
+    }
     res.statusCode = 502;
     res.setHeader("Content-Type", "application/json");
     res.end(
       JSON.stringify({
         error: "Request failed",
         details: err?.message || String(err),
+        ...(tokens == null ? {} : { tokens }),
       })
     );
   }
