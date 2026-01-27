@@ -286,25 +286,40 @@
 		        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.14);
 		      }
 
-	      .dot.tools {
-	        background: rgba(15, 23, 42, 0.82);
-	        box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.10);
-	      }
+		      .dot.tools {
+		        background: rgba(15, 23, 42, 0.82);
+		        box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.10);
+		      }
+	
+		      .dot.memory {
+		        background: linear-gradient(135deg, rgba(236, 72, 153, 0.92), rgba(37, 99, 235, 0.92));
+		        box-shadow: 0 0 0 4px rgba(236, 72, 153, 0.12);
+		      }
 
       .pill-btn[aria-pressed="false"] .dot.context {
         background: rgba(100, 116, 139, 0.9);
         box-shadow: 0 0 0 4px rgba(100, 116, 139, 0.12);
       }
 
-      .pill-btn[aria-pressed="false"] .dot.tools {
-        background: rgba(100, 116, 139, 0.9);
-        box-shadow: 0 0 0 4px rgba(100, 116, 139, 0.12);
-      }
+	      .pill-btn[aria-pressed="false"] .dot.tools {
+	        background: rgba(100, 116, 139, 0.9);
+	        box-shadow: 0 0 0 4px rgba(100, 116, 139, 0.12);
+	      }
+	
+	      .pill-btn[aria-pressed="false"] .dot.memory {
+	        background: rgba(100, 116, 139, 0.9);
+	        box-shadow: 0 0 0 4px rgba(100, 116, 139, 0.12);
+	      }
 
-      .pill-btn[aria-pressed="true"] .dot.tools {
-        background: rgba(124, 58, 237, 0.95);
-        box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.14);
-      }
+	      .pill-btn[aria-pressed="true"] .dot.tools {
+	        background: rgba(124, 58, 237, 0.95);
+	        box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.14);
+	      }
+	
+	      .pill-btn[aria-pressed="true"] .dot.memory {
+	        background: linear-gradient(135deg, rgba(236, 72, 153, 0.92), rgba(37, 99, 235, 0.92));
+	        box-shadow: 0 0 0 4px rgba(236, 72, 153, 0.12);
+	      }
 
 	      .btn {
 	        appearance: none;
@@ -1662,7 +1677,7 @@
     <div class="app-root" id="appRoot">
     <header>
       <div class="wrap header-row">
-        <div class="header-actions left">
+	        <div class="header-actions left">
           <button
             class="pill pill-btn"
             id="autoContextBtn"
@@ -1677,11 +1692,15 @@
             <span class="dot" id="healthDot"></span>
             <span id="healthText">Local</span>
           </span>
-          <button class="pill pill-btn" id="toolsBtn" type="button" aria-pressed="false" title="Enable local tools (workspace)">
-            <span class="dot tools" aria-hidden="true"></span>
-            <span>Tools</span>
-          </button>
-		          <button class="pill pill-btn" id="onlineBtn" type="button" aria-pressed="false" title="Sign in / Sign out">
+	          <button class="pill pill-btn" id="toolsBtn" type="button" aria-pressed="false" title="Enable local tools (workspace)">
+	            <span class="dot tools" aria-hidden="true"></span>
+	            <span>Tools</span>
+	          </button>
+	          <button class="pill pill-btn" id="memoryBtn" type="button" aria-pressed="false" title="Memory">
+	            <span class="dot memory" aria-hidden="true"></span>
+	            <span>Memory</span>
+	          </button>
+			          <button class="pill pill-btn" id="onlineBtn" type="button" aria-pressed="false" title="Sign in / Sign out">
 		            <img
 		              id="onlineStatusImg"
 		              class="online-status-img"
@@ -1696,14 +1715,17 @@
 	          </button>
 	        </div>
 
-	        <div class="brand" aria-label="AgentX, AgentC, and System">
-          <div class="agent-title">
-            <span class="agent-word sf-ultrathin">Agent</span><span class="agent-letter sf-light">X</span>
-          </div>
-          <div class="agent-title">
-            <span class="agent-word sf-ultrathin">Agent</span><span class="agent-letter sf-light">C</span>
-          </div>
-        </div>
+		        <div class="brand" aria-label="AgentX, AgentC, and System">
+	          <div class="agent-title">
+	            <span class="agent-word sf-ultrathin">Agent</span><span class="agent-letter sf-light">X</span>
+	          </div>
+	          <div class="agent-title">
+	            <span class="agent-word sf-ultrathin">Agent</span><span class="agent-letter sf-light">C</span>
+	          </div>
+	          <div class="agent-title">
+	            <span class="agent-word sf-ultrathin">System</span>
+	          </div>
+	        </div>
 
 	        <div class="header-actions right">
 	          <button class="btn" id="reloadBtn" type="button" title="Reload UI">Reload</button>
@@ -2272,11 +2294,11 @@
       </div>
     </dialog>
 
-    <dialog id="toolsModal">
-      <div class="modal-head">
-        <strong>Tools</strong>
-        <button class="btn" id="closeToolsBtn" type="button">Close</button>
-      </div>
+	    <dialog id="toolsModal">
+	      <div class="modal-head">
+	        <strong>Tools</strong>
+	        <button class="btn" id="closeToolsBtn" type="button">Close</button>
+	      </div>
       <div class="modal-body">
         <div class="field">
           <label>Planned actions</label>
@@ -2288,12 +2310,61 @@
         <button class="btn" id="cancelToolsBtn" type="button">Cancel</button>
         <button class="btn primary" id="runToolsBtn" type="button">Run Tools</button>
       </div>
-    </dialog>
+	    </dialog>
+	
+	    <dialog id="memoryModal">
+	      <div class="modal-head">
+	        <strong>Memory</strong>
+	        <button class="btn" id="closeMemoryBtn" type="button">Close</button>
+	      </div>
+	      <div class="modal-body">
+	        <div class="field full">
+	          <label for="persistentMemoryInput">Persistent Memory</label>
+	          <textarea
+	            id="persistentMemoryInput"
+	            placeholder="Saved locally and appended to future prompts (AgentX, AgentC, System)."
+	          ></textarea>
+	          <div class="hint">Use this for long-term context you want the agents to remember across sessions.</div>
+	        </div>
+	        <div class="field full">
+	          <label for="memorySessionInput">Session Memory (this tab)</label>
+	          <textarea id="memorySessionInput" placeholder="Keeps context for this tab only."></textarea>
+	          <div class="hint">This memory is included in prompts for the current tab/session.</div>
+	        </div>
+	        <div class="field full">
+	          <label>Export / Share</label>
+	          <div class="template-row">
+	            <input id="memoryEmailToInput" type="email" placeholder="Email (optional, for mailto:)" />
+	            <button class="btn" id="emailSessionBtn" type="button">Email</button>
+	            <button class="btn" id="copySessionBtn" type="button">Copy</button>
+	            <button class="btn" id="downloadSessionBtn" type="button">Download</button>
+	            <button class="btn" id="uploadMemoryBtn" type="button">Upload</button>
+	          </div>
+	          <div class="hint">Email opens your mail client (mailto). Download/Upload uses a portable JSON “memory pack”.</div>
+	        </div>
+	        <div class="field full">
+	          <label>Saved Sessions</label>
+	          <div class="template-row">
+	            <select id="savedSessionsSelect" aria-label="Saved sessions">
+	              <option value="">(no saved sessions)</option>
+	            </select>
+	            <button class="btn" id="saveSessionSnapshotBtn" type="button">Save Snapshot</button>
+	            <button class="btn" id="loadSessionSnapshotBtn" type="button" disabled>Load</button>
+	            <button class="btn danger" id="deleteSessionSnapshotBtn" type="button" disabled>Delete</button>
+	          </div>
+	          <div class="hint">Snapshots are stored locally in your browser storage on this device.</div>
+	        </div>
+	        <input id="memoryUploadInput" type="file" accept=".json,.txt,application/json,text/plain" hidden />
+	      </div>
+	      <div class="modal-foot">
+	        <button class="btn primary" id="saveMemoryBtn" type="button">Save Memory</button>
+	      </div>
+	    </dialog>
 
-    <dialog id="teachModal">
-      <div class="modal-head">
-        <strong>Teach</strong>
-        <button class="btn" id="closeTeachBtn" type="button">Close</button>
+	    <dialog id="teachModal">
+	      <div class="modal-head">
+	        <strong>Teach</strong>
+	        <button class="btn" id="closeTeachBtn" type="button">Close</button>
       </div>
       <div class="modal-body">
         <div class="field full">
@@ -2331,23 +2402,24 @@
 		    <script src="app_core.js?v=r2026-01-27h"></script>
 		    <script>
 		      (async () => {
-	        const STORAGE = {
-	          endpoint: "ollamaEndpoint",
-	          modelOverride: "ollamaModelOverride",
-	          agentXModelOverride: "ollamaAgentXModelOverride",
-	          agentCModelOverride: "ollamaAgentCModelOverride",
-	          autoModel: "ollamaAutoModelV2",
-	          options: "ollamaOptionsV2",
-	          autoContext: "debateAutoContextV1",
-	          debate: "debateHistoryV1",
-	          profile: "debateProfileV1",
-          sessionMemory: "debateSessionMemoryV1",
-          sessionTeachings: "debateSessionTeachingsV1",
-          onlineUrl: "debateOnlineUrlV1",
-          toolsEnabled: "debateToolsEnabledV1",
-          toolsAutoApprove: "debateToolsAutoApproveV1",
-          firstRunNoticeDismissed: "debateFirstRunNoticeDismissedV1"
-        };
+		        const STORAGE = {
+		          endpoint: "ollamaEndpoint",
+		          modelOverride: "ollamaModelOverride",
+		          agentXModelOverride: "ollamaAgentXModelOverride",
+		          agentCModelOverride: "ollamaAgentCModelOverride",
+		          autoModel: "ollamaAutoModelV2",
+		          options: "ollamaOptionsV2",
+		          autoContext: "debateAutoContextV1",
+		          debate: "debateHistoryV1",
+		          profile: "debateProfileV1",
+		          savedSessions: "debateSavedSessionsV1",
+	          sessionMemory: "debateSessionMemoryV1",
+	          sessionTeachings: "debateSessionTeachingsV1",
+	          onlineUrl: "debateOnlineUrlV1",
+	          toolsEnabled: "debateToolsEnabledV1",
+	          toolsAutoApprove: "debateToolsAutoApproveV1",
+	          firstRunNoticeDismissed: "debateFirstRunNoticeDismissedV1"
+	        };
         const IS_HTTP_ORIGIN = ["http:", "https:"].includes(window.location.protocol);
         const IS_LOOPBACK_HOST = ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
         const IS_NATIVE_WRAPPER =
@@ -2474,16 +2546,17 @@
 	              agentXLabel: "Creative Engineer",
 	              agentCLabel: "Logical Engineer",
 	              agentXRole: AGENT_X_ROLE,
-              agentCRole: AGENT_C_ROLE,
-              privacy: {
-                saveHistory: true,
-                autoClearCaches: true,
-                autoClearClipboard: true
-              },
-              customInstructions: "",
-              templates: [],
-              teachings: []
-            };
+	              agentCRole: AGENT_C_ROLE,
+	              privacy: {
+	                saveHistory: true,
+	                autoClearCaches: true,
+	                autoClearClipboard: true
+	              },
+	              persistentMemory: "",
+	              customInstructions: "",
+	              templates: [],
+	              teachings: []
+	            };
 
 			        const EXTERNAL_BROWSE_BLOCKED_QUESTION =
 			          "I can’t access external websites from this environment. Do you want me to open this in your browser instead?";
@@ -2747,12 +2820,13 @@
 		          autoModelName: (localStorage.getItem(STORAGE.autoModel) || "").trim() || null,
 		          onlineUrl: (storedOnlineUrl || DEFAULT_ONLINE_URL).trim(),
 		          toolsEnabled: localStorage.getItem(STORAGE.toolsEnabled) === "true",
-	          toolsAutoApprove: localStorage.getItem(STORAGE.toolsAutoApprove) === "true",
-            profile: { ...DEFAULT_PROFILE, templates: [], teachings: [] },
-            sessionMemory: "",
-            sessionTeachings: [],
-            templateEditorId: null,
-            pendingTeachContext: null,
+		          toolsAutoApprove: localStorage.getItem(STORAGE.toolsAutoApprove) === "true",
+	            profile: { ...DEFAULT_PROFILE, templates: [], teachings: [] },
+	            sessionMemory: "",
+	            sessionTeachings: [],
+	            savedSessions: [],
+	            templateEditorId: null,
+	            pendingTeachContext: null,
 	          topic: "",
 	          notice: null,
 	          modelSetupMessage: null,
@@ -3787,9 +3861,9 @@
 	          return "chat";
 	        }
 
-        function buildProfilePromptBlock(agent) {
-          const p = state.profile || DEFAULT_PROFILE;
-          const blocks = [];
+	        function buildProfilePromptBlock(agent) {
+	          const p = state.profile || DEFAULT_PROFILE;
+	          const blocks = [];
 
           const lang = effectiveLanguageFor(agent);
           if (lang && lang !== "auto") {
@@ -3802,11 +3876,14 @@
             blocks.push(`Response style: ${style} (0 systematic → 100 creative).`);
           }
 
-          const custom = String(p.customInstructions || "").trim();
-          if (custom) blocks.push(`MK custom instructions:\n${custom}`);
+	          const custom = String(p.customInstructions || "").trim();
+	          if (custom) blocks.push(`MK custom instructions:\n${custom}`);
+	
+	          const persistentMem = String(p.persistentMemory || "").trim();
+	          if (persistentMem) blocks.push(`Persistent memory:\n${persistentMem}`);
 
-          const sessionMem = String(state.sessionMemory || "").trim();
-          if (sessionMem) blocks.push(`Session memory:\n${sessionMem}`);
+	          const sessionMem = String(state.sessionMemory || "").trim();
+	          if (sessionMem) blocks.push(`Session memory:\n${sessionMem}`);
 
           const mergedTeachings = [...(state.sessionTeachings || []), ...(p.teachings || [])]
             .filter((t) => t && typeof t === "object" && String(t.text || "").trim())
@@ -4805,14 +4882,23 @@
             autoContextBtn.setAttribute("aria-pressed", state.autoContext ? "true" : "false");
           }
 
-          const toolsBtn = el("toolsBtn");
-          if (toolsBtn) {
-            const available = toolsAvailable();
-            toolsBtn.style.display = available ? "" : "none";
-            toolsBtn.disabled = state.loading || !available;
-            toolsBtn.setAttribute("aria-pressed", state.toolsEnabled && available ? "true" : "false");
-            toolsBtn.title = available ? "Enable local tools (workspace)" : "Tools unavailable (run python3 ./scripts/dev_server.py)";
-          }
+	          const toolsBtn = el("toolsBtn");
+	          if (toolsBtn) {
+	            const available = toolsAvailable();
+	            toolsBtn.style.display = available ? "" : "none";
+	            toolsBtn.disabled = state.loading || !available;
+	            toolsBtn.setAttribute("aria-pressed", state.toolsEnabled && available ? "true" : "false");
+	            toolsBtn.title = available ? "Enable local tools (workspace)" : "Tools unavailable (run python3 ./scripts/dev_server.py)";
+	          }
+	
+	          const memoryBtn = el("memoryBtn");
+	          if (memoryBtn) {
+	            const hasMemory =
+	              Boolean(String(state.profile?.persistentMemory || "").trim()) || Boolean(String(state.sessionMemory || "").trim());
+	            memoryBtn.disabled = state.loading;
+	            memoryBtn.setAttribute("aria-pressed", hasMemory ? "true" : "false");
+	            memoryBtn.title = hasMemory ? "Memory (saved)" : "Memory";
+	          }
 
           el("nextRoundBtn").disabled = state.loading || state.rounds.length === 0;
           el("refineBtn").disabled = state.loading || state.rounds.length === 0;
@@ -5145,8 +5231,8 @@
           return out.slice(0, 50);
         }
 
-        function normalizeTeachings(list) {
-          if (!Array.isArray(list)) return [];
+	        function normalizeTeachings(list) {
+	          if (!Array.isArray(list)) return [];
           const out = [];
           for (const item of list) {
             if (!item || typeof item !== "object") continue;
@@ -5164,8 +5250,46 @@
               at
             });
           }
-          return out.slice(0, 80);
-        }
+	          return out.slice(0, 80);
+	        }
+	
+	        function normalizeSavedSessions(list) {
+	          if (!Array.isArray(list)) return [];
+	          const out = [];
+	          for (const item of list) {
+	            if (!item || typeof item !== "object") continue;
+	            const id = String(item.id || "").trim();
+	            if (!id) continue;
+	            const name = String(item.name || "").trim() || "Session";
+	            const at = typeof item.at === "number" ? item.at : Date.now();
+	            const pack = item.pack && typeof item.pack === "object" ? item.pack : null;
+	            if (!pack) continue;
+	            out.push({ id, name: name.slice(0, 80), at, pack });
+	          }
+	          return out.slice(0, 30);
+	        }
+	
+	        function loadSavedSessions() {
+	          try {
+	            const raw = localStorage.getItem(STORAGE.savedSessions);
+	            if (!raw) {
+	              state.savedSessions = [];
+	              return;
+	            }
+	            const parsed = safeJSONParse(raw);
+	            state.savedSessions = normalizeSavedSessions(parsed);
+	          } catch {
+	            state.savedSessions = [];
+	          }
+	        }
+	
+	        function saveSavedSessions() {
+	          try {
+	            localStorage.setItem(STORAGE.savedSessions, JSON.stringify(state.savedSessions || []));
+	          } catch {
+	            // ignore
+	          }
+	        }
 
         function loadProfile() {
           try {
@@ -5201,15 +5325,16 @@
 	            next.systemLanguage = normalizeLang(next.systemLanguage, legacy || DEFAULT_PROFILE.systemLanguage);
 	            next.agentXLanguage = normalizeLang(next.agentXLanguage, legacy || DEFAULT_PROFILE.agentXLanguage);
 	            next.agentCLanguage = normalizeLang(next.agentCLanguage, legacy || DEFAULT_PROFILE.agentCLanguage);
-	            next.systemMode = normalizeMode(next.systemMode, DEFAULT_PROFILE.systemMode);
-	            next.agentXMode = normalizeMode(next.agentXMode, DEFAULT_PROFILE.agentXMode);
-	            next.agentCMode = normalizeMode(next.agentCMode, DEFAULT_PROFILE.agentCMode);
-	            next.agentXLabel = String(next.agentXLabel || DEFAULT_PROFILE.agentXLabel).trim() || DEFAULT_PROFILE.agentXLabel;
-	            next.agentCLabel = String(next.agentCLabel || DEFAULT_PROFILE.agentCLabel).trim() || DEFAULT_PROFILE.agentCLabel;
-	            next.agentXRole = String(next.agentXRole || DEFAULT_PROFILE.agentXRole).trim() || DEFAULT_PROFILE.agentXRole;
-	            next.agentCRole = String(next.agentCRole || DEFAULT_PROFILE.agentCRole).trim() || DEFAULT_PROFILE.agentCRole;
-	            next.customInstructions = String(next.customInstructions || "").trim();
-            state.profile = next;
+		            next.systemMode = normalizeMode(next.systemMode, DEFAULT_PROFILE.systemMode);
+		            next.agentXMode = normalizeMode(next.agentXMode, DEFAULT_PROFILE.agentXMode);
+		            next.agentCMode = normalizeMode(next.agentCMode, DEFAULT_PROFILE.agentCMode);
+		            next.agentXLabel = String(next.agentXLabel || DEFAULT_PROFILE.agentXLabel).trim() || DEFAULT_PROFILE.agentXLabel;
+		            next.agentCLabel = String(next.agentCLabel || DEFAULT_PROFILE.agentCLabel).trim() || DEFAULT_PROFILE.agentCLabel;
+		            next.agentXRole = String(next.agentXRole || DEFAULT_PROFILE.agentXRole).trim() || DEFAULT_PROFILE.agentXRole;
+		            next.agentCRole = String(next.agentCRole || DEFAULT_PROFILE.agentCRole).trim() || DEFAULT_PROFILE.agentCRole;
+		            next.persistentMemory = String(next.persistentMemory || "").trim();
+		            next.customInstructions = String(next.customInstructions || "").trim();
+	            state.profile = next;
           } catch {
             // ignore
           }
@@ -5248,17 +5373,212 @@
           }
         }
 
-        function saveSessionTeachings() {
-          try {
-            sessionStorage.setItem(STORAGE.sessionTeachings, JSON.stringify(state.sessionTeachings || []));
-          } catch {
-            // ignore
-          }
-        }
+	        function saveSessionTeachings() {
+	          try {
+	            sessionStorage.setItem(STORAGE.sessionTeachings, JSON.stringify(state.sessionTeachings || []));
+	          } catch {
+	            // ignore
+	          }
+	        }
+	
+	        const MEMORY_PACK_TYPE = "the-agent-family-memory-pack";
+	        const MEMORY_PACK_VERSION = 1;
+	
+	        function pickProfileForMemoryPack(profile) {
+	          const p = profile && typeof profile === "object" ? profile : DEFAULT_PROFILE;
+	          return {
+	            systemLanguage: String(p.systemLanguage || DEFAULT_PROFILE.systemLanguage),
+	            agentXLanguage: String(p.agentXLanguage || DEFAULT_PROFILE.agentXLanguage),
+	            agentCLanguage: String(p.agentCLanguage || DEFAULT_PROFILE.agentCLanguage),
+	            systemMode: normalizeMode(p.systemMode, DEFAULT_PROFILE.systemMode),
+	            agentXMode: normalizeMode(p.agentXMode, DEFAULT_PROFILE.agentXMode),
+	            agentCMode: normalizeMode(p.agentCMode, DEFAULT_PROFILE.agentCMode),
+	            style: clamp(Number(p.style), 0, 100),
+	            agentXLabel: String(p.agentXLabel || DEFAULT_PROFILE.agentXLabel),
+	            agentCLabel: String(p.agentCLabel || DEFAULT_PROFILE.agentCLabel),
+	            agentXRole: String(p.agentXRole || DEFAULT_PROFILE.agentXRole),
+	            agentCRole: String(p.agentCRole || DEFAULT_PROFILE.agentCRole),
+	            persistentMemory: String(p.persistentMemory || ""),
+	            customInstructions: String(p.customInstructions || ""),
+	            templates: normalizeTemplates(p.templates),
+	            teachings: normalizeTeachings(p.teachings)
+	          };
+	        }
+	
+	        function normalizeRoundsForPack(rounds) {
+	          if (!Array.isArray(rounds)) return [];
+	          const out = [];
+	          for (const r of rounds) {
+	            if (!r || typeof r !== "object") continue;
+	            const topic = String(r.topic || "").trim();
+	            const agentX = String(r.agentX || "").trimEnd();
+	            const agentC = String(r.agentC || "").trimEnd();
+	            const system = String(r.system || "").trimEnd();
+	            if (!topic && !agentX && !agentC && !system) continue;
+	            out.push({
+	              topic,
+	              agentX,
+	              agentC,
+	              system,
+	              model: String(r.model || "").trim(),
+	              modelX: String(r.modelX || r.model || "").trim(),
+	              modelC: String(r.modelC || r.model || "").trim(),
+	              modelSystem: String(r.modelSystem || r.model || "").trim(),
+	              tools: Array.isArray(r.tools) ? r.tools : [],
+	              at: typeof r.at === "number" ? r.at : null
+	            });
+	          }
+	          return out.slice(0, 200);
+	        }
+	
+	        function currentUiRev() {
+	          try {
+	            return String(el("uiRev")?.textContent || "").trim();
+	          } catch {
+	            return "";
+	          }
+	        }
+	
+	        function buildMemoryPack({ maxRounds } = {}) {
+	          const limit = Number.isFinite(Number(maxRounds)) ? Math.max(0, Number(maxRounds)) : 200;
+	          const rounds = normalizeRoundsForPack(state.rounds).slice(limit > 0 ? -limit : 0);
+	          return {
+	            type: MEMORY_PACK_TYPE,
+	            version: MEMORY_PACK_VERSION,
+	            exportedAt: new Date().toISOString(),
+	            uiRev: currentUiRev(),
+	            profile: pickProfileForMemoryPack(state.profile),
+	            sessionMemory: String(state.sessionMemory || ""),
+	            sessionTeachings: normalizeTeachings(state.sessionTeachings),
+	            rounds
+	          };
+	        }
+	
+	        function memoryPackToPlainText(pack, { maxRounds = 8, maxChars = 8000 } = {}) {
+	          const p = pack && typeof pack === "object" ? pack : {};
+	          const profile = p.profile && typeof p.profile === "object" ? p.profile : {};
+	          const lines = [];
+	          lines.push("The Agent Family — Session Export");
+	          lines.push(`Exported: ${String(p.exportedAt || "").trim() || new Date().toISOString()}`);
+	          const rev = String(p.uiRev || "").trim();
+	          if (rev) lines.push(`UI: ${rev}`);
+	          lines.push("");
+	          lines.push(`Modes: X=${MODE_LABELS[normalizeMode(profile.agentXMode, "chat")] || "Chat"}, C=${MODE_LABELS[normalizeMode(profile.agentCMode, "chat")] || "Chat"}, System=${MODE_LABELS[normalizeMode(profile.systemMode, "chat")] || "Chat"}`);
+	          lines.push("");
+	
+	          const persistentMemory = String(profile.persistentMemory || "").trim();
+	          if (persistentMemory) {
+	            lines.push("Persistent Memory:");
+	            lines.push(clip(persistentMemory, 2000));
+	            lines.push("");
+	          }
+	
+	          const sessionMemory = String(p.sessionMemory || "").trim();
+	          if (sessionMemory) {
+	            lines.push("Session Memory:");
+	            lines.push(clip(sessionMemory, 2000));
+	            lines.push("");
+	          }
+	
+	          const teachings = Array.isArray(profile.teachings) ? profile.teachings : [];
+	          if (teachings.length) {
+	            lines.push("Teachings:");
+	            for (const t of teachings.slice(0, 10)) {
+	              const who = t.target === "x" ? "AgentX" : t.target === "c" ? "AgentC" : t.target === "system" ? "System" : "Both";
+	              lines.push(`- ${who}: ${clip(String(t.text || "").trim(), 240)}`);
+	            }
+	            lines.push("");
+	          }
+	
+	          const rounds = normalizeRoundsForPack(p.rounds).slice(-Math.max(0, Number(maxRounds) || 0));
+	          if (rounds.length) {
+	            lines.push("Transcript (most recent rounds):");
+	            rounds.forEach((r, idx) => {
+	              lines.push("");
+	              lines.push(`Round ${Math.max(1, rounds.length - rounds.length + idx + 1)}`);
+	              if (r.topic) lines.push(`MK: ${clip(r.topic, 600)}`);
+	              if (r.agentX) lines.push(`Agent X: ${clip(r.agentX, 800)}`);
+	              if (r.agentC) lines.push(`Agent C: ${clip(r.agentC, 800)}`);
+	              if (r.system) lines.push(`System: ${clip(r.system, 800)}`);
+	            });
+	          }
+	
+	          const text = lines.join("\n").trim();
+	          return clip(text, maxChars);
+	        }
+	
+	        function downloadTextFile(filename, text, mime) {
+	          const name = String(filename || "export.txt").trim() || "export.txt";
+	          const body = String(text || "");
+	          const type = String(mime || "text/plain");
+	          const blob = new Blob([body], { type });
+	          const url = URL.createObjectURL(blob);
+	          const a = document.createElement("a");
+	          a.href = url;
+	          a.download = name;
+	          document.body.appendChild(a);
+	          a.click();
+	          a.remove();
+	          setTimeout(() => URL.revokeObjectURL(url), 2500);
+	        }
+	
+	        function openMailTo(to, subject, body) {
+	          const addr = String(to || "").trim();
+	          const qs = new URLSearchParams();
+	          qs.set("subject", String(subject || "The Agent Family — Session Export"));
+	          qs.set("body", String(body || ""));
+	          const href = `mailto:${encodeURIComponent(addr)}?${qs.toString()}`;
+	          try {
+	            window.location.href = href;
+	          } catch {
+	            // ignore
+	          }
+	        }
+	
+	        function refreshSavedSessionsSelect() {
+	          const select = el("savedSessionsSelect");
+	          if (!select) return;
+	          const keep = String(select.value || "");
+	          select.innerHTML = "";
+	
+	          const sessions = Array.isArray(state.savedSessions) ? state.savedSessions.slice() : [];
+	          sessions.sort((a, b) => Number(b.at || 0) - Number(a.at || 0));
+	
+	          const placeholder = document.createElement("option");
+	          placeholder.value = "";
+	          placeholder.textContent = sessions.length ? "(select a saved session)" : "(no saved sessions)";
+	          select.appendChild(placeholder);
+	
+	          for (const s of sessions) {
+	            const opt = document.createElement("option");
+	            opt.value = s.id;
+	            const when = (() => {
+	              try {
+	                return new Date(Number(s.at || 0)).toLocaleString();
+	              } catch {
+	                return "";
+	              }
+	            })();
+	            opt.textContent = when ? `${s.name} • ${when}` : s.name;
+	            select.appendChild(opt);
+	          }
+	
+	          if (keep && sessions.some((s) => s.id === keep)) {
+	            select.value = keep;
+	          } else {
+	            select.value = "";
+	          }
+	
+	          const enabled = Boolean(select.value);
+	          const loadBtn = el("loadSessionSnapshotBtn");
+	          const delBtn = el("deleteSessionSnapshotBtn");
+	          if (loadBtn) loadBtn.disabled = !enabled;
+	          if (delBtn) delBtn.disabled = !enabled;
+	        }
 
-	        function updateStyleValueLabel() {
-	          const node = el("styleValue");
-	          const input = el("styleRange");
+		        function updateStyleValueLabel() {
+		          const node = el("styleValue");
+		          const input = el("styleRange");
 	          if (!node || !input) return;
 	          const v = clamp(Number(input.value), 0, 100);
 	          node.textContent = `(${Number.isFinite(v) ? v : DEFAULT_PROFILE.style})`;
@@ -5498,6 +5818,100 @@
 	        function closeSettings() {
 	          closeDialogById("settingsModal");
 	        }
+	
+	        function openMemoryModal() {
+	          const persistent = el("persistentMemoryInput");
+	          if (persistent) persistent.value = String(state.profile.persistentMemory || "");
+	          const session = el("memorySessionInput");
+	          if (session) session.value = String(state.sessionMemory || "");
+	          refreshSavedSessionsSelect();
+	          openDialogById("memoryModal");
+	        }
+	
+	        function closeMemoryModal() {
+	          closeDialogById("memoryModal");
+	        }
+	
+	        function saveMemoryFromModal() {
+	          const p = String(el("persistentMemoryInput")?.value || "").trim();
+	          state.profile = { ...state.profile, persistentMemory: p };
+	          const s = String(el("memorySessionInput")?.value || "").trim();
+	          state.sessionMemory = s;
+	          try {
+	            const settingsSession = el("sessionMemoryInput");
+	            if (settingsSession) settingsSession.value = s;
+	          } catch {
+	            // ignore
+	          }
+	          saveProfile();
+	          saveSessionMemory();
+	          render();
+	          setStatusRight("Memory saved.");
+	        }
+	
+	        function addSavedSessionSnapshot(name, pack) {
+	          const id = makeId("sess");
+	          const snapshot = { id, name: String(name || "Session").trim().slice(0, 80) || "Session", at: Date.now(), pack };
+	          const list = Array.isArray(state.savedSessions) ? state.savedSessions.slice() : [];
+	          list.unshift(snapshot);
+	          state.savedSessions = normalizeSavedSessions(list);
+	          saveSavedSessions();
+	          refreshSavedSessionsSelect();
+	          try {
+	            const select = el("savedSessionsSelect");
+	            if (select) select.value = id;
+	          } catch {
+	            // ignore
+	          }
+	          refreshSavedSessionsSelect();
+	        }
+	
+	        function getSavedSessionById(id) {
+	          const key = String(id || "").trim();
+	          if (!key) return null;
+	          const list = Array.isArray(state.savedSessions) ? state.savedSessions : [];
+	          return list.find((s) => s && s.id === key) || null;
+	        }
+	
+	        function deleteSavedSessionById(id) {
+	          const key = String(id || "").trim();
+	          if (!key) return;
+	          state.savedSessions = (Array.isArray(state.savedSessions) ? state.savedSessions : []).filter((s) => s && s.id !== key);
+	          saveSavedSessions();
+	          refreshSavedSessionsSelect();
+	        }
+	
+	        function applyMemoryPack(pack) {
+	          const p = pack && typeof pack === "object" ? pack : null;
+	          if (!p) throw new Error("Invalid memory pack.");
+	          if (String(p.type || "").trim() !== MEMORY_PACK_TYPE) throw new Error("Unsupported memory pack.");
+	
+	          const profile = p.profile && typeof p.profile === "object" ? p.profile : {};
+	          const imported = pickProfileForMemoryPack(profile);
+	          const nextProfile = {
+	            ...state.profile,
+	            ...imported
+	          };
+	          nextProfile.privacy = state.profile?.privacy || DEFAULT_PROFILE.privacy;
+	          state.profile = nextProfile;
+	
+	          state.sessionMemory = String(p.sessionMemory || "").trim();
+	          state.sessionTeachings = normalizeTeachings(p.sessionTeachings);
+	          state.rounds = normalizeRoundsForPack(p.rounds);
+	          state.visibleStart = Math.max(0, state.rounds.length - DEFAULT_VISIBLE_ROUNDS);
+	          state.historyExpanded = false;
+	          state.unseenRounds = 0;
+	          state.initialScrollDone = false;
+	          state.forceScrollToBottomOnce = true;
+	          setNotice(null);
+	
+	          saveProfile();
+	          saveSessionMemory();
+	          saveSessionTeachings();
+	          saveHistory();
+	          render();
+	          setStatusRight("Loaded session.");
+	        }
 
 	        function closeTeachModal() {
 	          closeDialogById("teachModal");
@@ -5603,10 +6017,11 @@
           state.toolsEnabled = false;
           state.toolsAutoApprove = false;
 
-          state.profile = { ...DEFAULT_PROFILE, templates: [], teachings: [] };
-          state.sessionMemory = "";
-          state.sessionTeachings = [];
-          state.templateEditorId = null;
+	          state.profile = { ...DEFAULT_PROFILE, templates: [], teachings: [] };
+	          state.sessionMemory = "";
+	          state.sessionTeachings = [];
+	          state.savedSessions = [];
+	          state.templateEditorId = null;
 
           state.rounds = [];
           state.visibleStart = 0;
@@ -5920,13 +6335,14 @@
 	          render();
 	        }
 
-	        async function wire() {
-	          setComposerMoreOpen(false);
-	          loadOptions();
-	          loadProfile();
-	          loadSessionMemory();
-	          loadSessionTeachings();
-	          loadHistory();
+		        async function wire() {
+		          setComposerMoreOpen(false);
+		          loadOptions();
+		          loadProfile();
+		          loadSavedSessions();
+		          loadSessionMemory();
+		          loadSessionTeachings();
+		          loadHistory();
 	          updatePrivacyLight();
 	          refreshTemplateSelects();
 	          refreshTeachingsPre();
@@ -5941,10 +6357,11 @@
 	          updateModelDownloadUI();
             refreshCoordinationUi({ quiet: true }).catch(() => {});
 
-	          wireDialogLifecycle("settingsModal", { onClose: () => setStatusRight("") });
-	          wireDialogLifecycle("privacyModal", { onClose: () => setStatusRight("") });
-	          wireDialogLifecycle("teachModal", { onClose: () => (state.pendingTeachContext = null) });
-	          wireDialogLifecycle("toolsModal", { onClose: () => resolveToolApproval(false) });
+		          wireDialogLifecycle("settingsModal", { onClose: () => setStatusRight("") });
+		          wireDialogLifecycle("privacyModal", { onClose: () => setStatusRight("") });
+		          wireDialogLifecycle("memoryModal", { onClose: () => setStatusRight("") });
+		          wireDialogLifecycle("teachModal", { onClose: () => (state.pendingTeachContext = null) });
+		          wireDialogLifecycle("toolsModal", { onClose: () => resolveToolApproval(false) });
 	          el("modalBackdrop")?.addEventListener("click", closeTopModal);
 	          window.addEventListener("keydown", (e) => {
 	            if (e.key !== "Escape") return;
@@ -5954,13 +6371,14 @@
 	          });
 		          updateModalLayerState();
 
-			          el("onlineBtn").addEventListener("click", () => toggleAuth());
+		          el("onlineBtn").addEventListener("click", () => toggleAuth());
 		          el("downloadBtn")?.addEventListener("click", openDownload);
-	          el("toolsBtn").addEventListener("click", () => {
-	            if (!toolsAvailable()) {
-	              setStatusRight("Tools unavailable. Run `python3 ./scripts/dev_server.py` and reload.", true);
-	              return;
-	            }
+		          el("memoryBtn")?.addEventListener("click", openMemoryModal);
+		          el("toolsBtn").addEventListener("click", () => {
+		            if (!toolsAvailable()) {
+		              setStatusRight("Tools unavailable. Run `python3 ./scripts/dev_server.py` and reload.", true);
+		              return;
+		            }
             state.toolsEnabled = !state.toolsEnabled;
             localStorage.setItem(STORAGE.toolsEnabled, state.toolsEnabled ? "true" : "false");
             render();
@@ -6053,13 +6471,161 @@
             }
           });
           el("saveTemplateBtn").addEventListener("click", saveTemplateFromEditor);
-          el("deleteTemplateBtn").addEventListener("click", deleteTemplateFromEditor);
-          el("clearTeachingsBtn").addEventListener("click", clearTeachings);
-          el("clearLocalDataBtn").addEventListener("click", clearLocalData);
+	          el("deleteTemplateBtn").addEventListener("click", deleteTemplateFromEditor);
+	          el("clearTeachingsBtn").addEventListener("click", clearTeachings);
+	          el("clearLocalDataBtn").addEventListener("click", clearLocalData);
+	
+	          el("closeMemoryBtn")?.addEventListener("click", closeMemoryModal);
+	          el("saveMemoryBtn")?.addEventListener("click", saveMemoryFromModal);
+	          const scheduleMemoryAutosave = (() => {
+	            let t = 0;
+	            return () => {
+	              if (t) clearTimeout(t);
+	              t = window.setTimeout(() => {
+	                t = 0;
+	                try {
+	                  const persistent = String(el("persistentMemoryInput")?.value || "").trim();
+	                  state.profile = { ...state.profile, persistentMemory: persistent };
+	                  const session = String(el("memorySessionInput")?.value || "").trim();
+	                  state.sessionMemory = session;
+	                  saveProfile();
+	                  saveSessionMemory();
+	                  render();
+	                } catch {
+	                  // ignore
+	                }
+	              }, 600);
+	            };
+	          })();
+	          ["persistentMemoryInput", "memorySessionInput"].forEach((id) => {
+	            el(id)?.addEventListener("input", scheduleMemoryAutosave);
+	          });
+	
+	          el("savedSessionsSelect")?.addEventListener("change", refreshSavedSessionsSelect);
+	          el("saveSessionSnapshotBtn")?.addEventListener("click", () => {
+	            const defaultName = (() => {
+	              try {
+	                return new Date().toLocaleString();
+	              } catch {
+	                return "Session";
+	              }
+	            })();
+	            const name = window.prompt("Snapshot name", defaultName);
+	            if (!name) return;
+	            const pack = buildMemoryPack({ maxRounds: 24 });
+	            addSavedSessionSnapshot(name, pack);
+	            setStatusRight("Snapshot saved.");
+	          });
+	          el("loadSessionSnapshotBtn")?.addEventListener("click", () => {
+	            const id = String(el("savedSessionsSelect")?.value || "").trim();
+	            const snap = getSavedSessionById(id);
+	            if (!snap) return;
+	            try {
+	              applyMemoryPack(snap.pack);
+	            } catch (err) {
+	              setStatusRight(String(err?.message || err), true);
+	            }
+	          });
+	          el("deleteSessionSnapshotBtn")?.addEventListener("click", () => {
+	            const id = String(el("savedSessionsSelect")?.value || "").trim();
+	            if (!id) return;
+	            const ok = window.confirm("Delete this saved session snapshot?");
+	            if (!ok) return;
+	            deleteSavedSessionById(id);
+	            setStatusRight("Snapshot deleted.");
+	          });
+	
+	          el("downloadSessionBtn")?.addEventListener("click", () => {
+	            const selectedId = String(el("savedSessionsSelect")?.value || "").trim();
+	            const selected = selectedId ? getSavedSessionById(selectedId) : null;
+	            const pack = selected?.pack ? selected.pack : buildMemoryPack({ maxRounds: 200 });
+	            const json = JSON.stringify(pack, null, 2);
+	            const stamp = (() => {
+	              try {
+	                return new Date().toISOString().replace(/[:.]/g, "-");
+	              } catch {
+	                return "export";
+	              }
+	            })();
+	            downloadTextFile(`agent-family-session-${stamp}.json`, json, "application/json");
+	            setStatusRight("Downloaded.");
+	          });
+	          el("copySessionBtn")?.addEventListener("click", () => {
+	            const selectedId = String(el("savedSessionsSelect")?.value || "").trim();
+	            const selected = selectedId ? getSavedSessionById(selectedId) : null;
+	            const pack = selected?.pack ? selected.pack : buildMemoryPack({ maxRounds: 24 });
+	            const text = memoryPackToPlainText(pack, { maxRounds: 8, maxChars: 9000 });
+	            copyText(text)
+	              .then((ok) => {
+	                if (!ok) return setStatusRight("Could not copy.", true);
+	                setStatusRight("Copied.");
+	                armClipboardClear(CLIPBOARD_CLEAR_DELAY_MS);
+	              })
+	              .catch(() => setStatusRight("Could not copy.", true));
+	          });
+	          el("emailSessionBtn")?.addEventListener("click", () => {
+	            const selectedId = String(el("savedSessionsSelect")?.value || "").trim();
+	            const selected = selectedId ? getSavedSessionById(selectedId) : null;
+	            const pack = selected?.pack ? selected.pack : buildMemoryPack({ maxRounds: 24 });
+	            const to = String(el("memoryEmailToInput")?.value || "").trim();
+	            const body = memoryPackToPlainText(pack, { maxRounds: 8, maxChars: 8000 });
+	            const subject = `The Agent Family — Session Export (${new Date().toLocaleString()})`;
+	            openMailTo(to, subject, body);
+	          });
+	          el("uploadMemoryBtn")?.addEventListener("click", () => {
+	            try {
+	              el("memoryUploadInput")?.click();
+	            } catch {
+	              // ignore
+	            }
+	          });
+	          el("memoryUploadInput")?.addEventListener("change", async (e) => {
+	            try {
+	              const file = e?.target?.files?.[0];
+	              if (!file) return;
+	              const text = await file.text();
+	              const parsed = safeJSONParse(text);
+	              if (parsed && typeof parsed === "object") {
+	                if (String(parsed.type || "").trim() === MEMORY_PACK_TYPE) {
+	                  applyMemoryPack(parsed);
+	                } else if (parsed.pack && typeof parsed.pack === "object" && String(parsed.pack.type || "").trim() === MEMORY_PACK_TYPE) {
+	                  applyMemoryPack(parsed.pack);
+	                } else if (Array.isArray(parsed.savedSessions)) {
+	                  state.savedSessions = normalizeSavedSessions(parsed.savedSessions);
+	                  saveSavedSessions();
+	                  refreshSavedSessionsSelect();
+	                  setStatusRight("Imported saved sessions.");
+	                } else {
+	                  const asText = JSON.stringify(parsed, null, 2);
+	                  const merged = [String(state.profile.persistentMemory || "").trim(), String(asText || "").trim()]
+	                    .filter(Boolean)
+	                    .join("\n\n");
+	                  state.profile = { ...state.profile, persistentMemory: merged };
+	                  saveProfile();
+	                  render();
+	                  setStatusRight("Imported as persistent memory.");
+	                }
+	              } else {
+	                const merged = [String(state.profile.persistentMemory || "").trim(), String(text || "").trim()].filter(Boolean).join("\n\n");
+	                state.profile = { ...state.profile, persistentMemory: merged };
+	                saveProfile();
+	                render();
+	                setStatusRight("Imported as persistent memory.");
+	              }
+	            } catch (err) {
+	              setStatusRight(String(err?.message || err), true);
+	            } finally {
+	              try {
+	                e.target.value = "";
+	              } catch {
+	                // ignore
+	              }
+	            }
+	          });
 
-          el("conversation").addEventListener("click", (e) => {
-            const copyTarget = e.target?.closest ? e.target.closest("[data-copy-agent]") : null;
-            if (copyTarget) {
+	          el("conversation").addEventListener("click", (e) => {
+	            const copyTarget = e.target?.closest ? e.target.closest("[data-copy-agent]") : null;
+	            if (copyTarget) {
               const agent = String(copyTarget.getAttribute("data-copy-agent") || "").trim();
               const idx = Number(copyTarget.getAttribute("data-copy-round"));
               if (!Number.isFinite(idx)) return;
