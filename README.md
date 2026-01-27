@@ -42,6 +42,7 @@
 - UI: `Contents/Resources/Homepage.html` (shows balance + opens Stripe Payment Link)
 - Balance API: `GET /api/tokens/balance` (requires `Authorization: Bearer <Magic ID token>`)
 - Webhook: `POST /api/stripe/webhook` (Stripe `checkout.session.completed` → credits tokens)
+- First login bonus: new accounts get `77` free AgentC-oins (only if they have no prior balance in KV).
 
 Required env (Vercel/Node serverless):
 - `KV_REST_API_URL` and `KV_REST_API_TOKEN` (or `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`)

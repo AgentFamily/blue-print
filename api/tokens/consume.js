@@ -1,7 +1,8 @@
 const { getMagicUserIdFromRequest } = require("../_lib/magic_user");
-const { kvIncrBy } = require("../_lib/upstash_kv");
+const { kvIncrBy, kvSetNX } = require("../_lib/upstash_kv");
 
 const tokenKey = (userId) => `agentc:tokens:${userId}`;
+const INITIAL_TOKENS = 77;
 
 module.exports = async (req, res) => {
   if (req.method !== "POST") {
@@ -21,6 +22,12 @@ module.exports = async (req, res) => {
   }
 
   try {
+    try {
+      await kvSetNX(tokenKey(userId), String(INITIAL_TOKENS));
+    } catch {
+      // ignore init failures
+    }
+
     const next = await kvIncrBy(tokenKey(userId), -1);
     if (next < 0) {
       await kvIncrBy(tokenKey(userId), 1);
@@ -42,4 +49,3 @@ module.exports = async (req, res) => {
     res.end(JSON.stringify({ error: err?.message || "Token store error" }));
   }
 };
-

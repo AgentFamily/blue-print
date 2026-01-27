@@ -1,8 +1,9 @@
 const { getMagicJwtFromRequest, magicUserEmailFromJwt, getMagicUserIdFromRequest } = require("./_lib/magic_user");
-const { kvIncrBy, kvSet } = require("./_lib/upstash_kv");
+const { kvIncrBy, kvSet, kvSetNX } = require("./_lib/upstash_kv");
 
 const tokenKey = (userId) => `agentc:tokens:${userId}`;
 const emailKey = (email) => `agentc:email_to_user:${String(email || "").trim().toLowerCase()}`;
+const INITIAL_TOKENS = 77;
 
 module.exports = async (req, res) => {
   if (req.method !== "POST") {
@@ -64,6 +65,13 @@ module.exports = async (req, res) => {
           // ignore mapping failures
         }
       }
+
+      try {
+        await kvSetNX(tokenKey(magicUserId), String(INITIAL_TOKENS));
+      } catch {
+        // ignore init failures
+      }
+
       const next = await kvIncrBy(tokenKey(magicUserId), -1);
       if (next < 0) {
         await kvIncrBy(tokenKey(magicUserId), 1);
