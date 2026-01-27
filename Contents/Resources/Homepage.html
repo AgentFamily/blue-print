@@ -806,6 +806,71 @@
         -webkit-overflow-scrolling: touch;
       }
 
+      /* Glitch language (client-only visual effect) */
+      .answer pre.mk-glitch {
+        --g-i: 2;
+        --g-amp: 0.6px;
+        --g-delay: 0s;
+        --g-dur: 3.2s;
+        --g-alpha: 0.12;
+        font-weight: 650;
+        letter-spacing: 0.012em;
+        font-variant-numeric: tabular-nums;
+        text-shadow:
+          calc(var(--g-amp) * -1) 0 rgba(236, 72, 153, var(--g-alpha)),
+          calc(var(--g-amp) * 1) 0 rgba(59, 130, 246, var(--g-alpha));
+        transform: translateZ(0);
+        will-change: transform, filter, text-shadow;
+      }
+
+      @media (prefers-reduced-motion: no-preference) {
+        .answer pre.mk-glitch {
+          animation: mk-glitch-jitter var(--g-dur) steps(2, end) infinite;
+          animation-delay: var(--g-delay);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .answer pre.mk-glitch {
+          animation: none;
+          text-shadow:
+            0 0 rgba(236, 72, 153, 0),
+            0 0 rgba(59, 130, 246, 0);
+          filter: none;
+        }
+      }
+
+      @keyframes mk-glitch-jitter {
+        0% {
+          transform: translate(0, 0);
+          filter: none;
+        }
+        12% {
+          transform: translate(calc(var(--g-amp) * -1), calc(var(--g-amp) * 0.25));
+          filter: saturate(1.04);
+        }
+        24% {
+          transform: translate(calc(var(--g-amp) * 0.75), calc(var(--g-amp) * -0.25));
+          filter: contrast(1.03);
+        }
+        38% {
+          transform: translate(calc(var(--g-amp) * -0.5), calc(var(--g-amp) * -0.2));
+          filter: saturate(1.02);
+        }
+        55% {
+          transform: translate(calc(var(--g-amp) * 1), 0);
+          filter: contrast(1.04);
+        }
+        72% {
+          transform: translate(calc(var(--g-amp) * -0.25), calc(var(--g-amp) * 0.5));
+          filter: none;
+        }
+        100% {
+          transform: translate(0, 0);
+          filter: none;
+        }
+      }
+
       .terminal {
         display: inline-block;
         padding: 2px 6px;
@@ -2010,6 +2075,7 @@
                 <div class="voice-title">Agent X</div>
                 <select id="agentXLanguageSelect" aria-label="Agent X language">
                   <option value="auto">Auto</option>
+                  <option value="glitch">Glitch</option>
                   <option value="en">English</option>
                   <option value="es">Español</option>
                   <option value="fr">Français</option>
@@ -2028,6 +2094,7 @@
                 <div class="voice-title">System</div>
                 <select id="systemLanguageSelect" aria-label="System language">
                   <option value="auto">Auto</option>
+                  <option value="glitch">Glitch</option>
                   <option value="en">English</option>
                   <option value="es">Español</option>
                   <option value="fr">Français</option>
@@ -2050,6 +2117,7 @@
                 <div class="voice-title">Agent C</div>
                 <select id="agentCLanguageSelect" aria-label="Agent C language">
                   <option value="auto">Auto</option>
+                  <option value="glitch">Glitch</option>
                   <option value="en">English</option>
                   <option value="es">Español</option>
                   <option value="fr">Français</option>
@@ -2063,6 +2131,16 @@
               </div>
             </div>
           </div>
+	          <div class="template-row" id="glitchControlsRow" style="display:none; align-items:center">
+	            <div class="hint" style="flex:1 1 auto; min-width:220px">
+	              Glitch is visual-only (client-side). The model still answers normally.
+	            </div>
+	            <div style="display:flex;gap:10px;align-items:center;justify-content:flex-end;flex:0 0 auto">
+	              <span class="hint" style="white-space:nowrap">Intensity</span>
+	              <input id="glitchIntensityRange" type="range" min="0" max="10" step="1" value="2" style="width:160px" />
+	              <span id="glitchIntensityLabel" class="hint" style="min-width:44px;text-align:right">2</span>
+	            </div>
+	          </div>
 	          <div class="template-row">
 	            <button class="btn" id="shuffleLanguagesBtn" type="button">Shuffle Agent Languages</button>
 	          </div>
@@ -2526,6 +2604,7 @@
 	              systemLanguage: "auto",
 	              agentXLanguage: "auto",
 	              agentCLanguage: "auto",
+	              glitchIntensity: 2,
 	              systemMode: "chat",
 	              agentXMode: "chat",
 	              agentCMode: "chat",
@@ -3791,6 +3870,7 @@
 
 	        const LANGUAGE_LABELS = {
 	          auto: "Auto",
+	          glitch: "Glitch",
 	          en: "English",
 	          es: "Spanish",
 	          fr: "French",
@@ -3885,7 +3965,7 @@
 
 	        function voicePreviewText(agent, langCode) {
 	          const raw = String(langCode || "").trim() || "auto";
-	          const code = VOICE_PREVIEW_COPY[raw] ? raw : "en";
+	          const code = raw === "glitch" ? "en" : VOICE_PREVIEW_COPY[raw] ? raw : "en";
 	          const block = VOICE_PREVIEW_COPY[code] || VOICE_PREVIEW_COPY.en;
 	          if (agent === "x") return block.x;
 	          if (agent === "c") return block.c;
@@ -3893,6 +3973,7 @@
 	        }
 
 	        function renderVoicePreviewFromDraft() {
+	          renderGlitchControlsFromDraft();
 	          const subX = el("previewLangX");
 	          const subSystem = el("previewLangSystem");
 	          const subC = el("previewLangC");
@@ -3966,7 +4047,7 @@
 	          const blocks = [];
 
           const lang = effectiveLanguageFor(agent);
-          if (lang && lang !== "auto") {
+          if (lang && lang !== "auto" && lang !== "glitch") {
             const label = LANGUAGE_LABELS[lang] || lang;
             blocks.push(`Respond in ${label}.`);
           }
@@ -5251,6 +5332,103 @@
             }
 
             updateJumpLatestButton();
+            applyGlitchToConversation();
+        }
+
+        function clampInt(n, min, max) {
+          const v = parseInt(String(n ?? ""), 10);
+          if (!Number.isFinite(v)) return min;
+          return Math.max(min, Math.min(max, v));
+        }
+
+        function glitchIntensity() {
+          return clampInt(state.profile?.glitchIntensity ?? DEFAULT_PROFILE.glitchIntensity, 0, 10);
+        }
+
+        function anyGlitchSelectedDraft() {
+          const picks = [
+            String(el("agentXLanguageSelect")?.value || ""),
+            String(el("agentCLanguageSelect")?.value || ""),
+            String(el("systemLanguageSelect")?.value || "")
+          ].map((s) => String(s || "").trim());
+          return picks.includes("glitch");
+        }
+
+        function renderGlitchControlsFromDraft() {
+          const row = el("glitchControlsRow");
+          const range = el("glitchIntensityRange");
+          const label = el("glitchIntensityLabel");
+          if (!row || !range || !label) return;
+          const show = anyGlitchSelectedDraft();
+          row.style.display = show ? "flex" : "none";
+          const n = clampInt(range.value, 0, 10);
+          label.textContent = String(n);
+        }
+
+        function applyGlitchToConversation() {
+          const container = el("conversation");
+          if (!container) return;
+          const intensity = glitchIntensity();
+          const preferReduced = (() => {
+            try {
+              return window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+            } catch {
+              return false;
+            }
+          })();
+
+          const langX = effectiveLanguageFor("x");
+          const langC = effectiveLanguageFor("c");
+          const langS = effectiveLanguageFor("system");
+          const onX = langX === "glitch" && intensity > 0;
+          const onC = langC === "glitch" && intensity > 0;
+          const onS = langS === "glitch" && intensity > 0;
+
+          const seed01 = (n) => {
+            let x = (Number(n) || 0) >>> 0;
+            x ^= x << 13;
+            x ^= x >>> 17;
+            x ^= x << 5;
+            return (x >>> 0) / 4294967296;
+          };
+
+          const styleFor = (roundIndex, agentSalt) => {
+            const base = ((roundIndex + 1) * 2654435761) ^ agentSalt;
+            const r1 = seed01(base);
+            const r2 = seed01(base ^ 0x9e3779b9);
+            const delay = (r1 * 1.7).toFixed(2);
+            const dur = (2.6 + r2 * 2.2 - intensity * 0.05).toFixed(2);
+            const amp = (0.2 + intensity * 0.22).toFixed(2);
+            const alpha = preferReduced ? 0 : Math.min(0.22, 0.06 + intensity * 0.02);
+            return { delay, dur, amp, alpha: alpha.toFixed(2) };
+          };
+
+          const setGlitch = (pre, on, roundIndex, agentSalt) => {
+            if (!pre) return;
+            if (!on) {
+              pre.classList.remove("mk-glitch");
+              pre.style.removeProperty("--g-i");
+              pre.style.removeProperty("--g-amp");
+              pre.style.removeProperty("--g-delay");
+              pre.style.removeProperty("--g-dur");
+              pre.style.removeProperty("--g-alpha");
+              return;
+            }
+            const s = styleFor(roundIndex, agentSalt);
+            pre.classList.add("mk-glitch");
+            pre.style.setProperty("--g-i", String(intensity));
+            pre.style.setProperty("--g-amp", `${s.amp}px`);
+            pre.style.setProperty("--g-delay", `${s.delay}s`);
+            pre.style.setProperty("--g-dur", `${s.dur}s`);
+            pre.style.setProperty("--g-alpha", s.alpha);
+          };
+
+          container.querySelectorAll(".round").forEach((roundEl) => {
+            const roundIndex = clampInt(roundEl?.dataset?.roundIndex, 0, 9999);
+            setGlitch(roundEl.querySelector(".answer.x pre"), onX, roundIndex, 0x78);
+            setGlitch(roundEl.querySelector(".answer.c pre"), onC, roundIndex, 0x63);
+            setGlitch(roundEl.querySelector(".answer.system pre"), onS, roundIndex, 0x73);
+          });
         }
 
         async function refreshHealth() {
@@ -5458,6 +5636,8 @@
 
             const style = clamp(Number(next.style), 0, 100);
             next.style = Number.isFinite(style) ? style : DEFAULT_PROFILE.style;
+            const gi = clampInt(next.glitchIntensity ?? DEFAULT_PROFILE.glitchIntensity, 0, 10);
+            next.glitchIntensity = gi;
             const normalizeLang = (value, fallback) => {
               const raw = String(value || "").trim();
               if (!raw) return String(fallback || DEFAULT_PROFILE.systemLanguage);
@@ -5925,6 +6105,8 @@
 	          el("agentXLanguageSelect").value = state.profile.agentXLanguage || DEFAULT_PROFILE.agentXLanguage;
 	          el("agentCLanguageSelect").value = state.profile.agentCLanguage || DEFAULT_PROFILE.agentCLanguage;
 	          el("systemLanguageSelect").value = state.profile.systemLanguage || DEFAULT_PROFILE.systemLanguage;
+	          el("glitchIntensityRange").value = String(clampInt(state.profile.glitchIntensity ?? DEFAULT_PROFILE.glitchIntensity, 0, 10));
+	          renderGlitchControlsFromDraft();
 	          el("agentXModeSelect").value = state.profile.agentXMode || DEFAULT_PROFILE.agentXMode;
 	          el("agentCModeSelect").value = state.profile.agentCMode || DEFAULT_PROFILE.agentCMode;
 	          el("systemModeSelect").value = state.profile.systemMode || DEFAULT_PROFILE.systemMode;
@@ -5951,7 +6133,7 @@
 	          refreshTeachingsPre();
 	          renderVoicePreviewFromDraft();
 
-		          openDialogById("settingsModal");
+	          openDialogById("settingsModal");
 		          updateModelDownloadUI();
 	            refreshLanUi({ quiet: true }).catch(() => {});
               refreshCoordinationUi({ quiet: true }).catch(() => {});
@@ -6597,6 +6779,7 @@
 	          ["agentXLanguageSelect", "systemLanguageSelect", "agentCLanguageSelect"].forEach((id) => {
 	            el(id)?.addEventListener("change", renderVoicePreviewFromDraft);
 	          });
+            el("glitchIntensityRange")?.addEventListener("input", renderVoicePreviewFromDraft);
 	          ["agentXLabelInput", "agentCLabelInput"].forEach((id) => {
 	            el(id)?.addEventListener("input", renderVoicePreviewFromDraft);
 	          });
@@ -6604,7 +6787,7 @@
 	            el(id)?.addEventListener("change", renderVoicePreviewFromDraft);
 	          });
 	          el("shuffleLanguagesBtn").addEventListener("click", () => {
-	            const codes = Object.keys(LANGUAGE_LABELS).filter((c) => c !== "auto");
+	            const codes = Object.keys(LANGUAGE_LABELS).filter((c) => c !== "auto" && c !== "glitch");
 	            if (!codes.length) return;
 	            const pick = () => codes[Math.floor(Math.random() * codes.length)] || "en";
 	            let x = pick();
@@ -6958,7 +7141,7 @@
             }
           });
 
-	          el("saveBtn").addEventListener("click", async () => {
+          el("saveBtn").addEventListener("click", async () => {
 	            const endpoint = normalizeEndpoint(el("endpointInput").value);
 	            if (endpoint && /:11434$/.test(endpoint)) {
 	              setStatusRight("Use the proxy (e.g. http://127.0.0.1:3030). Browsers can’t call :11434 directly (CORS).", true);
@@ -6976,6 +7159,7 @@
 	            const agentXLanguage = String(el("agentXLanguageSelect")?.value || DEFAULT_PROFILE.agentXLanguage).trim() || DEFAULT_PROFILE.agentXLanguage;
 	            const agentCLanguage = String(el("agentCLanguageSelect")?.value || DEFAULT_PROFILE.agentCLanguage).trim() || DEFAULT_PROFILE.agentCLanguage;
 	            const systemLanguage = String(el("systemLanguageSelect")?.value || DEFAULT_PROFILE.systemLanguage).trim() || DEFAULT_PROFILE.systemLanguage;
+              const glitchIntensity = clampInt(el("glitchIntensityRange")?.value ?? DEFAULT_PROFILE.glitchIntensity, 0, 10);
 	            const agentXMode = normalizeMode(el("agentXModeSelect")?.value, DEFAULT_PROFILE.agentXMode);
 	            const agentCMode = normalizeMode(el("agentCModeSelect")?.value, DEFAULT_PROFILE.agentCMode);
 	            const systemMode = normalizeMode(el("systemModeSelect")?.value, DEFAULT_PROFILE.systemMode);
@@ -7009,6 +7193,7 @@
 	              agentXLanguage,
 	              agentCLanguage,
 	              systemLanguage,
+	              glitchIntensity,
 	              agentXMode,
 	              agentCMode,
 	              systemMode,
@@ -7026,7 +7211,7 @@
               customInstructions
             };
             state.sessionMemory = sessionMemory;
-            saveProfile();
+	            saveProfile();
             saveSessionMemory();
             refreshTemplateSelects();
             refreshTeachingsPre();
