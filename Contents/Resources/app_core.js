@@ -211,6 +211,7 @@
 	        const style = document.createElement("style");
 	        style.id = styleId;
 	        style.textContent = `
+	          .mk-magic-bubbles,.mk-magic-panel,.mk-magic-panel *{box-sizing:border-box}
 	          .mk-magic-bubbles{position:fixed;right:18px;bottom:18px;z-index:999999;display:flex;flex-direction:column;gap:10px;align-items:flex-end;touch-action:none}
 	          .mk-magic-bubble{appearance:none;border:0;background:transparent;color:#fff;cursor:pointer;padding:0;display:block}
 	          .mk-magic-bubble:disabled{opacity:.6;cursor:not-allowed}
@@ -225,10 +226,11 @@
 	          .mk-magic-toast:after{content:"";position:absolute;right:22px;bottom:-8px;width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:8px solid rgba(12,12,14,.92)}
 		          .mk-magic-panel{position:fixed;right:18px;bottom:86px;z-index:999999;width:min(640px,calc(100vw - 24px));max-height:min(640px,calc(100vh - 120px));overflow:auto;border-radius:16px;border:1px solid rgba(255,255,255,.14);background:rgba(12,12,14,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:#e5e7eb;box-shadow:0 18px 60px rgba(0,0,0,.6);padding:14px;display:none;resize:both;min-width:320px;min-height:240px}
 		          .mk-magic-panel.open{display:block}
-		          @media (max-width: 720px){.mk-magic-panel{right:10px;bottom:78px;width:calc(100vw - 20px);max-height:calc(100vh - 110px);resize:none;min-width:0}}
+		          @media (max-width: 720px){.mk-magic-panel{left:10px;right:10px;top:max(10px,env(safe-area-inset-top));bottom:max(10px,env(safe-area-inset-bottom));width:auto;max-height:none;min-height:0;resize:none}}
 		          .mk-magic-title{display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:650;margin-bottom:10px}
 		          .mk-magic-title{cursor:grab;user-select:none}
 		          .mk-magic-title:active{cursor:grabbing}
+	          @media (max-width: 720px){.mk-magic-title{position:sticky;top:0;padding:8px 0;background:rgba(12,12,14,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);z-index:1}}
 	          .mk-magic-close{appearance:none;border:0;background:transparent;color:#9ca3af;cursor:pointer;font-size:18px;line-height:1;padding:2px 6px}
 	          .mk-magic-row{display:flex;gap:8px;align-items:center}
 	          .mk-magic-input,.mk-magic-textarea{width:100%;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#e5e7eb;padding:10px 10px;font-size:13px;outline:none}
@@ -277,7 +279,7 @@
 		      const OFFLINE_PNG_CACHE = "mkMagicStatusPngOfflineV1";
 		      const ONLINE_PNG_CACHE = "mkMagicStatusPngOnlineV1";
 		      const PNG_VERSION_KEY = "mkMagicStatusPngVersionV1";
-		      const PNG_CACHE_VERSION = "r2026-01-27f";
+		      const PNG_CACHE_VERSION = "r2026-01-27g";
 
 		      const ensurePngCacheVersion = () => {
 		        try {
@@ -1441,9 +1443,9 @@
   api.createMagicAuthWidget = createMagicAuthWidget;
 
 		  try {
-		    Object.defineProperty(api, "__version", { value: "r2026-01-27f", enumerable: true });
+		    Object.defineProperty(api, "__version", { value: "r2026-01-27g", enumerable: true });
 			  } catch {
-		    api.__version = "r2026-01-27f";
+		    api.__version = "r2026-01-27g";
 			  }
 
   api.showSavedToast = (text, durationMs) => {
