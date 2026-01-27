@@ -217,9 +217,12 @@
 	          .mk-magic-status-inner{position:relative;display:block;width:min(360px,calc(100vw - 36px));max-width:220px}
 	          .mk-magic-status-img{width:100%;height:auto;display:block;filter:drop-shadow(0 18px 38px rgba(0,0,0,.55))}
 	          .mk-magic-status-fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;letter-spacing:.2px}
-	          .mk-magic-panel{position:fixed;right:18px;bottom:86px;z-index:999999;width:min(760px,calc(100vw - 36px));border-radius:16px;border:1px solid rgba(255,255,255,.14);background:rgba(12,12,14,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:#e5e7eb;box-shadow:0 18px 60px rgba(0,0,0,.6);padding:14px;display:none}
-	          .mk-magic-panel.open{display:block}
-	          .mk-magic-title{display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:650;margin-bottom:10px}
+		          .mk-magic-panel{position:fixed;right:18px;bottom:86px;z-index:999999;width:min(640px,calc(100vw - 24px));max-height:min(640px,calc(100vh - 120px));overflow:auto;border-radius:16px;border:1px solid rgba(255,255,255,.14);background:rgba(12,12,14,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:#e5e7eb;box-shadow:0 18px 60px rgba(0,0,0,.6);padding:14px;display:none;resize:both;min-width:320px;min-height:240px}
+		          .mk-magic-panel.open{display:block}
+		          @media (max-width: 720px){.mk-magic-panel{right:10px;bottom:78px;width:calc(100vw - 20px);max-height:calc(100vh - 110px);resize:none;min-width:0}}
+		          .mk-magic-title{display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:650;margin-bottom:10px}
+		          .mk-magic-title{cursor:grab;user-select:none}
+		          .mk-magic-title:active{cursor:grabbing}
 	          .mk-magic-close{appearance:none;border:0;background:transparent;color:#9ca3af;cursor:pointer;font-size:18px;line-height:1;padding:2px 6px}
 	          .mk-magic-row{display:flex;gap:8px;align-items:center}
 	          .mk-magic-input,.mk-magic-textarea{width:100%;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#e5e7eb;padding:10px 10px;font-size:13px;outline:none}
@@ -469,7 +472,7 @@
 		        }
 
 		        const email = String(state.email || "").trim();
-		        if (email && hasPublishableKey()) {
+		        if (email && looksLikePublishableKey()) {
 		          await loginWithEmailOtp({ showUI: true });
 		          return;
 		        }
@@ -482,14 +485,159 @@
 	          // ignore
 	        }
 	      });
-      close?.addEventListener("click", () => {
-        state.open = false;
-        render();
-      });
+	      close?.addEventListener("click", () => {
+	        state.open = false;
+	        render();
+	      });
 
-	      const emailInput = panel.querySelector("#mkMagicEmail");
-	      const publishableKeyInput = panel.querySelector("#mkMagicPublishableKey");
-	      const publishableKeyRow = panel.querySelector("#mkMagicPublishableKeyRow");
+	      // Drag-to-move panel (desktop). Double-click title bar to reset position.
+	      try {
+	        const LAYOUT_KEY = "mkMagicPanelLayoutV1";
+	        const titleBar = panel.querySelector(".mk-magic-title");
+	        const loadLayout = () => {
+	          try {
+	            const raw = localStorage.getItem(LAYOUT_KEY);
+	            if (!raw) return null;
+	            const obj = JSON.parse(raw);
+	            if (!obj || typeof obj !== "object") return null;
+	            const left = typeof obj.left === "number" ? obj.left : null;
+	            const top = typeof obj.top === "number" ? obj.top : null;
+	            const width = typeof obj.width === "number" ? obj.width : null;
+	            const height = typeof obj.height === "number" ? obj.height : null;
+	            if (left == null || top == null) return null;
+	            return { left, top, width, height };
+	          } catch {
+	            return null;
+	          }
+	        };
+	        const saveLayout = () => {
+	          try {
+	            const rect = panel.getBoundingClientRect();
+	            localStorage.setItem(
+	              LAYOUT_KEY,
+	              JSON.stringify({
+	                left: rect.left,
+	                top: rect.top,
+	                width: rect.width,
+	                height: rect.height
+	              })
+	            );
+	          } catch {
+	            // ignore
+	          }
+	        };
+	        const applyLayout = (layout) => {
+	          if (!layout) return false;
+	          panel.style.right = "auto";
+	          panel.style.bottom = "auto";
+	          panel.style.left = `${Math.max(6, layout.left)}px`;
+	          panel.style.top = `${Math.max(6, layout.top)}px`;
+	          if (typeof layout.width === "number" && layout.width > 0) panel.style.width = `${layout.width}px`;
+	          if (typeof layout.height === "number" && layout.height > 0) panel.style.height = `${layout.height}px`;
+	          return true;
+	        };
+	        const resetLayout = () => {
+	          try {
+	            localStorage.removeItem(LAYOUT_KEY);
+	          } catch {
+	            // ignore
+	          }
+	          panel.style.left = "";
+	          panel.style.top = "";
+	          panel.style.width = "";
+	          panel.style.height = "";
+	          panel.style.right = "";
+	          panel.style.bottom = "";
+	        };
+
+	        applyLayout(loadLayout());
+
+	        let dragging = null;
+	        const startDrag = (clientX, clientY) => {
+	          const rect = panel.getBoundingClientRect();
+	          dragging = {
+	            startX: clientX,
+	            startY: clientY,
+	            startLeft: rect.left,
+	            startTop: rect.top,
+	            width: rect.width,
+	            height: rect.height
+	          };
+	          panel.style.right = "auto";
+	          panel.style.bottom = "auto";
+	          document.body.style.userSelect = "none";
+	        };
+	        const moveDrag = (clientX, clientY) => {
+	          if (!dragging) return;
+	          const dx = clientX - dragging.startX;
+	          const dy = clientY - dragging.startY;
+	          const vw = Math.max(320, window.innerWidth || 0);
+	          const vh = Math.max(320, window.innerHeight || 0);
+	          const maxLeft = Math.max(6, vw - dragging.width - 6);
+	          const maxTop = Math.max(6, vh - dragging.height - 6);
+	          const left = Math.min(maxLeft, Math.max(6, dragging.startLeft + dx));
+	          const top = Math.min(maxTop, Math.max(6, dragging.startTop + dy));
+	          panel.style.left = `${left}px`;
+	          panel.style.top = `${top}px`;
+	        };
+	        const endDrag = () => {
+	          if (!dragging) return;
+	          dragging = null;
+	          document.body.style.userSelect = "";
+	          saveLayout();
+	        };
+
+	        titleBar?.addEventListener("dblclick", (e) => {
+	          if (e?.target?.closest?.(".mk-magic-close")) return;
+	          resetLayout();
+	        });
+
+	        titleBar?.addEventListener("mousedown", (e) => {
+	          if (e.button !== 0) return;
+	          if (e?.target?.closest?.(".mk-magic-close")) return;
+	          startDrag(e.clientX, e.clientY);
+	          e.preventDefault();
+	        });
+	        window.addEventListener("mousemove", (e) => moveDrag(e.clientX, e.clientY));
+	        window.addEventListener("mouseup", () => endDrag());
+
+	        titleBar?.addEventListener(
+	          "touchstart",
+	          (e) => {
+	            const t = e.touches && e.touches[0];
+	            if (!t) return;
+	            startDrag(t.clientX, t.clientY);
+	          },
+	          { passive: true }
+	        );
+	        window.addEventListener(
+	          "touchmove",
+	          (e) => {
+	            const t = e.touches && e.touches[0];
+	            if (!t) return;
+	            moveDrag(t.clientX, t.clientY);
+	          },
+	          { passive: true }
+	        );
+	        window.addEventListener("touchend", () => endDrag());
+
+	        // Persist resize (if supported)
+	        try {
+	          const ro = new ResizeObserver(() => {
+	            if (!state.open) return;
+	            saveLayout();
+	          });
+	          ro.observe(panel);
+	        } catch {
+	          // ignore
+	        }
+	      } catch {
+	        // ignore
+	      }
+
+		      const emailInput = panel.querySelector("#mkMagicEmail");
+		      const publishableKeyInput = panel.querySelector("#mkMagicPublishableKey");
+		      const publishableKeyRow = panel.querySelector("#mkMagicPublishableKeyRow");
 	      const jwtInput = panel.querySelector("#mkMagicJwt");
 	      const logoutBtn = panel.querySelector("#mkMagicLogout");
 	      const otpRegularBtn = panel.querySelector("#mkMagicOtpRegular");
@@ -501,16 +649,18 @@
 	      const chainSelect = panel.querySelector("#mkMagicChain");
 	      const getServerWalletBtn = panel.querySelector("#mkMagicGetServerWallet");
 
-      emailInput?.addEventListener("input", (e) => {
-        state.email = String(e?.target?.value || "");
-        saveToStorage();
-      });
-		      publishableKeyInput?.addEventListener("input", (e) => {
-		        state.publishableKey = String(e?.target?.value || "").trim();
-		        if (state.publishableKey) global.__MAGIC_PUBLISHABLE_KEY = state.publishableKey;
-		        if (state.lastError && state.lastError.toLowerCase().includes("publishable key")) setError("");
-		        saveToStorage();
-		      });
+	      emailInput?.addEventListener("input", (e) => {
+	        state.email = String(e?.target?.value || "");
+	        saveToStorage();
+	        render();
+	      });
+			      publishableKeyInput?.addEventListener("input", (e) => {
+			        state.publishableKey = String(e?.target?.value || "").trim();
+			        if (state.publishableKey) global.__MAGIC_PUBLISHABLE_KEY = state.publishableKey;
+			        if (state.lastError && state.lastError.toLowerCase().includes("publishable key")) setError("");
+			        saveToStorage();
+			        render();
+			      });
 		      jwtInput?.addEventListener("input", (e) => {
 		        state.jwt = String(e?.target?.value || "");
 		        saveToStorage();
@@ -582,40 +732,41 @@
       el.error.textContent = state.lastError;
     }
 
-				    function render() {
-				      if (!el) return;
-				      el.panel.classList.toggle("open", Boolean(state.open));
-				      const signedIn = Boolean(state.jwt);
-			      const hasPk = hasPublishableKey();
-			      try {
-			        el.setStatusImg?.(signedIn);
-			      } catch {
-			        // ignore
-			      }
+					    function render() {
+					      if (!el) return;
+					      el.panel.classList.toggle("open", Boolean(state.open));
+					      const signedIn = Boolean(state.jwt);
+				      const hasPk = looksLikePublishableKey();
+				      try {
+				        el.setStatusImg?.(signedIn);
+				      } catch {
+				        // ignore
+				      }
 		      if (el.status) el.status.textContent = signedIn ? "Signed in" : "Signed out";
 		      if (el.address) el.address.textContent = state.address ? state.address : "—";
 		      if (el.embedded) el.embedded.textContent = state.embeddedAddress ? state.embeddedAddress : "—";
 		      if (el.email && typeof el.email.value === "string" && el.email.value !== state.email) el.email.value = state.email;
 		      if (el.publishableKey && typeof el.publishableKey.value === "string" && el.publishableKey.value !== state.publishableKey)
 		        el.publishableKey.value = state.publishableKey;
-			      if (el.publishableKeyRow && el.publishableKeyRow.style) {
-			        el.publishableKeyRow.style.display = hasPk ? "none" : "flex";
-			      }
+				      if (el.publishableKeyRow && el.publishableKeyRow.style) {
+				        const injectedPk = Boolean(global.__MAGIC_PUBLISHABLE_KEY && !state.publishableKey);
+				        el.publishableKeyRow.style.display = injectedPk ? "none" : "flex";
+				      }
 		      if (el.jwt && typeof el.jwt.value === "string" && el.jwt.value !== state.jwt) el.jwt.value = state.jwt;
 			      if (el.logoutBtn) el.logoutBtn.disabled = state.loading || !signedIn;
-			      if (el.otpRegularBtn) el.otpRegularBtn.disabled = state.loading || !hasPk;
-			      if (el.otpWhiteBtn) el.otpWhiteBtn.disabled = state.loading || !hasPk;
-			      if (el.oauthRedirectBtn) el.oauthRedirectBtn.disabled = state.loading || !hasPk;
-			      if (el.oauthPopupBtn) el.oauthPopupBtn.disabled = state.loading || !hasPk;
-			      if (el.getServerWalletBtn) el.getServerWalletBtn.disabled = state.loading || !signedIn;
+				      if (el.otpRegularBtn) el.otpRegularBtn.disabled = state.loading || !hasPk;
+				      if (el.otpWhiteBtn) el.otpWhiteBtn.disabled = state.loading || !hasPk;
+				      if (el.oauthRedirectBtn) el.oauthRedirectBtn.disabled = state.loading || !hasPk;
+				      if (el.oauthPopupBtn) el.oauthPopupBtn.disabled = state.loading || !hasPk;
+				      if (el.getServerWalletBtn) el.getServerWalletBtn.disabled = state.loading || !signedIn;
 		      if (el.chain && typeof el.chain.value === "string" && el.chain.value !== state.chain) el.chain.value = state.chain;
 		      if (el.providerId && typeof el.providerId.value === "string" && el.providerId.value !== state.providerId)
 		        el.providerId.value = state.providerId;
-			      if (!hasPk && state.open && !state.loading && !state.lastError) {
-			        const originOk = ["http:", "https:"].includes(String(window?.location?.protocol || ""));
-			        const originNote = originOk ? "" : " (This UI is not on http(s); Magic may require a browser-served URL.)";
-			        setError(`Magic login is disabled until a publishable key is set (MAGIC_PUBLISHABLE_KEY / pk_…).${originNote}`);
-			      }
+		      if (!hasPk && state.open && !state.loading && !state.lastError) {
+		        const originOk = ["http:", "https:"].includes(String(window?.location?.protocol || ""));
+		        const originNote = originOk ? "" : " (This UI is not on http(s); Magic may require a browser-served URL.)";
+		        setError(`Magic login is disabled until a publishable key is set (MAGIC_PUBLISHABLE_KEY / pk_…).${originNote}`);
+		      }
 		    }
 
 	    function loadScript(src) {
