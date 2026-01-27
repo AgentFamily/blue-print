@@ -400,9 +400,9 @@
 	          <div>Auth + Wallet <span id="mkMagicStatus" class="mk-magic-pill" style="margin-left:8px">Signed out</span></div>
 	          <button class="mk-magic-close" type="button" aria-label="Close">×</button>
 	        </div>
-	        <div class="mk-magic-grid">
-	          <div class="mk-magic-section">
-	            <div class="mk-magic-h">Email Sign-in (Magic Link)</div>
+		        <div class="mk-magic-grid">
+		          <div class="mk-magic-section">
+		            <div class="mk-magic-h">Email Sign-in (Magic Link)</div>
 	            <div class="mk-magic-row" style="margin-bottom:10px">
 	              <input id="mkMagicEmail" class="mk-magic-input" type="email" placeholder="Enter your email address" autocomplete="email" />
 	            </div>
@@ -415,15 +415,16 @@
 	              Requires <span class="mk-magic-pill">MAGIC_PUBLISHABLE_KEY</span> (or paste <span class="mk-magic-pill">pk_…</span> above).
 	            </div>
 	          </div>
-	          <div class="mk-magic-section">
-	            <div class="mk-magic-h">OAuth</div>
-	            <button id="mkMagicOAuthRedirect" class="mk-magic-bigbtn" type="button" style="margin-bottom:10px">Login with Redirect</button>
-	            <button id="mkMagicOAuthPopup" class="mk-magic-bigbtn" type="button">Login with Popup</button>
-	            <div class="mk-magic-sub">
-	              Provider defaults to Google. Redirect uses the current URL as callback.
-	            </div>
-	          </div>
-	        </div>
+		          <div class="mk-magic-section">
+		            <div class="mk-magic-h">OAuth</div>
+		            <button id="mkMagicOAuthRedirect" class="mk-magic-bigbtn" type="button" style="margin-bottom:10px">Login with Redirect</button>
+		            <button id="mkMagicOAuthPopup" class="mk-magic-bigbtn" type="button">Login with Popup</button>
+		            <button id="mkMagicOAuthTelegram" class="mk-magic-bigbtn" type="button" style="margin-top:10px">Login with Telegram</button>
+		            <div class="mk-magic-sub">
+		              Google uses redirect/popup. Telegram uses a popup (requires Telegram bot configured in Magic).
+		            </div>
+		          </div>
+		        </div>
 
 		        <div class="mk-magic-section" style="margin-top:12px">
 		          <div class="mk-magic-h">Wallet</div>
@@ -650,10 +651,11 @@
 	      const jwtInput = panel.querySelector("#mkMagicJwt");
 	      const logoutBtn = panel.querySelector("#mkMagicLogout");
 	      const otpRegularBtn = panel.querySelector("#mkMagicOtpRegular");
-	      const otpWhiteBtn = panel.querySelector("#mkMagicOtpWhitelabel");
-	      const oauthRedirectBtn = panel.querySelector("#mkMagicOAuthRedirect");
-	      const oauthPopupBtn = panel.querySelector("#mkMagicOAuthPopup");
-	      const embeddedSpan = panel.querySelector("#mkMagicEmbedded");
+		      const otpWhiteBtn = panel.querySelector("#mkMagicOtpWhitelabel");
+		      const oauthRedirectBtn = panel.querySelector("#mkMagicOAuthRedirect");
+		      const oauthPopupBtn = panel.querySelector("#mkMagicOAuthPopup");
+		      const oauthTelegramBtn = panel.querySelector("#mkMagicOAuthTelegram");
+		      const embeddedSpan = panel.querySelector("#mkMagicEmbedded");
 	      const providerIdInput = panel.querySelector("#mkMagicProviderId");
 	      const chainSelect = panel.querySelector("#mkMagicChain");
 		      const getServerWalletBtn = panel.querySelector("#mkMagicGetServerWallet");
@@ -685,12 +687,15 @@
 	      otpWhiteBtn?.addEventListener("click", async () => {
 	        await loginWithEmailOtp({ showUI: false });
 	      });
-	      oauthRedirectBtn?.addEventListener("click", async () => {
-	        await loginWithOAuth({ flow: "redirect" });
-	      });
-	      oauthPopupBtn?.addEventListener("click", async () => {
-	        await loginWithOAuth({ flow: "popup" });
-	      });
+		      oauthRedirectBtn?.addEventListener("click", async () => {
+		        await loginWithOAuth({ flow: "redirect" });
+		      });
+		      oauthPopupBtn?.addEventListener("click", async () => {
+		        await loginWithOAuth({ flow: "popup" });
+		      });
+		      oauthTelegramBtn?.addEventListener("click", async () => {
+		        await loginWithTelegram();
+		      });
 	      providerIdInput?.addEventListener("input", (e) => {
 	        state.providerId = String(e?.target?.value || "").trim();
 	        saveToStorage();
@@ -728,12 +733,13 @@
 		        providerId: providerIdInput,
 	        chain: chainSelect,
 	        otpRegularBtn,
-	        otpWhiteBtn,
-	        oauthRedirectBtn,
-	        oauthPopupBtn,
-	        getServerWalletBtn,
-	        error: panel.querySelector("#mkMagicError")
-	      };
+		        otpWhiteBtn,
+		        oauthRedirectBtn,
+		        oauthPopupBtn,
+		        oauthTelegramBtn,
+		        getServerWalletBtn,
+		        error: panel.querySelector("#mkMagicError")
+		      };
 
       return el;
     }
@@ -750,7 +756,7 @@
       el.error.textContent = state.lastError;
     }
 
-					    function render() {
+			    function render() {
 					      if (!el) return;
 					      el.panel.classList.toggle("open", Boolean(state.open));
 					      const signedIn = Boolean(state.jwt);
@@ -771,11 +777,12 @@
 				        el.publishableKeyRow.style.display = injectedPk ? "none" : "flex";
 				      }
 		      if (el.jwt && typeof el.jwt.value === "string" && el.jwt.value !== state.jwt) el.jwt.value = state.jwt;
-			      if (el.logoutBtn) el.logoutBtn.disabled = state.loading || !signedIn;
+				      if (el.logoutBtn) el.logoutBtn.disabled = state.loading || !signedIn;
 				      if (el.otpRegularBtn) el.otpRegularBtn.disabled = state.loading || !hasPk;
 				      if (el.otpWhiteBtn) el.otpWhiteBtn.disabled = state.loading || !hasPk;
 				      if (el.oauthRedirectBtn) el.oauthRedirectBtn.disabled = state.loading || !hasPk;
 				      if (el.oauthPopupBtn) el.oauthPopupBtn.disabled = state.loading || !hasPk;
+				      if (el.oauthTelegramBtn) el.oauthTelegramBtn.disabled = state.loading || !hasPk;
 				      if (el.getServerWalletBtn) el.getServerWalletBtn.disabled = state.loading || !signedIn;
 		      if (el.chain && typeof el.chain.value === "string" && el.chain.value !== state.chain) el.chain.value = state.chain;
 		      if (el.providerId && typeof el.providerId.value === "string" && el.providerId.value !== state.providerId)
@@ -1060,6 +1067,44 @@
 	        saveToStorage();
 	      } catch (e) {
 	        setError(e?.message || "OAuth login failed");
+	      } finally {
+	        state.loading = false;
+	        render();
+	      }
+	    }
+
+	    async function loginWithTelegram() {
+	      ensureDom();
+	      setError("");
+	      state.loading = true;
+	      render();
+	      try {
+	        const sdk = await ensureMagicSdk();
+	        if (!sdk) throw new Error("Missing MAGIC_PUBLISHABLE_KEY (or Magic SDK failed to load).");
+	        const oauth = sdk?.oauth2 || sdk?.oauth;
+	        if (!oauth) throw new Error("Magic OAuth not available in this SDK build.");
+
+	        const redirectURI = (() => {
+	          try {
+	            return new URL("/oauth/callback", window.location.origin).toString();
+	          } catch {
+	            return String(window.location.href);
+	          }
+	        })();
+
+	        if (oauth.loginWithPopup) {
+	          await oauth.loginWithPopup({ provider: "telegram" });
+	        } else if (oauth.loginWithRedirect) {
+	          await oauth.loginWithRedirect({ provider: "telegram", redirectURI });
+	          return;
+	        } else {
+	          throw new Error("Telegram login is unavailable in this SDK build.");
+	        }
+
+	        await refreshFromMagic();
+	        saveToStorage();
+	      } catch (e) {
+	        setError(e?.message || "Telegram login failed");
 	      } finally {
 	        state.loading = false;
 	        render();
