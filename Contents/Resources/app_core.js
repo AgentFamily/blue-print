@@ -425,8 +425,8 @@
 	          </div>
 	        </div>
 
-	        <div class="mk-magic-section" style="margin-top:12px">
-	          <div class="mk-magic-h">Wallet</div>
+		        <div class="mk-magic-section" style="margin-top:12px">
+		          <div class="mk-magic-h">Wallet</div>
 	          <div class="mk-magic-row" style="margin-bottom:10px; gap:10px; flex-wrap:wrap">
 	            <span>Embedded:</span>
 	            <span id="mkMagicEmbedded" class="mk-magic-pill">—</span>
@@ -450,12 +450,21 @@
 	          <div class="mk-magic-actions">
 	            <button id="mkMagicLogout" class="mk-magic-action danger" type="button">Log out</button>
 	          </div>
-	          <div class="mk-magic-sub">
-	            Local dev uses <span class="mk-magic-pill">/server/magic/wallet</span>; production uses <span class="mk-magic-pill">/api/magic/wallet</span>.
-	          </div>
-	        </div>
-	        <div id="mkMagicError" class="mk-magic-error" style="display:none"></div>
-	      `;
+		          <div class="mk-magic-sub">
+		            Local dev uses <span class="mk-magic-pill">/server/magic/wallet</span>; production uses <span class="mk-magic-pill">/api/magic/wallet</span>.
+		          </div>
+		        </div>
+		        <div class="mk-magic-section" style="margin-top:12px">
+		          <div class="mk-magic-h">Admin</div>
+		          <button id="mkMagicAccessWhitelist" class="mk-magic-action secondary" type="button" style="width:100%;justify-content:center">
+		            View Magic Access Whitelist
+		          </button>
+		          <div class="mk-magic-sub">
+		            Admin-only. Requires MK admin cookie and server env <span class="mk-magic-pill">MAGIC_SECRET_KEY</span>.
+		          </div>
+		        </div>
+		        <div id="mkMagicError" class="mk-magic-error" style="display:none"></div>
+		      `;
 
 	      document.body.appendChild(bubbles);
 	      document.body.appendChild(panel);
@@ -647,7 +656,8 @@
 	      const embeddedSpan = panel.querySelector("#mkMagicEmbedded");
 	      const providerIdInput = panel.querySelector("#mkMagicProviderId");
 	      const chainSelect = panel.querySelector("#mkMagicChain");
-	      const getServerWalletBtn = panel.querySelector("#mkMagicGetServerWallet");
+		      const getServerWalletBtn = panel.querySelector("#mkMagicGetServerWallet");
+		      const accessWhitelistBtn = panel.querySelector("#mkMagicAccessWhitelist");
 
 	      emailInput?.addEventListener("input", (e) => {
 	        state.email = String(e?.target?.value || "");
@@ -689,9 +699,17 @@
 	        state.chain = String(e?.target?.value || "ETH").trim() || "ETH";
 	        saveToStorage();
 	      });
-	      getServerWalletBtn?.addEventListener("click", async () => {
-	        await getOrCreateServerWallet();
-	      });
+		      getServerWalletBtn?.addEventListener("click", async () => {
+		        await getOrCreateServerWallet();
+		      });
+		      accessWhitelistBtn?.addEventListener("click", async () => {
+		        try {
+		          const url = "/api/magic/access_whitelist";
+		          window.open(url, "_blank", "noopener,noreferrer");
+		        } catch (e) {
+		          setError(String(e?.message || e) || "Could not open allowlist.");
+		        }
+		      });
 
 		      el = {
 		        bubbles,
