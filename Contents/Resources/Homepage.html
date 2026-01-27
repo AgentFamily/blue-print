@@ -1692,7 +1692,7 @@
 		            <img
 		              id="onlineStatusImg"
 		              class="online-status-img"
-		              src="ChatGPT_Image_Jan_26__2026_at_07_41_19_PM-removebg-preview.svg"
+		              src="Logged OUT.png"
 		              alt="Logged out"
 		            />
 		            <span id="onlineLabel">Sign in</span>
@@ -5038,11 +5038,11 @@
 	              onlineBtn.title = signedIn ? "Sign out" : "Sign in";
 	              onlineLabel.textContent = signedIn ? "Log out" : "Sign in";
 	              if (onlineStatusImg) {
-	                const LOGGED_OUT_SVG = "ChatGPT_Image_Jan_26__2026_at_07_41_19_PM-removebg-preview.svg";
-	                const LOGGED_IN_SVG = "ChatGPT_Image_Jan_26__2026_at_07_41_21_PM-removebg-preview.svg";
-	                const LOGGED_OUT_PNG_CACHE = "mkMagicStatusPngOfflineV1";
-	                const LOGGED_IN_PNG_CACHE = "mkMagicStatusPngOnlineV1";
-	                const key = signedIn ? LOGGED_IN_PNG_CACHE : LOGGED_OUT_PNG_CACHE;
+	              const LOGGED_OUT_PNG = "Logged OUT.png";
+	              const LOGGED_IN_PNG = "Logged IN.png";
+	              const LOGGED_OUT_PNG_CACHE = "mkMagicStatusPngOfflineV1";
+	              const LOGGED_IN_PNG_CACHE = "mkMagicStatusPngOnlineV1";
+	              const key = signedIn ? LOGGED_IN_PNG_CACHE : LOGGED_OUT_PNG_CACHE;
 	                let src = "";
 	                try {
 	                  const cached = String(localStorage.getItem(key) || "");
@@ -5050,11 +5050,11 @@
 	                } catch {
 	                  // ignore
 	                }
-	                if (!src) src = signedIn ? LOGGED_IN_SVG : LOGGED_OUT_SVG;
-	                onlineStatusImg.src = src;
-	                onlineStatusImg.alt = signedIn ? "Logged in" : "Logged out";
-	              }
+	              if (!src) src = signedIn ? LOGGED_IN_PNG : LOGGED_OUT_PNG;
+	              onlineStatusImg.src = src;
+	              onlineStatusImg.alt = signedIn ? "Logged in" : "Logged out";
 	            }
+	          }
 
 	            const coinsBtn = el("coinsBtn");
 	            const coinsLabel = el("coinsLabel");
