@@ -218,8 +218,8 @@
 	          .mk-magic-bubble:hover{transform:translateY(-1px)}
 	          .mk-magic-bubble:active{transform:translateY(0)}
 	          .mk-magic-status{border-radius:18px}
-	          .mk-magic-status-inner{position:relative;display:block;width:min(360px,calc(100vw - 36px));max-width:220px}
-	          .mk-magic-status-img{width:100%;height:auto;display:block;filter:drop-shadow(0 18px 38px rgba(0,0,0,.55))}
+		          .mk-magic-status-inner{position:relative;display:block;width:52px;height:52px}
+		          .mk-magic-status-img{width:52px;height:52px;display:block;border-radius:999px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);object-fit:cover;object-position:50% 28%;filter:drop-shadow(0 14px 28px rgba(0,0,0,.45))}
 	          .mk-magic-status-fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;letter-spacing:.2px}
 	          .mk-magic-toast{position:fixed;z-index:1000000;max-width:220px;background:rgba(12,12,14,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:10px 12px;color:#fff;font-weight:800;font-size:13px;box-shadow:0 14px 40px rgba(0,0,0,.55);opacity:0;transform:translateY(6px);transition:opacity .18s ease,transform .18s ease;pointer-events:none;display:none}
 	          .mk-magic-toast.open{opacity:1;transform:translateY(0)}
@@ -265,17 +265,17 @@
 	      statusBubble.className = "mk-magic-bubble mk-magic-status";
 	      statusBubble.title = "Log in / Log out";
 	      statusBubble.setAttribute("aria-label", "Log in / Log out");
-	      statusBubble.innerHTML = `
-	        <span class="mk-magic-status-inner">
-	          <img class="mk-magic-status-img" alt="AgentC login status" src="ChatGPT_Image_Jan_26__2026_at_07_41_19_PM-removebg-preview.svg" />
-	          <span class="mk-magic-status-fallback" aria-hidden="true">AgentC</span>
-	        </span>
-	      `;
+		      statusBubble.innerHTML = `
+		        <span class="mk-magic-status-inner">
+		          <img class="mk-magic-status-img" alt="AgentC login status" src="Logged OUT.png" />
+		          <span class="mk-magic-status-fallback" aria-hidden="true">C</span>
+		        </span>
+		      `;
 
 		      const statusImg = statusBubble.querySelector(".mk-magic-status-img");
 		      const statusFallback = statusBubble.querySelector(".mk-magic-status-fallback");
-		      const OFFLINE_SVG = "ChatGPT_Image_Jan_26__2026_at_07_41_19_PM-removebg-preview.svg";
-		      const ONLINE_SVG = "ChatGPT_Image_Jan_26__2026_at_07_41_21_PM-removebg-preview.svg";
+		      const OFFLINE_SVG = "Logged OUT.png";
+		      const ONLINE_SVG = "Logged IN.png";
 		      const OFFLINE_PNG_CACHE = "mkMagicStatusPngOfflineV1";
 		      const ONLINE_PNG_CACHE = "mkMagicStatusPngOnlineV1";
 		      const PNG_VERSION_KEY = "mkMagicStatusPngVersionV1";
@@ -370,19 +370,9 @@
 
 		      const setStatusImg = (signedIn) => {
 		        if (!statusImg) return;
-		        const cacheKey = signedIn ? ONLINE_PNG_CACHE : OFFLINE_PNG_CACHE;
-		        const png = getCachedPng(cacheKey);
-		        const svg = signedIn ? ONLINE_SVG : OFFLINE_SVG;
-		        statusImg.setAttribute("src", png || svg);
+		        // Root fix: always use bundled PNGs (avoid legacy SVG→PNG cache that can show oversized icons).
+		        statusImg.setAttribute("src", signedIn ? ONLINE_SVG : OFFLINE_SVG);
 		      };
-
-		      // Prefer PNG button rendering when possible (render SVG → PNG once, cache in localStorage).
-		      try {
-		        void warmPngFromSvg(OFFLINE_SVG, OFFLINE_PNG_CACHE);
-		        void warmPngFromSvg(ONLINE_SVG, ONLINE_PNG_CACHE);
-		      } catch {
-		        // ignore
-		      }
 
 	      try {
 	        if (statusFallback) statusFallback.style.display = "none";

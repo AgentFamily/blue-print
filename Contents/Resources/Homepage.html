@@ -274,9 +274,13 @@
 		      }
 
 		      .online-status-img {
-		        width: 28px;
-		        height: 28px;
-		        object-fit: contain;
+		        width: 22px;
+		        height: 22px;
+		        border-radius: 999px;
+		        border: 1px solid rgba(15, 23, 42, 0.10);
+		        background: rgba(255, 255, 255, 0.75);
+		        object-fit: cover;
+		        object-position: 50% 28%;
 		        filter: drop-shadow(0 10px 18px rgba(2, 6, 23, 0.12));
 		        flex: 0 0 auto;
 		      }
@@ -5040,18 +5044,8 @@
 	              if (onlineStatusImg) {
 	              const LOGGED_OUT_PNG = "Logged OUT.png";
 	              const LOGGED_IN_PNG = "Logged IN.png";
-	              const LOGGED_OUT_PNG_CACHE = "mkMagicStatusPngOfflineV1";
-	              const LOGGED_IN_PNG_CACHE = "mkMagicStatusPngOnlineV1";
-	              const key = signedIn ? LOGGED_IN_PNG_CACHE : LOGGED_OUT_PNG_CACHE;
-	                let src = "";
-	                try {
-	                  const cached = String(localStorage.getItem(key) || "");
-	                  if (cached.startsWith("data:image/png")) src = cached;
-	                } catch {
-	                  // ignore
-	                }
-	              if (!src) src = signedIn ? LOGGED_IN_PNG : LOGGED_OUT_PNG;
-	              onlineStatusImg.src = src;
+	              // Root fix: avoid legacy SVG→PNG localStorage caches (they can keep showing oversized icons).
+	              onlineStatusImg.src = signedIn ? LOGGED_IN_PNG : LOGGED_OUT_PNG;
 	              onlineStatusImg.alt = signedIn ? "Logged in" : "Logged out";
 	            }
 	          }
