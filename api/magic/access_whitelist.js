@@ -37,7 +37,7 @@ module.exports = async (req, res) => {
     res.statusCode = 403;
     res.setHeader("Content-Type", "application/json");
     res.setHeader("Cache-Control", "no-store");
-    res.end(JSON.stringify({ error: "Forbidden (admin only). Use the MK admin code first." }));
+    res.end(JSON.stringify({ error: "Forbidden (admin only)." }));
     return;
   }
 
@@ -91,4 +91,3 @@ module.exports = async (req, res) => {
     res.end(JSON.stringify({ error: "Request failed", details: String(err?.message || err) }));
   }
 };
-
