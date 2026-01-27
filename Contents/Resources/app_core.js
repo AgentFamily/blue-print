@@ -853,7 +853,11 @@
 		      // Optional OAuth2 extension (Google login) — best-effort load for static HTML builds.
 		      try {
 		        if (!global.OAuthExtension) {
-		          await loadScript("https://cdn.jsdelivr.net/npm/@magic-ext/oauth2/dist/extension.js");
+		          try {
+		            await loadScript("https://cdn.jsdelivr.net/npm/@magic-ext/oauth2/dist/extension.js");
+		          } catch {
+		            await loadScript("https://unpkg.com/@magic-ext/oauth2/dist/extension.js");
+		          }
 		        }
 		      } catch {
 		        // ignore
@@ -1044,8 +1048,14 @@
 	          await oauth.loginWithRedirect({ provider, redirectURI, scope: ["user:email"] });
 	          return;
 	        }
-	        if (!oauth.loginWithPopup) throw new Error("loginWithPopup not available.");
-	        await oauth.loginWithPopup({ provider, scope: ["user:email"] });
+	        if (oauth.loginWithPopup) {
+	          await oauth.loginWithPopup({ provider, scope: ["user:email"] });
+	        } else if (oauth.loginWithRedirect) {
+	          await oauth.loginWithRedirect({ provider, redirectURI, scope: ["user:email"] });
+	          return;
+	        } else {
+	          throw new Error("OAuth login is unavailable in this SDK build.");
+	        }
 	        await refreshFromMagic();
 	        saveToStorage();
 	      } catch (e) {

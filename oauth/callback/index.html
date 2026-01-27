@@ -123,7 +123,11 @@
         }
 
         try {
-          await loadScript("https://cdn.jsdelivr.net/npm/@magic-ext/oauth2/dist/extension.js");
+          try {
+            await loadScript("https://cdn.jsdelivr.net/npm/@magic-ext/oauth2/dist/extension.js");
+          } catch {
+            await loadScript("https://unpkg.com/@magic-ext/oauth2/dist/extension.js");
+          }
         } catch {
           // best-effort; the SDK may still provide oauth (legacy)
         }
@@ -163,4 +167,3 @@
     </script>
   </body>
 </html>
-
