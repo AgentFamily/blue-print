@@ -820,9 +820,9 @@
 	      }
 	    }
 
-		    async function ensureMagicSdk() {
-		      if (magic) return magic;
-		      let publishableKey = getPublishableKey();
+	    async function ensureMagicSdk() {
+	      if (magic) return magic;
+	      let publishableKey = getPublishableKey();
 		      if (!publishableKey) {
 		        await fetchMagicConfig();
 		        publishableKey = getPublishableKey();
@@ -850,7 +850,23 @@
 	      }
 	      if (!global.Magic) return null;
 
-	      magic = new global.Magic(publishableKey);
+	      magic = new global.Magic(publishableKey, {
+	        useStorageCache: true
+	      });
+	      try {
+	        if (magic?.user?.onUserLoggedOut) {
+	          magic.user.onUserLoggedOut((isLoggedOut) => {
+	            if (!isLoggedOut) return;
+	            state.jwt = "";
+	            state.address = "";
+	            state.embeddedAddress = "";
+	            saveToStorage();
+	            render();
+	          });
+	        }
+	      } catch {
+	        // ignore
+	      }
 	      return magic;
 	    }
 
@@ -893,47 +909,99 @@
 	    }
 
 			    async function loginWithEmailOtp({ showUI }) {
-		      ensureDom();
-		      setError("");
-		      state.loading = true;
-	      render();
+			      ensureDom();
+			      setError("");
+			      state.loading = true;
+		      render();
 
-		      try {
-		        const sdk = await ensureMagicSdk();
-		        if (!sdk) throw new Error("Missing MAGIC_PUBLISHABLE_KEY (or Magic SDK failed to load).");
-		        if (!looksLikePublishableKey()) throw new Error("Invalid Magic publishable key (expected pk_…).");
-		        const email = String(state.email || "").trim();
-		        if (!email) throw new Error("Enter an email address.");
-		        const doMagicLink = async () => {
-		          if (!sdk.auth?.loginWithMagicLink) throw new Error("Magic Link login not available in this SDK build.");
-		          await sdk.auth.loginWithMagicLink({ email, showUI: Boolean(showUI) });
-		        };
-		        if (sdk.auth?.loginWithEmailOTP) {
-		          try {
-		            await sdk.auth.loginWithEmailOTP({ email });
-		          } catch (otpErr) {
-		            try {
-		              await doMagicLink();
-		            } catch (mlErr) {
-		              const otpMsg = String(otpErr?.message || otpErr?.reason || "").trim();
-		              const mlMsg = String(mlErr?.message || mlErr?.reason || "").trim();
+			      try {
+			        const sdk = await ensureMagicSdk();
+			        if (!sdk) throw new Error("Missing MAGIC_PUBLISHABLE_KEY (or Magic SDK failed to load).");
+			        if (!looksLikePublishableKey()) throw new Error("Invalid Magic publishable key (expected pk_…).");
+			        const email = String(state.email || "").trim();
+			        if (!email) throw new Error("Enter an email address.");
+			        const doMagicLink = async () => {
+			          if (!sdk.auth?.loginWithMagicLink) throw new Error("Magic Link login not available in this SDK build.");
+			          await sdk.auth.loginWithMagicLink({ email, showUI: Boolean(showUI) });
+			        };
+			        if (sdk.auth?.loginWithEmailOTP) {
+			          try {
+			            if (showUI === false) {
+			              // Minimal whitelabel flow: prompt for OTP and emit events if supported.
+			              const handle = sdk.auth.loginWithEmailOTP({ email, showUI: false, deviceCheckUI: false });
+			              const result = await new Promise((resolve, reject) => {
+			                let settled = false;
+			                const done = (v) => {
+			                  if (settled) return;
+			                  settled = true;
+			                  resolve(v);
+			                };
+			                const fail = (e) => {
+			                  if (settled) return;
+			                  settled = true;
+			                  reject(e);
+			                };
+			                try {
+			                  handle?.on?.("email-otp-sent", () => {
+			                    try {
+			                      const otp = window.prompt("Enter the code from your email");
+			                      if (!otp) {
+			                        handle?.emit?.("cancel");
+			                        fail(new Error("Login canceled."));
+			                        return;
+			                      }
+			                      handle?.emit?.("verify-email-otp", otp);
+			                    } catch (e) {
+			                      fail(e);
+			                    }
+			                  });
+			                  handle?.on?.("invalid-email-otp", () => {
+			                    try {
+			                      const otp = window.prompt("Invalid code. Try again:");
+			                      if (!otp) {
+			                        handle?.emit?.("cancel");
+			                        fail(new Error("Login canceled."));
+			                        return;
+			                      }
+			                      handle?.emit?.("verify-email-otp", otp);
+			                    } catch (e) {
+			                      fail(e);
+			                    }
+			                  });
+			                  handle?.on?.("done", done);
+			                  handle?.on?.("error", fail);
+			                  if (typeof handle?.then === "function") handle.then(done).catch(fail);
+			                } catch (e) {
+			                  fail(e);
+			                }
+			              });
+			              void result;
+			            } else {
+			              await sdk.auth.loginWithEmailOTP({ email, showUI: true });
+			            }
+			          } catch (otpErr) {
+			            try {
+			              await doMagicLink();
+			            } catch (mlErr) {
+			              const otpMsg = String(otpErr?.message || otpErr?.reason || "").trim();
+			              const mlMsg = String(mlErr?.message || mlErr?.reason || "").trim();
 		              throw new Error(
 		                `Email OTP failed${otpMsg ? `: ${otpMsg}` : ""}. Magic Link also failed${mlMsg ? `: ${mlMsg}` : ""}.`
 		              );
 		            }
 		          }
-		        } else {
-		          await doMagicLink();
-		        }
-				        await refreshFromMagic();
-				        saveToStorage();
+			        } else {
+			          await doMagicLink();
+			        }
+					        await refreshFromMagic();
+					        saveToStorage();
 			      } catch (e) {
-		        setError(formatMagicError(e));
-		      } finally {
-		        state.loading = false;
-		        render();
-		      }
-		    }
+			        setError(formatMagicError(e));
+			      } finally {
+			        state.loading = false;
+			        render();
+			      }
+			    }
 
 	    async function loginWithOAuth({ flow }) {
 	      ensureDom();
