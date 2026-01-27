@@ -1696,7 +1696,7 @@
 	          </button>
 	        </div>
 
-        <div class="brand" aria-label="AgentX and AgentC">
+	        <div class="brand" aria-label="AgentX, AgentC, and System">
           <div class="agent-title">
             <span class="agent-word sf-ultrathin">Agent</span><span class="agent-letter sf-light">X</span>
           </div>
@@ -1721,20 +1721,13 @@
           </div>
         </div>
       </section>
-      <section class="hero">
-        <h2 class="sf-thin">Two AI engineers. Same template. Different perspective.</h2>
-        <h1>
-          <span class="sf-ultrathin">Local</span>
-          <span class="sf-thin">AI Debate</span>
-        </h1>
-        <p>Type a technical topic. AgentX and AgentC respond in the same structured format, using SF UltraThin/Thin/Light typography.</p>
-
-        <div class="chips" aria-label="Example topics">
-          <button class="chip-btn" type="button" data-topic="Microservices and Monolithic Architecture">Microservices / Monolith</button>
-          <button class="chip-btn" type="button" data-topic="REST and GraphQL API Design">REST / GraphQL</button>
-          <button class="chip-btn" type="button" data-topic="SQL and NoSQL Databases">SQL / NoSQL</button>
-          <button class="chip-btn" type="button" data-topic="TDD and BDD Testing Approaches">TDD / BDD</button>
-        </div>
+	      <section class="hero">
+	        <h2 class="sf-thin">Three voices. One conversation. Different perspectives.</h2>
+	        <h1>
+	          <span class="sf-ultrathin">Local</span>
+	          <span class="sf-thin">AI Debate</span>
+	        </h1>
+	        <p>Ask anything. Switch each speaker between Chat, Teach, TDD, BDD, or Automate (⋯).</p>
 
         <div class="agents" aria-label="Agent profiles">
           <div class="agent-card">
@@ -1761,7 +1754,7 @@
         </div>
       </section>
 
-      <section class="panel" aria-label="Conversation">
+	      <section class="panel" aria-label="Conversation">
         <div class="panel-head">
           <div class="panel-title">
             <strong class="sf-thin">Conversation</strong>
@@ -1773,29 +1766,50 @@
             <button class="btn danger" id="resetBtn" type="button" disabled>Reset</button>
           </div>
         </div>
-        <div class="conversation" id="conversation">
-          <div class="empty" id="emptyState">Enter a topic below to start the debate.</div>
-        </div>
-      </section>
-    </main>
+	        <div class="conversation" id="conversation">
+	          <div class="empty" id="emptyState">Send a message to start.</div>
+	        </div>
+	      </section>
+	    </main>
 
-    <div class="composer" role="region" aria-label="Debate input">
-      <div class="wrap composer-inner">
-        <form id="topicForm" autocomplete="off">
-          <div class="composer-row">
-            <textarea id="topicInput" placeholder="Enter a technical topic for both AI engineers to debate…" rows="1"></textarea>
-            <div class="composer-actions">
-              <button class="btn primary" id="startBtn" type="submit">Start Debate</button>
-              <button class="btn icon" id="composerMoreBtn" type="button" aria-expanded="false" aria-label="More options" title="More">⋯</button>
-            </div>
-          </div>
-          <div class="composer-tools" aria-label="Templates">
-            <select id="templateQuickSelect">
-              <option value="">Templates…</option>
-            </select>
-            <button class="btn" id="insertTemplateBtn" type="button" disabled>Insert</button>
-            <button class="btn" id="manageTemplatesBtn" type="button">Manage</button>
-          </div>
+	    <div class="composer" role="region" aria-label="Message input">
+	      <div class="wrap composer-inner">
+	        <form id="topicForm" autocomplete="off">
+	          <div class="composer-row">
+	            <textarea id="topicInput" placeholder="Ask anything (AgentX + AgentC + System)..." rows="1"></textarea>
+	            <div class="composer-actions">
+	              <button class="btn primary" id="startBtn" type="submit">Send</button>
+	              <button class="btn icon" id="composerMoreBtn" type="button" aria-expanded="false" aria-label="More options" title="More">⋯</button>
+	            </div>
+	          </div>
+	          <div class="composer-tools" aria-label="Modes and templates">
+	            <select id="agentXModeQuickSelect" aria-label="Agent X mode">
+	              <option value="chat">Agent X · Chat</option>
+	              <option value="teach">Agent X · Teach</option>
+	              <option value="tdd">Agent X · TDD</option>
+	              <option value="bdd">Agent X · BDD</option>
+	              <option value="automate">Agent X · Automate</option>
+	            </select>
+	            <select id="systemModeQuickSelect" aria-label="System mode">
+	              <option value="chat">System · Chat</option>
+	              <option value="teach">System · Teach</option>
+	              <option value="tdd">System · TDD</option>
+	              <option value="bdd">System · BDD</option>
+	              <option value="automate">System · Automate</option>
+	            </select>
+	            <select id="agentCModeQuickSelect" aria-label="Agent C mode">
+	              <option value="chat">Agent C · Chat</option>
+	              <option value="teach">Agent C · Teach</option>
+	              <option value="tdd">Agent C · TDD</option>
+	              <option value="bdd">Agent C · BDD</option>
+	              <option value="automate">Agent C · Automate</option>
+	            </select>
+	            <select id="templateQuickSelect">
+	              <option value="">Templates…</option>
+	            </select>
+	            <button class="btn" id="insertTemplateBtn" type="button" disabled>Insert</button>
+	            <button class="btn" id="manageTemplatesBtn" type="button">Manage</button>
+	          </div>
           <div class="clarity" id="clarityHint" aria-live="polite"></div>
           <div class="privacy-light" id="privacyLight" aria-live="polite"></div>
 	          <div class="status">
@@ -1973,9 +1987,9 @@
           <label>&nbsp;</label>
           <button class="btn" id="refreshModelsBtn" type="button">Refresh Models</button>
         </div>
-        <div class="field full">
-          <label>Language Voices</label>
-          <div class="hint">Playfully give each speaker a language “voice”.</div>
+	        <div class="field full">
+	          <label>Language Voices</label>
+	          <div class="hint">Playfully give each speaker a language “voice”.</div>
           <div class="voices">
             <div class="voice-card">
               <img
@@ -2040,13 +2054,66 @@
               </div>
             </div>
           </div>
-          <div class="template-row">
-            <button class="btn" id="shuffleLanguagesBtn" type="button">Shuffle Agent Languages</button>
-          </div>
-        </div>
-        <div class="field full" id="voicePreviewField">
-          <label>Voice Preview</label>
-          <div class="hint">Live preview based on your current Settings (before you hit Save).</div>
+	          <div class="template-row">
+	            <button class="btn" id="shuffleLanguagesBtn" type="button">Shuffle Agent Languages</button>
+	          </div>
+	        </div>
+	        <div class="field full">
+	          <label>Modes</label>
+	          <div class="hint">Pick how each speaker responds (chatty, teaching, test-first, behavior-first, or automation).</div>
+	          <div class="voices">
+	            <div class="voice-card">
+	              <img
+	                class="voice-avatar"
+	                src="https://ucarecdn.com/82e21364-f8e6-4526-9464-16cac4cfaba6/-/format/auto/"
+	                alt="Agent X"
+	              />
+	              <div class="voice-meta">
+	                <div class="voice-title">Agent X</div>
+	                <select id="agentXModeSelect" aria-label="Agent X mode">
+	                  <option value="chat">Chat</option>
+	                  <option value="teach">Teach</option>
+	                  <option value="tdd">TDD</option>
+	                  <option value="bdd">BDD</option>
+	                  <option value="automate">Automate</option>
+	                </select>
+	              </div>
+	            </div>
+	            <div class="voice-card">
+	              <div class="voice-avatar system" aria-hidden="true">⚙️</div>
+	              <div class="voice-meta">
+	                <div class="voice-title">System</div>
+	                <select id="systemModeSelect" aria-label="System mode">
+	                  <option value="chat">Chat</option>
+	                  <option value="teach">Teach</option>
+	                  <option value="tdd">TDD</option>
+	                  <option value="bdd">BDD</option>
+	                  <option value="automate">Automate</option>
+	                </select>
+	              </div>
+	            </div>
+	            <div class="voice-card">
+	              <img
+	                class="voice-avatar"
+	                src="https://ucarecdn.com/1d3af6f0-a64f-4a71-a100-414802839a19/-/format/auto/"
+	                alt="Agent C"
+	              />
+	              <div class="voice-meta">
+	                <div class="voice-title">Agent C</div>
+	                <select id="agentCModeSelect" aria-label="Agent C mode">
+	                  <option value="chat">Chat</option>
+	                  <option value="teach">Teach</option>
+	                  <option value="tdd">TDD</option>
+	                  <option value="bdd">BDD</option>
+	                  <option value="automate">Automate</option>
+	                </select>
+	              </div>
+	            </div>
+	          </div>
+	        </div>
+	        <div class="field full" id="voicePreviewField">
+	          <label>Voice Preview</label>
+	          <div class="hint">Live preview based on your current Settings (before you hit Save).</div>
           <div class="preview-grid">
             <div class="preview-card x">
               <div class="preview-head">
@@ -2358,30 +2425,55 @@
         const EMOJI_PALETTE_PATH = "emoji-palette.json";
         let emojiPaletteText = "";
 
-        const MK_REFINEMENT_CONTRACT = `
-You are writing directly to MK (the user). Every round, make the language more tailored to MK: cut generic filler, remove repetition, and make the guidance more build-ready and direct.
-Include at least one concrete outcome statement (what changed, what was produced, or what will happen next) in the response.
-
-Output must be 2 to 6 short paragraphs. Each paragraph must start with exactly one emoji from the provided Emoji Palette as the first character (choose one that matches the paragraph’s purpose and content). Do not use bullet points, numbered lists, markdown, headings, or quote blocks. Never output **. Do not start lines with "-" or "1.". If you include terminal commands, wrap them in single backticks.
-
-To highlight origin, append exactly one origin emoji tag at the end of key sentences: 🗣️ (directly from MK’s latest message), 💬 (paraphrased from earlier conversation/context), 🧠 (general knowledge), 🧪 (inference), 🔮 (assumption/uncertainty). Use at least one origin tag per paragraph, and never more than one origin tag per sentence.
-
-When there is prior conversation, refine at least one point from the previous round (tighter wording, more specific) and add at least one new improvement not previously mentioned. The final paragraph must start with ❓ and contain exactly one short question addressed to MK, and that question sentence must end with 🗣️.
-        `.trim();
+	        const MODES = ["chat", "teach", "tdd", "bdd", "automate"];
+	        const MODE_LABELS = {
+	          chat: "Chat",
+	          teach: "Teach",
+	          tdd: "TDD",
+	          bdd: "BDD",
+	          automate: "Automate"
+	        };
+	
+	        function normalizeMode(value, fallback) {
+	          const raw = String(value || "").trim().toLowerCase();
+	          if (MODE_LABELS[raw]) return raw;
+	          return MODE_LABELS[String(fallback || "").trim().toLowerCase()] ? String(fallback).trim().toLowerCase() : "chat";
+	        }
+	
+	        const MODE_CONTRACTS = {
+	          chat: `
+	Write directly to the user. Be concise, specific, and helpful. Use bullets or short sections only when they improve clarity. Ask a clarifying question only if needed.
+	          `.trim(),
+	          teach: `
+	Teach clearly. Explain concepts step-by-step, include a small example, and end with one quick check-for-understanding question when appropriate.
+	          `.trim(),
+	          tdd: `
+	Use a test-first approach (TDD). Start by listing the tests you would write (or acceptance tests), then outline the implementation steps. Prefer concrete test cases and small increments.
+	          `.trim(),
+	          bdd: `
+	Use a behavior-first approach (BDD). Start with a user story and acceptance criteria, then add Given/When/Then scenarios before outlining implementation.
+	          `.trim(),
+	          automate: `
+	Focus on practical automation and workflows the user can apply. Propose scripts/checks/guardrails and concrete next steps. If tools are enabled, you may suggest tool actions that are safe and auditable.
+	          `.trim()
+	        };
 
 		        const AGENT_X_ROLE = "You are Agent X, a creative, exploratory senior engineer.";
 		        const AGENT_C_ROLE = "You are Agent C, a logical and skeptical senior engineer.";
-            const SYSTEM_ROLE =
-              "You are the System, an orchestration layer that reviews Agent X and Agent C, reconciles differences, and proposes automation ideas for MK.";
+	            const SYSTEM_ROLE =
+	              "You are the System, an orchestration layer that reviews Agent X and Agent C, reconciles differences, and produces a single helpful response for the user.";
 
-            const DEFAULT_PROFILE = {
-              systemLanguage: "auto",
-              agentXLanguage: "auto",
-              agentCLanguage: "auto",
-              style: 50,
-              agentXLabel: "Creative Engineer",
-              agentCLabel: "Logical Engineer",
-              agentXRole: AGENT_X_ROLE,
+	            const DEFAULT_PROFILE = {
+	              systemLanguage: "auto",
+	              agentXLanguage: "auto",
+	              agentCLanguage: "auto",
+	              systemMode: "chat",
+	              agentXMode: "chat",
+	              agentCMode: "chat",
+	              style: 50,
+	              agentXLabel: "Creative Engineer",
+	              agentCLabel: "Logical Engineer",
+	              agentXRole: AGENT_X_ROLE,
               agentCRole: AGENT_C_ROLE,
               privacy: {
                 saveHistory: true,
@@ -3536,53 +3628,53 @@ When there is prior conversation, refine at least one point from the previous ro
 	          ko: "Korean"
 	        };
 
-	        const VOICE_PREVIEW_COPY = {
-	          en: {
-	            x: "🎨 Wild idea: turn Settings into a “Voice Mixer” so each agent speaks its own language.",
-	            c: "🧪 Sanity check: keep per-agent language prefs persistent and the UI predictable.",
-	            system: "⚙️ Automation ideas: save voice presets, add “Shuffle”, and auto-suggest scripts/checks."
-	          },
-	          es: {
-	            x: "🎨 Idea loca: convierte Ajustes en un “mezclador de voces” para que cada agente hable su propio idioma.",
-	            c: "🧪 Revisión rápida: guarda el idioma por agente y mantén la interfaz predecible.",
-	            system: "⚙️ Ideas de automatización: guarda presets de voz, añade “Mezclar” y sugiere scripts/chequeos."
-	          },
-	          fr: {
-	            x: "🎨 Idée folle : transforme les Réglages en “mixeur de voix” pour que chaque agent parle sa langue.",
-	            c: "🧪 Vérification : conserve les langues par agent, persiste-les, et garde l'UI prévisible.",
-	            system: "⚙️ Idées d'automatisation : enregistre des presets, ajoute “Mélanger” et propose des scripts/contrôles."
-	          },
-	          de: {
-	            x: "🎨 Verrückte Idee: mach die Einstellungen zu einem „Voice Mixer“, damit jeder Agent seine eigene Sprache spricht.",
-	            c: "🧪 Kurzcheck: Sprache pro Agent speichern und die UI vorhersehbar halten.",
-	            system: "⚙️ Automationsideen: Voice-Presets speichern, „Mischen“ hinzufügen und Skripte/Checks vorschlagen."
-	          },
-	          pt: {
-	            x: "🎨 Ideia maluca: transforme Ajustes em um “mixer de vozes” para cada agente falar seu próprio idioma.",
-	            c: "🧪 Checagem rápida: salvar o idioma por agente e manter a UI previsível.",
-	            system: "⚙️ Ideias de automação: salvar presets, adicionar “Misturar” e sugerir scripts/checks."
-	          },
-	          it: {
-	            x: "🎨 Idea pazza: trasforma le Impostazioni in un “mixer di voci” così ogni agente parla la sua lingua.",
-	            c: "🧪 Controllo rapido: salva la lingua per agente e mantieni l'interfaccia prevedibile.",
-	            system: "⚙️ Idee di automazione: salva preset, aggiungi “Shuffle” e suggerisci script/check."
-	          },
-	          zh: {
-	            x: "🎨 脑洞：把设置做成“语音调音台”，让每个代理用自己的语言说话。",
-	            c: "🧪 快速检查：按代理保存语言偏好，并让界面行为可预期。",
-	            system: "⚙️ 自动化点子：保存语音预设，加入“随机”，并自动建议脚本/检查。"
-	          },
-	          ja: {
-	            x: "🎨 遊び心：設定を「ボイスミキサー」にして、各エージェントが別言語で話せるようにする。",
-	            c: "🧪 簡易チェック：エージェント別の言語設定を保存し、UIの挙動を安定させる。",
-	            system: "⚙️ 自動化アイデア：ボイスのプリセット保存、「シャッフル」追加、スクリプト/チェック提案。"
-	          },
-	          ko: {
-	            x: "🎨 장난스러운 아이디어: 설정을 “보이스 믹서”로 만들어 각 에이전트가 자기 언어로 말하게 해요.",
-	            c: "🧪 빠른 점검: 에이전트별 언어를 저장하고 UI가 예측 가능하게 유지해요.",
-	            system: "⚙️ 자동화 아이디어: 보이스 프리셋 저장, “셔플” 추가, 스크립트/체크 제안."
-	          }
-	        };
+		        const VOICE_PREVIEW_COPY = {
+		          en: {
+		            x: "🎨 Wild idea: turn Settings into a “Voice Mixer” so each agent speaks its own language.",
+		            c: "🧪 Sanity check: keep per-agent language prefs persistent and the UI predictable.",
+		            system: "⚙️ Synthesis: reconcile both answers and suggest a clear next step."
+		          },
+		          es: {
+		            x: "🎨 Idea loca: convierte Ajustes en un “mezclador de voces” para que cada agente hable su propio idioma.",
+		            c: "🧪 Revisión rápida: guarda el idioma por agente y mantén la interfaz predecible.",
+		            system: "⚙️ Síntesis: reconcilia ambas respuestas y sugiere un próximo paso claro."
+		          },
+		          fr: {
+		            x: "🎨 Idée folle : transforme les Réglages en “mixeur de voix” pour que chaque agent parle sa langue.",
+		            c: "🧪 Vérification : conserve les langues par agent, persiste-les, et garde l'UI prévisible.",
+		            system: "⚙️ Synthèse : concilie les deux réponses et propose une prochaine étape claire."
+		          },
+		          de: {
+		            x: "🎨 Verrückte Idee: mach die Einstellungen zu einem „Voice Mixer“, damit jeder Agent seine eigene Sprache spricht.",
+		            c: "🧪 Kurzcheck: Sprache pro Agent speichern und die UI vorhersehbar halten.",
+		            system: "⚙️ Synthese: beide Antworten abgleichen und einen klaren nächsten Schritt vorschlagen."
+		          },
+		          pt: {
+		            x: "🎨 Ideia maluca: transforme Ajustes em um “mixer de vozes” para cada agente falar seu próprio idioma.",
+		            c: "🧪 Checagem rápida: salvar o idioma por agente e manter a UI previsível.",
+		            system: "⚙️ Síntese: reconciliar as duas respostas e sugerir um próximo passo claro."
+		          },
+		          it: {
+		            x: "🎨 Idea pazza: trasforma le Impostazioni in un “mixer di voci” così ogni agente parla la sua lingua.",
+		            c: "🧪 Controllo rapido: salva la lingua per agente e mantieni l'interfaccia prevedibile.",
+		            system: "⚙️ Sintesi: riconcilia entrambe le risposte e suggerisci un prossimo passo chiaro."
+		          },
+		          zh: {
+		            x: "🎨 脑洞：把设置做成“语音调音台”，让每个代理用自己的语言说话。",
+		            c: "🧪 快速检查：按代理保存语言偏好，并让界面行为可预期。",
+		            system: "⚙️ 综合：对齐两方答案并给出清晰的下一步建议。"
+		          },
+		          ja: {
+		            x: "🎨 遊び心：設定を「ボイスミキサー」にして、各エージェントが別言語で話せるようにする。",
+		            c: "🧪 簡易チェック：エージェント別の言語設定を保存し、UIの挙動を安定させる。",
+		            system: "⚙️ 統合：両方の回答を整合させ、次の一手を明確に提案する。"
+		          },
+		          ko: {
+		            x: "🎨 장난스러운 아이디어: 설정을 “보이스 믹서”로 만들어 각 에이전트가 자기 언어로 말하게 해요.",
+		            c: "🧪 빠른 점검: 에이전트별 언어를 저장하고 UI가 예측 가능하게 유지해요.",
+		            system: "⚙️ 종합: 두 답변을 조율하고 다음 단계 하나를 명확히 제안해요."
+		          }
+		        };
 
 	        function labelForLanguage(lang) {
 	          const key = String(lang || "auto").trim() || "auto";
@@ -3683,9 +3775,17 @@ When there is prior conversation, refine at least one point from the previous ro
 	          const sys = String(p.systemLanguage || DEFAULT_PROFILE.systemLanguage).trim() || "auto";
 	          if (agent === "system") return sys || "auto";
 	          const raw = String(agent === "x" ? p.agentXLanguage : agent === "c" ? p.agentCLanguage : "").trim();
-          if (raw && raw !== "auto") return raw;
-          return sys || "auto";
-        }
+	          if (raw && raw !== "auto") return raw;
+	          return sys || "auto";
+	        }
+	
+	        function effectiveModeFor(agent) {
+	          const p = state.profile || DEFAULT_PROFILE;
+	          if (agent === "system") return normalizeMode(p.systemMode, DEFAULT_PROFILE.systemMode);
+	          if (agent === "x") return normalizeMode(p.agentXMode, DEFAULT_PROFILE.agentXMode);
+	          if (agent === "c") return normalizeMode(p.agentCMode, DEFAULT_PROFILE.agentCMode);
+	          return "chat";
+	        }
 
         function buildProfilePromptBlock(agent) {
           const p = state.profile || DEFAULT_PROFILE;
@@ -3749,35 +3849,45 @@ When there is prior conversation, refine at least one point from the previous ro
           return Math.round(lerp(0.07, 0.33, t) * 100) / 100;
         }
 
-        function agentGuidance(agent) {
-          const v = clamp(Number(state.profile?.style ?? DEFAULT_PROFILE.style), 0, 100);
-          if (agent === "x") {
-            if (v >= 67) return "Lean bold, creative, and practical.";
-            if (v <= 33) return "Lean systematic, concrete, and practical.";
-            return "Lean creative but grounded and practical.";
-          }
+	        function agentGuidance(agent) {
+	          const v = clamp(Number(state.profile?.style ?? DEFAULT_PROFILE.style), 0, 100);
+	          const mode = effectiveModeFor(agent);
+	          const modeHint =
+	            mode === "teach"
+	              ? "Teach clearly with a small example."
+	              : mode === "tdd"
+	              ? "Use TDD: tests first, then implementation steps."
+	              : mode === "bdd"
+	              ? "Use BDD: story + acceptance criteria + Given/When/Then."
+	              : mode === "automate"
+	              ? "Include practical automation and workflows when helpful."
+	              : "";
+	          if (agent === "x") {
+	            if (v >= 67) return ["Lean bold, creative, and practical.", modeHint].filter(Boolean).join(" ");
+	            if (v <= 33) return ["Lean systematic, concrete, and practical.", modeHint].filter(Boolean).join(" ");
+	            return ["Lean creative but grounded and practical.", modeHint].filter(Boolean).join(" ");
+	          }
 
-          if (v >= 67) return "Lean skeptical and systematic, but explore alternatives when helpful.";
-          if (v <= 33) return "Lean skeptical, systematic, and reliability-focused.";
-          return "Lean skeptical and systematic.";
-        }
+	          if (v >= 67) return ["Lean skeptical and systematic, but explore alternatives when helpful.", modeHint].filter(Boolean).join(" ");
+	          if (v <= 33) return ["Lean skeptical, systematic, and reliability-focused.", modeHint].filter(Boolean).join(" ");
+	          return ["Lean skeptical and systematic.", modeHint].filter(Boolean).join(" ");
+	        }
 
-        function systemAutomationGuidance() {
-          const v = clamp(Number(state.profile?.style ?? DEFAULT_PROFILE.style), 0, 100);
-          if (v >= 67) {
-            return "Be inventive but concrete: synthesize both answers and propose automation ideas MK can actually implement.";
-          }
-          if (v <= 33) {
-            return "Be systematic: synthesize both answers and propose automation ideas with clear next steps and guardrails.";
-          }
-          return "Synthesize both answers and propose practical automation ideas.";
-        }
+	        function systemReflectionInstruction() {
+	          const mode = effectiveModeFor("system");
+	          if (mode === "automate") return "As System, synthesize both answers and propose concrete automation ideas (workflows, scripts, checks, UI tweaks). Keep it short and actionable.";
+	          if (mode === "tdd") return "As System, reconcile both answers into one TDD plan: key tests first, then implementation steps. Keep it concise and build-ready.";
+	          if (mode === "bdd") return "As System, reconcile both answers into one BDD plan: user story, acceptance criteria, Given/When/Then scenarios, then implementation outline.";
+	          if (mode === "teach") return "As System, reconcile both answers into one teaching explanation: key takeaways, what each agent got right, and a clear next step.";
+	          return "As System, reconcile both answers into one cohesive response with clear next steps. Keep it concise and avoid repetition.";
+	        }
 
-        function systemPrompt(roleLine, agent) {
-          const paletteBlock = emojiPaletteText ? `\n\n${emojiPaletteText}` : "";
-          const profileBlock = buildProfilePromptBlock(agent);
-          return `${roleLine}\n\n${MK_REFINEMENT_CONTRACT}${paletteBlock}${profileBlock}`;
-        }
+	        function systemPrompt(roleLine, agent) {
+	          const mode = effectiveModeFor(agent);
+	          const modeContract = MODE_CONTRACTS[mode] || MODE_CONTRACTS.chat;
+	          const profileBlock = buildProfilePromptBlock(agent);
+	          return `${roleLine}\n\nMode: ${MODE_LABELS[mode] || mode}\n${modeContract}${profileBlock}`;
+	        }
 
         function renderAnswerHTML(text) {
           const safe = escapeHTML(String(text || "").split("**").join(""));
@@ -3787,15 +3897,9 @@ When there is prior conversation, refine at least one point from the previous ro
           return parts.map((part, idx) => (idx % 2 === 1 ? `<span class="terminal sf-light">${part}</span>` : part)).join("");
         }
 
-        function normalizeOutput(text) {
-          const raw = String(text || "").replace(/\r\n/g, "\n").split("**").join("").trim();
-          if (!raw) return "";
-          const cleaned = raw
-            .split("\n")
-            .map((line) => line.replace(/^[-*•]\s+/, "").replace(/^\d+[\.\)]\s+/, ""))
-            .join("\n");
-          return cleaned.trim();
-        }
+	        function normalizeOutput(text) {
+	          return String(text || "").replace(/\r\n/g, "\n").split("**").join("").trim();
+	        }
 
         function clip(text, maxChars) {
           const s = String(text || "");
@@ -4297,16 +4401,15 @@ When there is prior conversation, refine at least one point from the previous ro
           return { toolRuns, userContext: userContext + toolResultsToContext(toolRuns) };
         }
 
-        async function runSystemReflection({ baseContext, agentXText, agentCText }) {
-          const sysUser = [
-            String(baseContext || "").trim(),
-            `Agent X answer:\n${clip(String(agentXText || ""), 2200)}`,
-            `Agent C answer:\n${clip(String(agentCText || ""), 2200)}`,
-            "As System, reflect on both answers and give Automation Ideas MK can implement (workflows, scripts, checks, UI tweaks). Keep it short and concrete.",
-            systemAutomationGuidance()
-          ]
-            .filter(Boolean)
-            .join("\n\n");
+	        async function runSystemReflection({ baseContext, agentXText, agentCText }) {
+	          const sysUser = [
+	            String(baseContext || "").trim(),
+	            `Agent X answer:\n${clip(String(agentXText || ""), 2200)}`,
+	            `Agent C answer:\n${clip(String(agentCText || ""), 2200)}`,
+	            systemReflectionInstruction()
+	          ]
+	            .filter(Boolean)
+	            .join("\n\n");
 
           const sys = await ollamaChat({
             system: systemPrompt(SYSTEM_ROLE, "system"),
@@ -4319,7 +4422,7 @@ When there is prior conversation, refine at least one point from the previous ro
 
 	        async function runDebate(topic) {
 	          const prompt = String(topic || "").trim();
-	          if (!prompt) throw new Error("Enter a topic to debate.");
+	          if (!prompt) throw new Error("Enter a message.");
 
 	          const contextParts = [];
 	          const authCtx = magicAuthContextForLLM(prompt);
@@ -4354,13 +4457,11 @@ When there is prior conversation, refine at least one point from the previous ro
               if (toolsLine) contextParts.push(toolsLine);
             }
 
-            contextParts.push(`MK message: ${prompt}`);
-            contextParts.push(
-              "This is a new round. Tighten at least one point from the previous round and add at least one new improvement, keeping it tightly tailored to MK."
-            );
-          } else {
-            contextParts.push(`MK message: ${prompt}`);
-          }
+	            contextParts.push(`MK message: ${prompt}`);
+	            contextParts.push("Respond to MK’s message. Use the context above only if it helps.");
+	          } else {
+	            contextParts.push(`MK message: ${prompt}`);
+	          }
 
           let userContext = contextParts.join("\n\n");
           const tools = await runToolsIfNeeded(userContext);
@@ -4400,7 +4501,7 @@ When there is prior conversation, refine at least one point from the previous ro
 
 	        async function runLoop() {
 	          const last = state.rounds[state.rounds.length - 1];
-	          if (!last) throw new Error("Start a debate first.");
+	          if (!last) throw new Error("Start a conversation first.");
 
 	          const contextParts = [];
 	          const authCtx = magicAuthContextForLLM(String(last.topic || ""));
@@ -4435,7 +4536,7 @@ When there is prior conversation, refine at least one point from the previous ro
             if (toolsLine) contextParts.push(toolsLine);
           }
 
-          contextParts.push("This is the Next Round. Refine at least one point from the previous round and add at least one new improvement, with less repetition and more MK-tailored specificity.");
+	          contextParts.push("This is a continuation. Improve and extend the previous answers with at least one new useful detail, avoiding repetition.");
 
           let context = contextParts.join("\n\n");
           const tools = await runToolsIfNeeded(context);
@@ -4473,9 +4574,9 @@ When there is prior conversation, refine at least one point from the previous ro
 	          };
         }
 
-        async function runRefineLoop() {
-          const last = state.rounds[state.rounds.length - 1];
-          if (!last) throw new Error("Start a debate first.");
+	        async function runRefineLoop() {
+	          const last = state.rounds[state.rounds.length - 1];
+	          if (!last) throw new Error("Start a conversation first.");
 
           const contextParts = [`MK latest message: ${last.topic}`];
 
@@ -4631,8 +4732,8 @@ When there is prior conversation, refine at least one point from the previous ro
           render();
         }
 
-        function loadOlderRounds() {
-          if (state.visibleStart <= 0) return;
+	        function loadOlderRounds() {
+	          if (state.visibleStart <= 0) return;
 
           const container = el("conversation");
           const prevFirstIndex = state.visibleStart;
@@ -4670,12 +4771,31 @@ When there is prior conversation, refine at least one point from the previous ro
           } else if (canScrollAfter && beforeScrollTop != null) {
             containerAfter.scrollTop = beforeScrollTop;
           }
-        }
+	        }
+	
+	        function systemPanelRoleLabel() {
+	          const mode = effectiveModeFor("system");
+	          if (mode === "automate") return "Automation";
+	          if (mode === "tdd") return "TDD Notes";
+	          if (mode === "bdd") return "BDD Notes";
+	          if (mode === "teach") return "Teaching";
+	          return "Synthesis";
+	        }
+	
+	        function syncModeQuickSelects() {
+	          const x = el("agentXModeQuickSelect");
+	          if (x) x.value = effectiveModeFor("x");
+	          const c = el("agentCModeQuickSelect");
+	          if (c) c.value = effectiveModeFor("c");
+	          const sys = el("systemModeQuickSelect");
+	          if (sys) sys.value = effectiveModeFor("system");
+	        }
 
 	        function render() {
 	          document.body.classList.toggle("has-rounds", state.rounds.length > 0);
+	          syncModeQuickSelects();
 	          el("endpointCode").textContent = displayEndpoint();
-            const rawModelLabel = state.modelOverride ? state.modelOverride : state.autoModelName || "auto";
+	          const rawModelLabel = state.modelOverride ? state.modelOverride : state.autoModelName || "auto";
 	          el("modelCode").textContent = rawModelLabel === "auto" ? "auto" : displayModelLabel(rawModelLabel) || rawModelLabel;
 	          const toolsStatus = toolsAvailable() ? (state.toolsEnabled ? "on" : "off") : "n/a";
 	          el("toolsCode").textContent = toolsStatus;
@@ -4724,7 +4844,7 @@ When there is prior conversation, refine at least one point from the previous ro
 	            } else {
 	              const empty = document.createElement("div");
 	              empty.className = "empty";
-	              const message = state.modelSetupMessage ? state.modelSetupMessage : "Enter a topic below to start the debate.";
+		              const message = state.modelSetupMessage ? state.modelSetupMessage : "Send a message below to start the conversation.";
 	              const msg = document.createElement("div");
 	              msg.textContent = message;
 	              empty.appendChild(msg);
@@ -4850,14 +4970,14 @@ When there is prior conversation, refine at least one point from the previous ro
                   <pre>${renderAnswerHTML(round.agentC)}</pre>
                 </div>
                 <div class="answer system">
-                  <div class="answer-head">
-                    <div class="name"><span class="sf-ultrathin">System</span></div>
-                    <div class="answer-actions">
-                      <div class="role">Automation Ideas</div>
-                      <button class="btn tiny icon" type="button" data-copy-agent="system" data-copy-round="${i}" title="Copy System">📋</button>
-                      <button class="btn tiny" type="button" data-teach-agent="system" data-teach-round="${i}">Teach</button>
-                    </div>
-                  </div>
+	                  <div class="answer-head">
+	                    <div class="name"><span class="sf-ultrathin">System</span></div>
+	                    <div class="answer-actions">
+	                      <div class="role">${escapeHTML(systemPanelRoleLabel())}</div>
+	                      <button class="btn tiny icon" type="button" data-copy-agent="system" data-copy-round="${i}" title="Copy System">📋</button>
+	                      <button class="btn tiny" type="button" data-teach-agent="system" data-teach-round="${i}">Teach</button>
+	                    </div>
+	                  </div>
                   <pre>${renderAnswerHTML(round.system || "(System reflection will appear here for new rounds.)")}</pre>
                 </div>
               </div>
@@ -5076,16 +5196,19 @@ When there is prior conversation, refine at least one point from the previous ro
               if (!raw) return String(fallback || DEFAULT_PROFILE.systemLanguage);
               return LANGUAGE_LABELS[raw] ? raw : raw;
             };
-            const legacyLang = String(parsed.language || "").trim();
-            const legacy = legacyLang && legacyLang !== "auto" ? legacyLang : "";
-            next.systemLanguage = normalizeLang(next.systemLanguage, legacy || DEFAULT_PROFILE.systemLanguage);
-            next.agentXLanguage = normalizeLang(next.agentXLanguage, legacy || DEFAULT_PROFILE.agentXLanguage);
-            next.agentCLanguage = normalizeLang(next.agentCLanguage, legacy || DEFAULT_PROFILE.agentCLanguage);
-            next.agentXLabel = String(next.agentXLabel || DEFAULT_PROFILE.agentXLabel).trim() || DEFAULT_PROFILE.agentXLabel;
-            next.agentCLabel = String(next.agentCLabel || DEFAULT_PROFILE.agentCLabel).trim() || DEFAULT_PROFILE.agentCLabel;
-            next.agentXRole = String(next.agentXRole || DEFAULT_PROFILE.agentXRole).trim() || DEFAULT_PROFILE.agentXRole;
-            next.agentCRole = String(next.agentCRole || DEFAULT_PROFILE.agentCRole).trim() || DEFAULT_PROFILE.agentCRole;
-            next.customInstructions = String(next.customInstructions || "").trim();
+	            const legacyLang = String(parsed.language || "").trim();
+	            const legacy = legacyLang && legacyLang !== "auto" ? legacyLang : "";
+	            next.systemLanguage = normalizeLang(next.systemLanguage, legacy || DEFAULT_PROFILE.systemLanguage);
+	            next.agentXLanguage = normalizeLang(next.agentXLanguage, legacy || DEFAULT_PROFILE.agentXLanguage);
+	            next.agentCLanguage = normalizeLang(next.agentCLanguage, legacy || DEFAULT_PROFILE.agentCLanguage);
+	            next.systemMode = normalizeMode(next.systemMode, DEFAULT_PROFILE.systemMode);
+	            next.agentXMode = normalizeMode(next.agentXMode, DEFAULT_PROFILE.agentXMode);
+	            next.agentCMode = normalizeMode(next.agentCMode, DEFAULT_PROFILE.agentCMode);
+	            next.agentXLabel = String(next.agentXLabel || DEFAULT_PROFILE.agentXLabel).trim() || DEFAULT_PROFILE.agentXLabel;
+	            next.agentCLabel = String(next.agentCLabel || DEFAULT_PROFILE.agentCLabel).trim() || DEFAULT_PROFILE.agentCLabel;
+	            next.agentXRole = String(next.agentXRole || DEFAULT_PROFILE.agentXRole).trim() || DEFAULT_PROFILE.agentXRole;
+	            next.agentCRole = String(next.agentCRole || DEFAULT_PROFILE.agentCRole).trim() || DEFAULT_PROFILE.agentCRole;
+	            next.customInstructions = String(next.customInstructions || "").trim();
             state.profile = next;
           } catch {
             // ignore
@@ -5336,11 +5459,14 @@ When there is prior conversation, refine at least one point from the previous ro
           el("toolsEnabledInput").disabled = !toolsAvailable();
           el("toolsAutoApproveInput").checked = state.toolsAutoApprove;
 
-          el("agentXLanguageSelect").value = state.profile.agentXLanguage || DEFAULT_PROFILE.agentXLanguage;
-          el("agentCLanguageSelect").value = state.profile.agentCLanguage || DEFAULT_PROFILE.agentCLanguage;
-          el("systemLanguageSelect").value = state.profile.systemLanguage || DEFAULT_PROFILE.systemLanguage;
-          el("styleRange").value = String(clamp(Number(state.profile.style), 0, 100));
-          updateStyleValueLabel();
+	          el("agentXLanguageSelect").value = state.profile.agentXLanguage || DEFAULT_PROFILE.agentXLanguage;
+	          el("agentCLanguageSelect").value = state.profile.agentCLanguage || DEFAULT_PROFILE.agentCLanguage;
+	          el("systemLanguageSelect").value = state.profile.systemLanguage || DEFAULT_PROFILE.systemLanguage;
+	          el("agentXModeSelect").value = state.profile.agentXMode || DEFAULT_PROFILE.agentXMode;
+	          el("agentCModeSelect").value = state.profile.agentCMode || DEFAULT_PROFILE.agentCMode;
+	          el("systemModeSelect").value = state.profile.systemMode || DEFAULT_PROFILE.systemMode;
+	          el("styleRange").value = String(clamp(Number(state.profile.style), 0, 100));
+	          updateStyleValueLabel();
           el("agentXLabelInput").value = state.profile.agentXLabel || DEFAULT_PROFILE.agentXLabel;
           el("agentCLabelInput").value = state.profile.agentCLabel || DEFAULT_PROFILE.agentCLabel;
           el("agentXRoleInput").value = state.profile.agentXRole || DEFAULT_PROFILE.agentXRole;
@@ -5590,19 +5716,19 @@ When there is prior conversation, refine at least one point from the previous ro
 		          if (!topic) return;
 	          setComposerMoreOpen(false);
 		          setNotice(null);
-			          if (isMkIdentityPrompt(topic)) {
-			            if (hasMkAdmin()) {
-			              setNotice("MK admin is already enabled. Enter a technical topic to continue.");
-			            } else {
-			              setNotice("Checking MK code…");
-			              render();
-			              try {
-			                await mkAdminSignIn();
-			                setNotice("MK admin enabled. Enter a technical topic to continue.");
-			              } catch (err) {
-			                setNotice(String(err?.message || err) || "MK code rejected");
-			              }
-			            }
+				          if (isMkIdentityPrompt(topic)) {
+				            if (hasMkAdmin()) {
+				              setNotice("MK admin is already enabled. Enter a message to continue.");
+				            } else {
+				              setNotice("Checking MK code…");
+				              render();
+				              try {
+				                await mkAdminSignIn();
+				                setNotice("MK admin enabled. Enter a message to continue.");
+				              } catch (err) {
+				                setNotice(String(err?.message || err) || "MK code rejected");
+				              }
+				            }
 			            try {
 			              el("topicInput").value = "";
 			            } catch {
@@ -5844,17 +5970,31 @@ When there is prior conversation, refine at least one point from the previous ro
             setComposerMoreOpen(next);
           });
           el("topicInput").addEventListener("input", autosizeTextarea);
-          el("topicInput").addEventListener("keydown", (e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              startDebateFromUI();
-            }
-          });
-          el("templateQuickSelect").addEventListener("change", () => {
-            const select = el("templateQuickSelect");
-            const btn = el("insertTemplateBtn");
-            if (btn) btn.disabled = !(select && select.value);
-          });
+	          el("topicInput").addEventListener("keydown", (e) => {
+	            if (e.key === "Enter" && !e.shiftKey) {
+	              e.preventDefault();
+	              startDebateFromUI();
+	            }
+	          });
+	          const wireModeQuick = (selectId, key, who) => {
+	            const select = el(selectId);
+	            if (!select) return;
+	            select.addEventListener("change", () => {
+	              const next = normalizeMode(select.value, "chat");
+	              state.profile = { ...state.profile, [key]: next };
+	              saveProfile();
+	              setStatusRight(`${who} mode: ${MODE_LABELS[next] || next}.`);
+	              render();
+	            });
+	          };
+	          wireModeQuick("agentXModeQuickSelect", "agentXMode", "Agent X");
+	          wireModeQuick("systemModeQuickSelect", "systemMode", "System");
+	          wireModeQuick("agentCModeQuickSelect", "agentCMode", "Agent C");
+	          el("templateQuickSelect").addEventListener("change", () => {
+	            const select = el("templateQuickSelect");
+	            const btn = el("insertTemplateBtn");
+	            if (btn) btn.disabled = !(select && select.value);
+	          });
           el("insertTemplateBtn").addEventListener("click", insertSelectedTemplate);
           el("manageTemplatesBtn").addEventListener("click", () => {
             openSettings();
@@ -5865,19 +6005,8 @@ When there is prior conversation, refine at least one point from the previous ro
               } catch {
                 // ignore
               }
-            });
-          });
-
-          document.querySelectorAll("[data-topic]").forEach((button) => {
-            button.addEventListener("click", () => {
-              if (state.loading) return;
-              const topic = button.getAttribute("data-topic");
-              if (!topic) return;
-              el("topicInput").value = topic;
-              autosizeTextarea();
-              startDebateFromUI();
-            });
-          });
+	            });
+	          });
 
 	          el("topicForm").addEventListener("submit", (e) => {
 	            e.preventDefault();
@@ -6116,15 +6245,18 @@ When there is prior conversation, refine at least one point from the previous ro
 	            const numPredict = Number(el("numPredictInput").value) || DEFAULT_OPTIONS.numPredict;
 	            const toolsEnabled = Boolean(el("toolsEnabledInput").checked);
 	            const toolsAutoApprove = Boolean(el("toolsAutoApproveInput").checked);
-            const agentXLanguage = String(el("agentXLanguageSelect")?.value || DEFAULT_PROFILE.agentXLanguage).trim() || DEFAULT_PROFILE.agentXLanguage;
-            const agentCLanguage = String(el("agentCLanguageSelect")?.value || DEFAULT_PROFILE.agentCLanguage).trim() || DEFAULT_PROFILE.agentCLanguage;
-            const systemLanguage = String(el("systemLanguageSelect")?.value || DEFAULT_PROFILE.systemLanguage).trim() || DEFAULT_PROFILE.systemLanguage;
-            const style = clamp(Number(el("styleRange")?.value), 0, 100);
-            const agentXLabel = String(el("agentXLabelInput")?.value || "").trim() || DEFAULT_PROFILE.agentXLabel;
-            const agentCLabel = String(el("agentCLabelInput")?.value || "").trim() || DEFAULT_PROFILE.agentCLabel;
-            const agentXRole = String(el("agentXRoleInput")?.value || "").trim() || DEFAULT_PROFILE.agentXRole;
-            const agentCRole = String(el("agentCRoleInput")?.value || "").trim() || DEFAULT_PROFILE.agentCRole;
-            const customInstructions = String(el("customInstructionsInput")?.value || "").trim();
+	            const agentXLanguage = String(el("agentXLanguageSelect")?.value || DEFAULT_PROFILE.agentXLanguage).trim() || DEFAULT_PROFILE.agentXLanguage;
+	            const agentCLanguage = String(el("agentCLanguageSelect")?.value || DEFAULT_PROFILE.agentCLanguage).trim() || DEFAULT_PROFILE.agentCLanguage;
+	            const systemLanguage = String(el("systemLanguageSelect")?.value || DEFAULT_PROFILE.systemLanguage).trim() || DEFAULT_PROFILE.systemLanguage;
+	            const agentXMode = normalizeMode(el("agentXModeSelect")?.value, DEFAULT_PROFILE.agentXMode);
+	            const agentCMode = normalizeMode(el("agentCModeSelect")?.value, DEFAULT_PROFILE.agentCMode);
+	            const systemMode = normalizeMode(el("systemModeSelect")?.value, DEFAULT_PROFILE.systemMode);
+	            const style = clamp(Number(el("styleRange")?.value), 0, 100);
+	            const agentXLabel = String(el("agentXLabelInput")?.value || "").trim() || DEFAULT_PROFILE.agentXLabel;
+	            const agentCLabel = String(el("agentCLabelInput")?.value || "").trim() || DEFAULT_PROFILE.agentCLabel;
+	            const agentXRole = String(el("agentXRoleInput")?.value || "").trim() || DEFAULT_PROFILE.agentXRole;
+	            const agentCRole = String(el("agentCRoleInput")?.value || "").trim() || DEFAULT_PROFILE.agentCRole;
+	            const customInstructions = String(el("customInstructionsInput")?.value || "").trim();
             const sessionMemory = String(el("sessionMemoryInput")?.value || "").trim();
             const saveHistoryPref = Boolean(el("saveHistoryInput")?.checked);
             const autoClearCaches = Boolean(el("autoClearCachesInput")?.checked);
@@ -6144,16 +6276,19 @@ When there is prior conversation, refine at least one point from the previous ro
 	            state.onlineUrl = onlineUrl || DEFAULT_ONLINE_URL;
 	            state.toolsEnabled = toolsEnabled;
 	            state.toolsAutoApprove = toolsAutoApprove;
-            state.profile = {
-              ...state.profile,
-              agentXLanguage,
-              agentCLanguage,
-              systemLanguage,
-              style: Number.isFinite(style) ? style : DEFAULT_PROFILE.style,
-              agentXLabel,
-              agentCLabel,
-              agentXRole,
-              agentCRole,
+	            state.profile = {
+	              ...state.profile,
+	              agentXLanguage,
+	              agentCLanguage,
+	              systemLanguage,
+	              agentXMode,
+	              agentCMode,
+	              systemMode,
+	              style: Number.isFinite(style) ? style : DEFAULT_PROFILE.style,
+	              agentXLabel,
+	              agentCLabel,
+	              agentXRole,
+	              agentCRole,
               privacy: {
                 ...(state.profile.privacy || DEFAULT_PROFILE.privacy),
                 saveHistory: saveHistoryPref,
