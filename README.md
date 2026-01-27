@@ -40,9 +40,12 @@
 ## AgentC-oins (Stripe + Magic)
 
 - UI: `Contents/Resources/Homepage.html` (shows balance + opens Stripe Payment Link)
-- Balance API: `GET /api/tokens/balance` (requires `Authorization: Bearer <Magic ID token>`)
+- Balance API: `GET /api/tokens/balance` (requires `Authorization: Bearer <Magic ID token>`, returns `{tokens}`)
+- Balance API (richer): `GET /api/balance` (returns `{magic_user_id, token_balance, last_used}`)
 - Webhook: `POST /api/stripe/webhook` (Stripe `checkout.session.completed` → credits tokens)
 - First login bonus: new accounts get `77` free AgentC-oins (only if they have no prior balance in KV).
+ - Hardening: token spends freeze at `0` and return HTTP `402` when exhausted.
+ - Optional ledger: set `AGENTC_TOKEN_LEDGER=1` to store a lightweight local KV ledger per user (best-effort).
 
 Required env (Vercel/Node serverless):
 - `KV_REST_API_URL` and `KV_REST_API_TOKEN` (or `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`)

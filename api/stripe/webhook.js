@@ -1,5 +1,6 @@
 const crypto = require("crypto");
-const { kvGet, kvIncrBy, kvSetNX } = require("../_lib/upstash_kv");
+const { kvGet, kvSetNX } = require("../_lib/upstash_kv");
+const { creditTokens } = require("../_lib/token");
 
 const firstEnv = (...names) => {
   for (const name of names) {
@@ -64,7 +65,6 @@ const verifyStripeSignature = ({ secret, signatureHeader, payload }) => {
   return v1s.some((sig) => timingSafeEqualHex(expected, sig));
 };
 
-const tokenKey = (userId) => `agentc:tokens:${userId}`;
 const creditedKey = (sessionId) => `agentc:stripe:credited:${sessionId}`;
 const emailKey = (email) => `agentc:email_to_user:${String(email || "").trim().toLowerCase()}`;
 
@@ -123,6 +123,9 @@ module.exports = async (req, res) => {
   const paymentStatus = String(session?.payment_status || "").trim();
   let userId = String(session?.client_reference_id || "").trim();
   const paymentLinkId = String(session?.payment_link || "").trim();
+  const metaUserId =
+    String(session?.metadata?.user_id || "").trim() ||
+    String(session?.metadata?.userId || "").trim();
 
   if (!sessionId || paymentStatus !== "paid") {
     res.statusCode = 200;
@@ -130,6 +133,8 @@ module.exports = async (req, res) => {
     res.end(JSON.stringify({ received: true }));
     return;
   }
+
+  if (metaUserId) userId = metaUserId;
 
   if (!userId) {
     const email =
@@ -152,15 +157,23 @@ module.exports = async (req, res) => {
   }
 
   let tokensToCredit = 0;
-  const metaTokens = parseInt(String(session?.metadata?.agentc_tokens || ""), 10);
-  if (Number.isFinite(metaTokens) && metaTokens > 0) {
-    tokensToCredit = metaTokens;
+  const topupAmount = parseInt(
+    String(session?.metadata?.topup_amount || session?.metadata?.topupAmount || ""),
+    10
+  );
+  if (Number.isFinite(topupAmount) && topupAmount > 0) {
+    tokensToCredit = topupAmount;
   } else {
+    const metaTokens = parseInt(String(session?.metadata?.agentc_tokens || ""), 10);
+    if (Number.isFinite(metaTokens) && metaTokens > 0) {
+      tokensToCredit = metaTokens;
+    }
+
     const allowed = parseAllowedPaymentLinks();
-    if (allowed) {
+    if (!tokensToCredit && allowed) {
       const n = parseInt(String(allowed[paymentLinkId] ?? ""), 10);
       if (Number.isFinite(n) && n > 0) tokensToCredit = n;
-    } else {
+    } else if (!tokensToCredit) {
       const requiredLinkId = firstEnv("STRIPE_PAYMENT_LINK_ID");
       if (requiredLinkId && paymentLinkId && paymentLinkId !== requiredLinkId) {
         res.statusCode = 200;
@@ -182,7 +195,12 @@ module.exports = async (req, res) => {
       return;
     }
 
-    const newBalance = await kvIncrBy(tokenKey(userId), tokensToCredit);
+    const newBalance = await creditTokens(userId, tokensToCredit, {
+      source: "stripe",
+      session_id: sessionId,
+      payment_link: paymentLinkId || null,
+      event_id: String(event?.id || "").trim() || null,
+    });
     res.statusCode = 200;
     res.setHeader("Content-Type", "application/json");
     res.end(JSON.stringify({ received: true, userId, tokensCredited: tokensToCredit, tokens: newBalance }));

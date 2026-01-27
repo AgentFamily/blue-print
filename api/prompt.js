@@ -1,9 +1,8 @@
 const { getMagicJwtFromRequest, magicUserEmailFromJwt, getMagicUserIdFromRequest } = require("./_lib/magic_user");
-const { kvIncrBy, kvSet, kvSetNX } = require("./_lib/upstash_kv");
+const { kvSet } = require("./_lib/upstash_kv");
+const { creditTokens, spendTokens } = require("./_lib/token");
 
-const tokenKey = (userId) => `agentc:tokens:${userId}`;
 const emailKey = (email) => `agentc:email_to_user:${String(email || "").trim().toLowerCase()}`;
-const INITIAL_TOKENS = 77;
 
 module.exports = async (req, res) => {
   if (req.method !== "POST") {
@@ -66,28 +65,19 @@ module.exports = async (req, res) => {
         }
       }
 
-      try {
-        await kvSetNX(tokenKey(magicUserId), String(INITIAL_TOKENS));
-      } catch {
-        // ignore init failures
-      }
-
-      const next = await kvIncrBy(tokenKey(magicUserId), -1);
-      if (next < 0) {
-        await kvIncrBy(tokenKey(magicUserId), 1);
-        res.statusCode = 402;
-        res.setHeader("Content-Type", "application/json");
-        res.setHeader("Cache-Control", "no-store");
-        res.end(JSON.stringify({ error: "No AgentC-oins remaining.", tokens: 0 }));
-        return;
-      }
+      const out = await spendTokens(magicUserId, 1);
       tokenCharged = true;
-      tokens = next;
+      tokens = out.tokens;
     } catch (err) {
       res.statusCode = err?.status || 500;
       res.setHeader("Content-Type", "application/json");
       res.setHeader("Cache-Control", "no-store");
-      res.end(JSON.stringify({ error: err?.message || "Token store error" }));
+      res.end(
+        JSON.stringify({
+          error: err?.message || "Token store error",
+          ...(typeof err?.tokens !== "undefined" ? { tokens: err.tokens } : {}),
+        })
+      );
       return;
     }
   }
@@ -207,7 +197,7 @@ module.exports = async (req, res) => {
   } catch (err) {
     if (tokenCharged && magicUserId) {
       try {
-        await kvIncrBy(tokenKey(magicUserId), 1);
+        await creditTokens(magicUserId, 1, { reason: "upstream_error_refund" });
       } catch {
         // ignore refund failures
       }

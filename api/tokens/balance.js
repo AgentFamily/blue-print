@@ -1,9 +1,8 @@
 const { getMagicJwtFromRequest, magicUserEmailFromJwt, getMagicUserIdFromRequest } = require("../_lib/magic_user");
-const { kvGetInt, kvSet, kvSetNX } = require("../_lib/upstash_kv");
+const { kvSet } = require("../_lib/upstash_kv");
+const { getBalance } = require("../_lib/token");
 
-const tokenKey = (userId) => `agentc:tokens:${userId}`;
 const emailKey = (email) => `agentc:email_to_user:${String(email || "").trim().toLowerCase()}`;
-const INITIAL_TOKENS = 77;
 
 module.exports = async (req, res) => {
   if (req.method !== "GET") {
@@ -33,14 +32,8 @@ module.exports = async (req, res) => {
       }
     }
 
-    // First login: seed new accounts with free tokens (exactly once, only if no prior balance exists).
-    try {
-      await kvSetNX(tokenKey(userId), String(INITIAL_TOKENS));
-    } catch {
-      // ignore init failures
-    }
-
-    const tokens = await kvGetInt(tokenKey(userId), 0);
+    const bal = await getBalance(userId);
+    const tokens = bal.tokens;
     res.statusCode = 200;
     res.setHeader("Content-Type", "application/json");
     res.setHeader("Cache-Control", "no-store");

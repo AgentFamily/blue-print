@@ -1,10 +1,10 @@
-const { getMagicUserIdFromRequest } = require("../_lib/magic_user");
-const { spendTokens } = require("../_lib/token");
+const { getMagicUserIdFromRequest } = require("./_lib/magic_user");
+const { getBalance } = require("./_lib/token");
 
 module.exports = async (req, res) => {
-  if (req.method !== "POST") {
+  if (req.method !== "GET") {
     res.statusCode = 405;
-    res.setHeader("Allow", "POST");
+    res.setHeader("Allow", "GET");
     res.end("Method Not Allowed");
     return;
   }
@@ -19,22 +19,22 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const out = await spendTokens(userId, 1);
-
+    const bal = await getBalance(userId);
     res.statusCode = 200;
-    res.setHeader("Content-Type", "application/json");
-    res.setHeader("Cache-Control", "no-store");
-    res.end(JSON.stringify({ tokens: out.tokens }));
-  } catch (err) {
-    const status = err?.status || 500;
-    res.statusCode = status;
     res.setHeader("Content-Type", "application/json");
     res.setHeader("Cache-Control", "no-store");
     res.end(
       JSON.stringify({
-        error: err?.message || "Token store error",
-        ...(typeof err?.tokens !== "undefined" ? { tokens: err.tokens } : {}),
+        magic_user_id: userId,
+        token_balance: bal.tokens,
+        last_used: bal.last_used,
       })
     );
+  } catch (err) {
+    res.statusCode = err?.status || 500;
+    res.setHeader("Content-Type", "application/json");
+    res.setHeader("Cache-Control", "no-store");
+    res.end(JSON.stringify({ error: err?.message || "Balance lookup failed" }));
   }
 };
+
