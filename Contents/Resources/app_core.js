@@ -271,7 +271,7 @@
 		      const OFFLINE_PNG_CACHE = "mkMagicStatusPngOfflineV1";
 		      const ONLINE_PNG_CACHE = "mkMagicStatusPngOnlineV1";
 		      const PNG_VERSION_KEY = "mkMagicStatusPngVersionV1";
-		      const PNG_CACHE_VERSION = "r2026-01-26c";
+		      const PNG_CACHE_VERSION = "r2026-01-27e";
 
 		      const ensurePngCacheVersion = () => {
 		        try {
@@ -1240,10 +1240,10 @@
   api.createMagicAuthWidget = createMagicAuthWidget;
 
 		  try {
-		    Object.defineProperty(api, "__version", { value: "r2026-01-26c", enumerable: true });
-		  } catch {
-		    api.__version = "r2026-01-26c";
-		  }
+		    Object.defineProperty(api, "__version", { value: "r2026-01-27e", enumerable: true });
+			  } catch {
+		    api.__version = "r2026-01-27e";
+			  }
 
   try {
     global.MKCore = api;
