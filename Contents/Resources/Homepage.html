@@ -1673,10 +1673,10 @@
             <span class="dot tools" aria-hidden="true"></span>
             <span>Tools</span>
           </button>
-	          <button class="pill pill-btn" id="onlineBtn" type="button" title="Open online mode">
-	            <span class="dot online" aria-hidden="true"></span>
-	            <span>Online</span>
-	          </button>
+		          <button class="pill pill-btn" id="onlineBtn" type="button" aria-pressed="false" title="Sign in / Sign out">
+		            <span class="dot online" aria-hidden="true"></span>
+		            <span id="onlineLabel">Sign in</span>
+		          </button>
 	          <button class="pill pill-btn" id="downloadBtn" type="button" title="Download paper">
 	            <span class="dot download" aria-hidden="true"></span>
 	            <span>Download</span>
@@ -4750,6 +4750,17 @@ When there is prior conversation, refine at least one point from the previous ro
 	            return;
 	          }
 
+	          const onlineBtn = el("onlineBtn");
+	          const onlineLabel = el("onlineLabel");
+	          if (onlineBtn && onlineLabel) {
+	            const snap = getMagicAuthSnapshot();
+	            const signedIn = Boolean(snap && snap.signedIn);
+	            onlineBtn.disabled = Boolean(state.loading);
+	            onlineBtn.setAttribute("aria-pressed", signedIn ? "true" : "false");
+	            onlineBtn.title = signedIn ? "Sign out" : "Sign in";
+	            onlineLabel.textContent = signedIn ? "Log out" : "Sign in";
+	          }
+
           if (state.visibleStart > 0) {
             const loadWrap = document.createElement("div");
             loadWrap.className = "load-older";
@@ -5461,14 +5472,24 @@ When there is prior conversation, refine at least one point from the previous ro
           render();
         }
 
-		        function openOnline() {
-		          const url = "https://chatgpt.com/g/g-696650381b248191ab2ca39f3a8112f6-engineer12";
-		          try {
-		            window.open(url, "_blank", "noopener,noreferrer");
-		          } catch {
-		            window.location.href = url;
-		          }
-		        }
+			        async function toggleAuth() {
+			          const snap = getMagicAuthSnapshot();
+			          const signedIn = Boolean(snap && snap.signedIn);
+			          if (signedIn) {
+			            setStatusRight("Signing out…");
+			            try {
+			              if (window.MKMagicAuth?.logout) await window.MKMagicAuth.logout();
+			              else if (window.MKCore?.magicAuth?.logout) await window.MKCore.magicAuth.logout();
+			            } catch (err) {
+			              setStatusRight(String(err?.message || err) || "Sign out failed.", true);
+			            } finally {
+			              setStatusRight("");
+			              render();
+			            }
+			            return;
+			          }
+			          openMagicAuthPanel();
+			        }
 
 		        function openDownload() {
 		          const url = "https://doi.org/10.5281/zenodo.18334441";
@@ -5776,7 +5797,7 @@ When there is prior conversation, refine at least one point from the previous ro
 	          });
 		          updateModalLayerState();
 
-		          el("onlineBtn").addEventListener("click", openOnline);
+			          el("onlineBtn").addEventListener("click", () => toggleAuth());
 		          el("downloadBtn")?.addEventListener("click", openDownload);
 	          el("toolsBtn").addEventListener("click", () => {
 	            if (!toolsAvailable()) {
