@@ -44,17 +44,38 @@ module.exports = async (req, res) => {
     return;
   }
 
+  const looksLikeOpenAIKey = (apiKey) => {
+    const k = String(apiKey || "").trim();
+    if (!k) return false;
+    return /^sk-(proj-)?/i.test(k);
+  };
+
+  const buildChatCompletionsUrl = (baseUrl) => {
+    let cleanBase = String(baseUrl || "").trim().replace(/\/+$/, "");
+    if (!cleanBase) return "";
+    if (/\/chat\/completions$/i.test(cleanBase)) return cleanBase;
+    if (!/\/v1$/i.test(cleanBase)) cleanBase = `${cleanBase}/v1`;
+    return `${cleanBase}/chat/completions`;
+  };
+
   const openBaseUrl = String(process.env.OPEN_BASE_URL || process.env.OPENAI_BASE_URL || "https://api.openai.com/v1").replace(
     /\/+$/,
     ""
   );
-  const gatewayBaseUrl = String(process.env.AI_GATEWAY_BASE_URL || "https://api.openai.com/v1").replace(/\/+$/, "");
+  const gatewayBaseUrl = String(
+    process.env.AI_GATEWAY_BASE_URL ||
+      (looksLikeOpenAIKey(gatewayKey) ? "https://api.openai.com/v1" : "https://gateway.ai.vercel.com/v1")
+  ).replace(/\/+$/, "");
 
   const openModel = process.env.OPEN_MODEL || process.env.OPENAI_MODEL || process.env.AI_MODEL || "gpt-4o-mini";
-  const gatewayModel = process.env.AI_GATEWAY_MODEL || process.env.AI_MODEL || "gpt-4o-mini";
+  const gatewayModelEnv = process.env.AI_GATEWAY_MODEL;
+  let gatewayModel = gatewayModelEnv || process.env.AI_MODEL || "gpt-4o-mini";
+  if (!gatewayModelEnv && !looksLikeOpenAIKey(gatewayKey) && !String(gatewayModel).includes("/")) {
+    gatewayModel = `openai/${gatewayModel}`;
+  }
 
   try {
-    const openRes = await fetch(`${openBaseUrl}/chat/completions`, {
+    const openRes = await fetch(buildChatCompletionsUrl(openBaseUrl), {
       method: "POST",
       headers: {
         Authorization: `Bearer ${String(openKey).trim()}`,
@@ -89,7 +110,7 @@ module.exports = async (req, res) => {
 
     const openText = String(openData?.choices?.[0]?.message?.content ?? "");
 
-    const gatewayRes = await fetch(`${gatewayBaseUrl}/chat/completions`, {
+    const gatewayRes = await fetch(buildChatCompletionsUrl(gatewayBaseUrl), {
       method: "POST",
       headers: {
         Authorization: `Bearer ${String(gatewayKey).trim()}`,
@@ -114,12 +135,17 @@ module.exports = async (req, res) => {
 
     const gatewayData = await gatewayRes.json().catch(() => null);
     if (!gatewayRes.ok) {
-      res.statusCode = gatewayRes.status || 502;
+      // Fail-open: return the OpenAI candidate if the evaluator is misconfigured or down.
+      res.statusCode = 200;
       res.setHeader("Content-Type", "application/json");
       res.end(
         JSON.stringify({
-          error: "AI Gateway upstream error",
-          details: gatewayData,
+          text: openText,
+          open_text: openText,
+          gateway_error: {
+            status: gatewayRes.status || 502,
+            details: gatewayData,
+          },
         })
       );
       return;

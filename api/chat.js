@@ -49,9 +49,59 @@ const getLastUserContent = (messages) => {
 
 const ADMIN_COOKIE = "mk_admin";
 
-const callChatCompletions = async ({ baseUrl, apiKey, model, messages, temperature }) => {
-  const cleanBase = String(baseUrl || "").trim().replace(/\/+$/, "");
-  const url = `${cleanBase}/chat/completions`;
+const truthyEnv = (value) => {
+  const v = String(value || "").trim().toLowerCase();
+  if (!v) return false;
+  return v === "1" || v === "true" || v === "yes" || v === "y" || v === "on";
+};
+
+const looksLikeOpenAIKey = (apiKey) => {
+  const k = String(apiKey || "").trim();
+  if (!k) return false;
+  return /^sk-(proj-)?/i.test(k);
+};
+
+const buildChatCompletionsUrl = (baseUrl) => {
+  let cleanBase = String(baseUrl || "").trim().replace(/\/+$/, "");
+  if (!cleanBase) return "";
+  if (/\/chat\/completions$/i.test(cleanBase)) return cleanBase;
+  if (!/\/v1$/i.test(cleanBase)) cleanBase = `${cleanBase}/v1`;
+  return `${cleanBase}/chat/completions`;
+};
+
+const clip = (text, maxChars) => {
+  const s = String(text || "");
+  return s.length > maxChars ? s.slice(0, maxChars) + "…" : s;
+};
+
+const safeJsonParse = (text) => {
+  try {
+    return JSON.parse(String(text || ""));
+  } catch {
+    return null;
+  }
+};
+
+const extractUpstreamMessage = (json, fallbackText) => {
+  const direct =
+    json?.error?.message ||
+    json?.message ||
+    json?.error ||
+    (typeof json === "string" ? json : null) ||
+    "";
+  const msg = String(direct || fallbackText || "").trim();
+  return msg || "Upstream error";
+};
+
+const callChatCompletions = async ({ provider, baseUrl, apiKey, model, messages, temperature }) => {
+  const url = buildChatCompletionsUrl(baseUrl);
+  if (!url) {
+    const err = new Error(`Upstream (${provider || "unknown"}) misconfigured: missing base URL`);
+    err.status = 500;
+    err.provider = provider || "unknown";
+    err.details = { baseUrl };
+    throw err;
+  }
 
   const res = await fetch(url, {
     method: "POST",
@@ -66,11 +116,14 @@ const callChatCompletions = async ({ baseUrl, apiKey, model, messages, temperatu
     }),
   });
 
-  const json = await res.json().catch(() => null);
+  const text = await res.text().catch(() => "");
+  const json = safeJsonParse(text);
   if (!res.ok) {
-    const err = new Error("Upstream error");
+    const msg = extractUpstreamMessage(json, text);
+    const err = new Error(`Upstream (${provider || "unknown"}) HTTP ${res.status}: ${clip(msg, 320)}`);
     err.status = res.status;
-    err.details = json;
+    err.provider = provider || "unknown";
+    err.details = json ?? { raw: clip(text, 1400) };
     throw err;
   }
 
@@ -116,19 +169,6 @@ module.exports = async (req, res) => {
   const openKey = firstEnv("open", "OPEN", "OPENAI_API_KEY", "OPEN_AI_API_KEY", "OPEN_API_KEY");
   const gatewayKey = firstEnv("AI_GATEWAY_API_KEY");
 
-  if (!openKey) {
-    res.statusCode = 500;
-    res.setHeader("Content-Type", "application/json");
-    res.end(JSON.stringify({ error: "Missing OpenAI key env (expected `open` or `OPENAI_API_KEY`)" }));
-    return;
-  }
-  if (!gatewayKey) {
-    res.statusCode = 500;
-    res.setHeader("Content-Type", "application/json");
-    res.end(JSON.stringify({ error: "Missing AI_GATEWAY_API_KEY" }));
-    return;
-  }
-
   if (!messages || messages.length === 0) {
     res.statusCode = 400;
     res.setHeader("Content-Type", "application/json");
@@ -136,10 +176,30 @@ module.exports = async (req, res) => {
     return;
   }
 
+  if (!openKey && !gatewayKey) {
+    res.statusCode = 500;
+    res.setHeader("Content-Type", "application/json");
+    res.end(
+      JSON.stringify({
+        error: "Missing upstream API key (expected `open`/`OPENAI_API_KEY` and/or `AI_GATEWAY_API_KEY`)",
+      })
+    );
+    return;
+  }
+
   const openBaseUrl = firstEnv("OPEN_BASE_URL", "OPENAI_BASE_URL") || "https://api.openai.com/v1";
   const openModel = firstEnv("OPEN_MODEL", "OPENAI_MODEL") || "gpt-4o-mini";
-  const gatewayBaseUrl = firstEnv("AI_GATEWAY_BASE_URL") || "https://api.openai.com/v1";
-  const gatewayModel = firstEnv("AI_GATEWAY_MODEL") || "gpt-4o-mini";
+
+  const gatewayBaseUrl =
+    firstEnv("AI_GATEWAY_BASE_URL") ||
+    (looksLikeOpenAIKey(gatewayKey) ? "https://api.openai.com/v1" : "https://gateway.ai.vercel.com/v1");
+  const gatewayModelEnv = firstEnv("AI_GATEWAY_MODEL");
+  let gatewayModel = gatewayModelEnv || "gpt-4o-mini";
+  if (!gatewayModelEnv && gatewayKey && !looksLikeOpenAIKey(gatewayKey) && !String(gatewayModel).includes("/")) {
+    gatewayModel = `openai/${gatewayModel}`;
+  }
+
+  const useGatewayEval = truthyEnv(firstEnv("AI_GATEWAY_EVAL", "MK_GATEWAY_EVAL", "MK_ENABLE_GATEWAY_EVAL"));
   const temperature = typeof body?.options?.temperature === "number" ? body.options.temperature : 0.2;
 
   const effectiveMessages = isAdminCookie
@@ -153,7 +213,126 @@ module.exports = async (req, res) => {
     : messages;
 
   try {
+    // Preferred mode: use AI Gateway directly when configured.
+    // Optional: enable a two-step "OpenAI -> Gateway evaluator" flow via env `AI_GATEWAY_EVAL=1`.
+
+    if (useGatewayEval && openKey && gatewayKey) {
+      const open = await callChatCompletions({
+        provider: "open",
+        baseUrl: openBaseUrl,
+        apiKey: openKey,
+        model: openModel,
+        messages: effectiveMessages,
+        temperature,
+      });
+
+      const evaluatorMessages = [
+        {
+          role: "system",
+          content:
+            "You are AI Gateway. Evaluate the candidate assistant response for correctness, safety, and usefulness; then provide a best-possible final answer. Output plain text only in this exact format:\nEVAL:\n- <bullets>\n\nFINAL:\n<answer>",
+        },
+        {
+          role: "user",
+          content:
+            `Conversation messages:\n${JSON.stringify(effectiveMessages, null, 2)}\n\n` +
+            `Candidate assistant response:\n${open.content}`,
+        },
+      ];
+
+      try {
+        const gateway = await callChatCompletions({
+          provider: "gateway",
+          baseUrl: gatewayBaseUrl,
+          apiKey: gatewayKey,
+          model: gatewayModel,
+          messages: evaluatorMessages,
+          temperature: 0.2,
+        });
+
+        res.statusCode = 200;
+        res.setHeader("Content-Type", "application/json");
+        res.end(
+          JSON.stringify({
+            message: { role: "assistant", content: gateway.content },
+            open: { model: openModel, content: open.content },
+            gateway: { model: gatewayModel, content: gateway.content },
+          })
+        );
+        return;
+      } catch (gatewayErr) {
+        // Fail-open: return the OpenAI candidate if the evaluator is misconfigured or down.
+        res.statusCode = 200;
+        res.setHeader("Content-Type", "application/json");
+        res.end(
+          JSON.stringify({
+            message: { role: "assistant", content: open.content },
+            open: { model: openModel, content: open.content },
+            gateway_error: {
+              error: gatewayErr?.message || "Gateway evaluator failed",
+              status: gatewayErr?.status,
+              provider: gatewayErr?.provider,
+              details: gatewayErr?.details,
+            },
+          })
+        );
+        return;
+      }
+    }
+
+    if (gatewayKey) {
+      try {
+        const gateway = await callChatCompletions({
+          provider: "gateway",
+          baseUrl: gatewayBaseUrl,
+          apiKey: gatewayKey,
+          model: gatewayModel,
+          messages: effectiveMessages,
+          temperature,
+        });
+
+        res.statusCode = 200;
+        res.setHeader("Content-Type", "application/json");
+        res.end(
+          JSON.stringify({
+            message: { role: "assistant", content: gateway.content },
+            gateway: { model: gatewayModel, content: gateway.content },
+          })
+        );
+        return;
+      } catch (gatewayErr) {
+        if (!openKey) throw gatewayErr;
+        // Fallback: if AI Gateway is down/misconfigured, still answer via OpenAI.
+        const open = await callChatCompletions({
+          provider: "open",
+          baseUrl: openBaseUrl,
+          apiKey: openKey,
+          model: openModel,
+          messages: effectiveMessages,
+          temperature,
+        });
+
+        res.statusCode = 200;
+        res.setHeader("Content-Type", "application/json");
+        res.end(
+          JSON.stringify({
+            message: { role: "assistant", content: open.content },
+            open: { model: openModel, content: open.content },
+            gateway_error: {
+              error: gatewayErr?.message || "AI Gateway failed",
+              status: gatewayErr?.status,
+              provider: gatewayErr?.provider,
+              details: gatewayErr?.details,
+            },
+          })
+        );
+        return;
+      }
+    }
+
+    // OpenAI-only fallback.
     const open = await callChatCompletions({
+      provider: "open",
       baseUrl: openBaseUrl,
       apiKey: openKey,
       model: openModel,
@@ -161,43 +340,17 @@ module.exports = async (req, res) => {
       temperature,
     });
 
-    const evaluatorMessages = [
-      {
-        role: "system",
-        content:
-          "You are AI Gateway. Evaluate the candidate assistant response for correctness, safety, and usefulness; then provide a best-possible final answer. Output plain text only in this exact format:\nEVAL:\n- <bullets>\n\nFINAL:\n<answer>",
-      },
-      {
-        role: "user",
-        content:
-          `Conversation messages:\n${JSON.stringify(effectiveMessages, null, 2)}\n\n` +
-          `Candidate assistant response:\n${open.content}`,
-      },
-    ];
-
-    const gateway = await callChatCompletions({
-      baseUrl: gatewayBaseUrl,
-      apiKey: gatewayKey,
-      model: gatewayModel,
-      messages: evaluatorMessages,
-      temperature: 0.2,
-    });
-
     res.statusCode = 200;
     res.setHeader("Content-Type", "application/json");
-    res.end(
-      JSON.stringify({
-        message: { role: "assistant", content: gateway.content },
-        open: { model: openModel, content: open.content },
-        gateway: { model: gatewayModel, content: gateway.content },
-      })
-    );
+    res.end(JSON.stringify({ message: { role: "assistant", content: open.content }, open: { model: openModel } }));
   } catch (err) {
     res.statusCode = err?.status || 502;
     res.setHeader("Content-Type", "application/json");
     res.end(
       JSON.stringify({
         error: err?.message || "Request failed",
+        status: err?.status,
+        provider: err?.provider,
         details: err?.details,
       })
     );
