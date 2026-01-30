@@ -871,15 +871,134 @@
         }
       }
 
-      .terminal {
-        display: inline-block;
-        padding: 2px 6px;
-        border-radius: 10px;
-        border: 1px solid rgba(2, 6, 23, 0.10);
-        background: rgba(2, 6, 23, 0.04);
-        color: rgba(2, 6, 23, 0.84);
-        font-weight: var(--sf-light);
-      }
+	      .terminal {
+	        display: inline-block;
+	        padding: 2px 6px;
+	        border-radius: 10px;
+	        border: 1px solid rgba(2, 6, 23, 0.10);
+	        background: rgba(2, 6, 23, 0.04);
+	        color: rgba(2, 6, 23, 0.84);
+	        font-weight: var(--sf-light);
+	      }
+
+	      /* Online sealing (client-only AES UX controls) */
+	      .io-toggle {
+	        display: flex;
+	        align-items: center;
+	        gap: 12px;
+	        flex-wrap: wrap;
+	      }
+
+	      .io-toggle .io-tag {
+	        font-size: 12px;
+	        color: rgba(2, 6, 23, 0.72);
+	        letter-spacing: 0.02em;
+	        font-weight: var(--sf-light);
+	      }
+
+	      .io-switch {
+	        position: relative;
+	        width: 160px;
+	        height: 28px;
+	        border-radius: 999px;
+	        border: 1px solid rgba(2, 6, 23, 0.12);
+	        background: rgba(2, 6, 23, 0.04);
+	        flex: 0 0 auto;
+	      }
+
+	      .io-switch input {
+	        position: absolute;
+	        inset: 0;
+	        opacity: 0;
+	        cursor: pointer;
+	      }
+
+	      .io-switch .io-knob {
+	        position: absolute;
+	        top: 50%;
+	        left: 6px;
+	        width: 18px;
+	        height: 18px;
+	        border-radius: 999px;
+	        background: #ffffff;
+	        box-shadow: 0 8px 18px rgba(2, 6, 23, 0.12);
+	        transform: translate(0, -50%);
+	        transition: transform 180ms ease, box-shadow 180ms ease;
+	      }
+
+	      .io-switch input:checked + .io-knob {
+	        transform: translate(130px, -50%);
+	        box-shadow: 0 10px 22px rgba(2, 6, 23, 0.16);
+	      }
+
+	      @media (prefers-reduced-motion: reduce) {
+	        .io-switch .io-knob {
+	          transition: none;
+	        }
+	      }
+
+	      .seal-field {
+	        margin-top: 10px;
+	        padding: 10px 12px;
+	        border-radius: 14px;
+	        border: 1px solid rgba(2, 6, 23, 0.10);
+	        background: rgba(2, 6, 23, 0.02);
+	      }
+
+	      .seal-row {
+	        display: flex;
+	        gap: 10px;
+	        align-items: center;
+	        flex-wrap: wrap;
+	      }
+
+	      .seal-row input[type="password"] {
+	        flex: 1 1 240px;
+	      }
+
+	      .seal-status {
+	        font-size: 12px;
+	        color: rgba(2, 6, 23, 0.72);
+	      }
+
+	      .answer details.seal {
+	        margin-top: 10px;
+	        border-top: 1px solid rgba(2, 6, 23, 0.08);
+	        padding-top: 8px;
+	      }
+
+	      .answer details.seal summary {
+	        cursor: pointer;
+	        user-select: none;
+	        color: rgba(2, 6, 23, 0.78);
+	        font-size: 12px;
+	        font-weight: var(--sf-light);
+	        letter-spacing: 0.01em;
+	        list-style: none;
+	        outline: none;
+	      }
+
+	      .answer details.seal summary::-webkit-details-marker {
+	        display: none;
+	      }
+
+	      .answer details.seal summary::before {
+	        content: "🔐";
+	        margin-right: 8px;
+	      }
+
+	      .answer pre.seal-pre {
+	        margin-top: 8px;
+	        font-size: 12px;
+	        line-height: 1.4;
+	        color: rgba(2, 6, 23, 0.86);
+	        font-weight: var(--sf-light);
+	        font-variant-numeric: tabular-nums;
+	        border: 1px solid rgba(2, 6, 23, 0.10);
+	        border-radius: 14px;
+	        padding: 10px 12px;
+	        background: rgba(2, 6, 23, 0.03);
+	      }
 
       .composer {
         flex: 0 0 auto;
@@ -1889,13 +2008,14 @@
 	          </div>
           <div class="clarity" id="clarityHint" aria-live="polite"></div>
           <div class="privacy-light" id="privacyLight" aria-live="polite"></div>
-	          <div class="status">
-	            <div id="statusLeft">
-	              Endpoint <code id="endpointCode"></code> • Model <code id="modelCode">auto</code> • Tools <code id="toolsCode">off</code> • UI
-		              <code id="uiRev">r2026-01-27h</code>
-	            </div>
-	            <div id="statusRight"></div>
-	          </div>
+		          <div class="status">
+		            <div id="statusLeft">
+		              Endpoint <code id="endpointCode"></code> • Model <code id="modelCode">auto</code> • Tools <code id="toolsCode">off</code> • Mode
+			              <code id="ioModeCode">🟢 LOCAL</code> • UI
+			              <code id="uiRev">r2026-01-27h</code>
+		            </div>
+		            <div id="statusRight"></div>
+		          </div>
         </form>
       </div>
     </div>
@@ -1929,14 +2049,42 @@
 	          <label for="agentCModelInput">Agent C Model Override (optional)</label>
 	          <input id="agentCModelInput" type="text" placeholder="(blank = inherit System)" />
 	        </div>
-        <div class="field">
-          <label for="onlineUrlInput">Online URL</label>
-	          <input id="onlineUrlInput" type="text" placeholder="https://doi.org/10.5281/zenodo.18334441" />
+	        <div class="field">
+	          <label for="onlineUrlInput">Online URL</label>
+		          <input id="onlineUrlInput" type="text" placeholder="https://doi.org/10.5281/zenodo.18334441" />
+		        </div>
+	        <div class="field full">
+	          <label>Mode</label>
+	          <div class="hint">LOCAL runs fully on-device. ONLINE is an intent stamp for the next outputs.</div>
+	          <div class="io-toggle" role="group" aria-label="Local or Online">
+	            <span class="io-tag">LOCAL</span>
+	            <label class="io-switch" aria-label="Toggle Local or Online">
+	              <input id="ioOnlineSwitch" type="checkbox" />
+	              <span class="io-knob" aria-hidden="true"></span>
+	            </label>
+	            <span class="io-tag">ONLINE</span>
+	          </div>
+	          <div class="seal-field" id="onlineSealField" hidden>
+	            <div class="seal-row">
+	              <label>
+	                <input id="sealAesInput" type="checkbox" />
+	                Seal with AES-256 (recommended)
+	              </label>
+	            </div>
+	            <div class="seal-row" style="margin-top:10px">
+	              <input id="aesPassphraseInput" type="password" placeholder="Passphrase (not stored; required each reload)" autocomplete="new-password" />
+	              <button class="btn" id="armAesBtn" type="button">Arm</button>
+	              <span class="seal-status" id="aesSealStatus">Not armed</span>
+	            </div>
+	            <div class="hint" style="margin-top:8px">
+	              AES is edge-applied to the output only, never to the model mid-generation. Ciphertext is never glitched.
+	            </div>
+	          </div>
 	        </div>
-        <div class="field full" id="lanAccessField">
-          <label>LAN Party (iPhone Access)</label>
-          <div class="hint">Turn this on to open the UI on your iPhone on the same Wi‑Fi. Tools stay local‑only.</div>
-          <div class="lan-card" role="group" aria-label="LAN access">
+	        <div class="field full" id="lanAccessField">
+	          <label>LAN Party (iPhone Access)</label>
+	          <div class="hint">Turn this on to open the UI on your iPhone on the same Wi‑Fi. Tools stay local‑only.</div>
+	          <div class="lan-card" role="group" aria-label="LAN access">
             <div class="lan-avatars" aria-hidden="true">
               <img
                 class="voice-avatar"
@@ -2600,29 +2748,219 @@
 	            const SYSTEM_ROLE =
 	              "You are the System, an orchestration layer that reviews Agent X and Agent C, reconciles differences, and produces a single helpful response for the user.";
 
-	            const DEFAULT_PROFILE = {
-	              systemLanguage: "auto",
-	              agentXLanguage: "auto",
-	              agentCLanguage: "auto",
-	              glitchIntensity: 2,
-	              systemMode: "chat",
-	              agentXMode: "chat",
-	              agentCMode: "chat",
-	              style: 50,
-	              agentXLabel: "Creative Engineer",
-	              agentCLabel: "Logical Engineer",
-	              agentXRole: AGENT_X_ROLE,
-	              agentCRole: AGENT_C_ROLE,
-	              privacy: {
-	                saveHistory: true,
-	                autoClearCaches: true,
-	                autoClearClipboard: true
-	              },
-	              persistentMemory: "",
-	              customInstructions: "",
-	              templates: [],
-	              teachings: []
-	            };
+		            const DEFAULT_PROFILE = {
+		              systemLanguage: "auto",
+		              agentXLanguage: "auto",
+		              agentCLanguage: "auto",
+		              ioMode: "local",
+		              glitchIntensity: 2,
+		              systemMode: "chat",
+		              agentXMode: "chat",
+		              agentCMode: "chat",
+		              style: 50,
+		              agentXLabel: "Creative Engineer",
+		              agentCLabel: "Logical Engineer",
+		              agentXRole: AGENT_X_ROLE,
+		              agentCRole: AGENT_C_ROLE,
+		              privacy: {
+		                saveHistory: true,
+		                autoClearCaches: true,
+		                autoClearClipboard: true
+		              },
+		              persistentMemory: "",
+		              customInstructions: "",
+		              templates: [],
+		              teachings: []
+		            };
+
+		            function normalizeIOMode(value, fallback) {
+		              const raw = String(value || "").trim().toLowerCase();
+		              if (raw === "local" || raw === "online_plain" || raw === "online_aes") return raw;
+		              const fb = String(fallback || "").trim().toLowerCase();
+		              if (fb === "local" || fb === "online_plain" || fb === "online_aes") return fb;
+		              return "local";
+		            }
+
+		            // Client-only AES seal keys (session-only; never persisted).
+		            const AES_SEAL_KDF_ITERATIONS = 120_000;
+		            let aesSealState = {
+		              ready: false,
+		              saltBytes: null,
+		              saltB64: "",
+		              iterations: AES_SEAL_KDF_ITERATIONS,
+		              aesKey: null,
+		              hmacKey: null
+		            };
+
+		            function aesSealReady() {
+		              return Boolean(
+		                aesSealState &&
+		                  aesSealState.ready &&
+		                  aesSealState.aesKey &&
+		                  aesSealState.hmacKey &&
+		                  aesSealState.saltBytes &&
+		                  aesSealState.saltB64
+		              );
+		            }
+
+		            function selectedIOMode() {
+		              return normalizeIOMode(state.profile?.ioMode, DEFAULT_PROFILE.ioMode);
+		            }
+
+		            function effectiveIOMode() {
+		              // Mode is user-selected; enforcement happens at the I/O edge.
+		              return selectedIOMode();
+		            }
+
+		            function ioBadgeLabel() {
+		              const mode = effectiveIOMode();
+		              if (mode === "local") return "🟢 LOCAL";
+		              if (mode === "online_plain") return "🟠 ONLINE";
+		              return aesSealReady() ? "🔐 ONLINE · AES-256 SEALED" : "🔐 ONLINE · AES-256 (ARM REQUIRED)";
+		            }
+
+		            function bytesToB64(u8) {
+		              const bytes = u8 instanceof Uint8Array ? u8 : new Uint8Array(u8 || []);
+		              let binary = "";
+		              const chunk = 0x2000;
+		              for (let i = 0; i < bytes.length; i += chunk) {
+		                binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+		              }
+		              return btoa(binary);
+		            }
+
+		            function concatBytes(...parts) {
+		              const arrays = parts.filter(Boolean).map((p) => (p instanceof Uint8Array ? p : new Uint8Array(p)));
+		              const total = arrays.reduce((n, a) => n + a.length, 0);
+		              const out = new Uint8Array(total);
+		              let off = 0;
+		              for (const a of arrays) {
+		                out.set(a, off);
+		                off += a.length;
+		              }
+		              return out;
+		            }
+
+		            async function armAesSealFromPassphrase(passphrase) {
+		              const pass = String(passphrase || "");
+		              if (!pass) throw new Error("Enter a passphrase.");
+		              if (!window.crypto || !window.crypto.subtle) throw new Error("WebCrypto unavailable in this browser.");
+		              const encoder = new TextEncoder();
+		              const salt = new Uint8Array(16);
+		              window.crypto.getRandomValues(salt);
+		              const baseKey = await window.crypto.subtle.importKey("raw", encoder.encode(pass), "PBKDF2", false, ["deriveBits"]);
+		              const bits = await window.crypto.subtle.deriveBits(
+		                { name: "PBKDF2", salt, iterations: AES_SEAL_KDF_ITERATIONS, hash: "SHA-256" },
+		                baseKey,
+		                512
+		              );
+		              const bytes = new Uint8Array(bits);
+		              const aesKeyBytes = bytes.slice(0, 32);
+		              const hmacKeyBytes = bytes.slice(32, 64);
+		              const aesKey = await window.crypto.subtle.importKey("raw", aesKeyBytes, { name: "AES-CBC" }, false, ["encrypt"]);
+		              const hmacKey = await window.crypto.subtle.importKey(
+		                "raw",
+		                hmacKeyBytes,
+		                { name: "HMAC", hash: "SHA-256" },
+		                false,
+		                ["sign"]
+		              );
+		              aesSealState = {
+		                ready: true,
+		                saltBytes: salt,
+		                saltB64: bytesToB64(salt),
+		                iterations: AES_SEAL_KDF_ITERATIONS,
+		                aesKey,
+		                hmacKey
+		              };
+		            }
+
+		            async function aesSealEncrypt(plaintext) {
+		              if (!aesSealReady()) throw new Error("Encryption unavailable — transmission blocked.");
+		              const encoder = new TextEncoder();
+		              const iv = new Uint8Array(16);
+		              window.crypto.getRandomValues(iv);
+		              const pt = encoder.encode(String(plaintext || ""));
+		              const ctBuf = await window.crypto.subtle.encrypt({ name: "AES-CBC", iv }, aesSealState.aesKey, pt);
+		              const ct = new Uint8Array(ctBuf);
+		              const macInput = concatBytes(aesSealState.saltBytes, iv, ct);
+		              const macBuf = await window.crypto.subtle.sign("HMAC", aesSealState.hmacKey, macInput);
+		              const hmac = new Uint8Array(macBuf);
+		              return {
+		                alg: "AES-256-CBC-HMAC-SHA256",
+		                kdf: "PBKDF2-SHA256",
+		                iterations: aesSealState.iterations,
+		                salt: aesSealState.saltB64,
+		                iv: bytesToB64(iv),
+		                ciphertext: bytesToB64(ct),
+		                hmac: bytesToB64(hmac)
+		              };
+		            }
+
+		            async function maybeSealTriplet({ agentXText, agentCText, systemText }) {
+		              const mode = effectiveIOMode();
+		              if (mode !== "online_aes") return {};
+		              if (!aesSealReady()) throw new Error("Encryption unavailable — transmission blocked. Open Settings → Arm AES.");
+		              const [sealX, sealC, sealSystem] = await Promise.all([
+		                aesSealEncrypt(agentXText),
+		                aesSealEncrypt(agentCText),
+		                aesSealEncrypt(systemText)
+		              ]);
+		              return { sealX, sealC, sealSystem };
+		            }
+
+		            function renderSealDetailsHTML(sealObj) {
+		              if (!sealObj) return "";
+		              let pretty = "";
+		              try {
+		                pretty = JSON.stringify(sealObj, null, 2);
+		              } catch {
+		                pretty = String(sealObj);
+		              }
+		              return `<details class="seal"><summary class="sf-thin">Encrypted Copy (AES-256)</summary><pre class="seal-pre">${escapeHTML(
+		                pretty
+		              )}</pre></details>`;
+		            }
+
+		            function renderOnlineSealControlsFromDraft() {
+		              const online = Boolean(el("ioOnlineSwitch")?.checked);
+		              const sealField = el("onlineSealField");
+		              if (sealField) sealField.hidden = !online;
+		              const seal = el("sealAesInput");
+		              if (seal && !online) seal.checked = false;
+		              const status = el("aesSealStatus");
+		              if (status) {
+		                status.textContent = aesSealReady() ? "Armed (session-only)" : online && Boolean(seal?.checked) ? "Arm required" : "Not armed";
+		              }
+		            }
+
+		            function applyIOModeFromDraftControls() {
+		              const online = Boolean(el("ioOnlineSwitch")?.checked);
+		              const wantsSeal = Boolean(el("sealAesInput")?.checked);
+		              const next = online ? (wantsSeal ? "online_aes" : "online_plain") : "local";
+		              state.profile = { ...state.profile, ioMode: next };
+		              saveProfile();
+		              render();
+		            }
+
+		            async function armAesFromSettings() {
+		              const input = el("aesPassphraseInput");
+		              const pass = String(input?.value || "");
+		              if (!pass) {
+		                setStatusRight("Enter a passphrase to arm AES.", true);
+		                input?.focus?.();
+		                return;
+		              }
+		              setStatusRight("Arming AES…");
+		              try {
+		                await armAesSealFromPassphrase(pass);
+		                if (input) input.value = "";
+		                setStatusRight("AES armed (session-only).");
+		                render();
+		              } catch (err) {
+		                setStatusRight(String(err?.message || err) || "AES arming failed.", true);
+		              }
+		            }
 
 			        const EXTERNAL_BROWSE_BLOCKED_QUESTION =
 			          "I can’t access external websites from this environment. Do you want me to open this in your browser instead?";
@@ -4768,22 +5106,28 @@
 	            })
 	          ]);
 
-          const agentXText = normalizeOutput(agentX.content);
-          const agentCText = normalizeOutput(agentC.content);
-          const sys = await runSystemReflection({ baseContext: userContext, agentXText, agentCText });
+	          const agentXText = normalizeOutput(agentX.content);
+	          const agentCText = normalizeOutput(agentC.content);
+	          const sys = await runSystemReflection({ baseContext: userContext, agentXText, agentCText });
+	          const seals = await maybeSealTriplet({
+	            agentXText,
+	            agentCText,
+	            systemText: sys.content
+	          });
 
-	          return {
-	            topic: prompt,
-	            model: agentX.model,
+		          return {
+		            topic: prompt,
+		            model: agentX.model,
 	            modelX: agentX.model,
 	            modelC: agentC.model,
 	            modelSystem: sys.model,
-	            tools: tools.toolRuns,
-	            agentX: agentXText,
-	            agentC: agentCText,
-	            system: sys.content
-	          };
-        }
+		            tools: tools.toolRuns,
+		            agentX: agentXText,
+		            agentC: agentCText,
+		            system: sys.content,
+		            ...seals
+		          };
+	        }
 
 	        async function runLoop() {
 	          const last = state.rounds[state.rounds.length - 1];
@@ -4843,22 +5187,28 @@
 	            })
 	          ]);
 
-          const agentXText = normalizeOutput(agentX.content);
-          const agentCText = normalizeOutput(agentC.content);
-          const sys = await runSystemReflection({ baseContext: context, agentXText, agentCText });
+	          const agentXText = normalizeOutput(agentX.content);
+	          const agentCText = normalizeOutput(agentC.content);
+	          const sys = await runSystemReflection({ baseContext: context, agentXText, agentCText });
+	          const seals = await maybeSealTriplet({
+	            agentXText,
+	            agentCText,
+	            systemText: sys.content
+	          });
 
-	          return {
-	            topic: last.topic,
-	            model: agentX.model,
+		          return {
+		            topic: last.topic,
+		            model: agentX.model,
 	            modelX: agentX.model,
 	            modelC: agentC.model,
-	            modelSystem: sys.model,
-	            tools: tools.toolRuns,
-	            agentX: agentXText,
-	            agentC: agentCText,
-	            system: sys.content
-	          };
-        }
+		            modelSystem: sys.model,
+		            tools: tools.toolRuns,
+		            agentX: agentXText,
+		            agentC: agentCText,
+		            system: sys.content,
+		            ...seals
+		          };
+	        }
 
 	        async function runRefineLoop() {
 	          const last = state.rounds[state.rounds.length - 1];
@@ -4922,22 +5272,28 @@
 	            })
 	          ]);
 
-          const agentXText = normalizeOutput(agentX.content);
-          const agentCText = normalizeOutput(agentC.content);
-          const sys = await runSystemReflection({ baseContext, agentXText, agentCText });
+	          const agentXText = normalizeOutput(agentX.content);
+	          const agentCText = normalizeOutput(agentC.content);
+	          const sys = await runSystemReflection({ baseContext, agentXText, agentCText });
+	          const seals = await maybeSealTriplet({
+	            agentXText,
+	            agentCText,
+	            systemText: sys.content
+	          });
 
-	          return {
-	            topic: last.topic,
-	            model: agentX.model,
+		          return {
+		            topic: last.topic,
+		            model: agentX.model,
 	            modelX: agentX.model,
 	            modelC: agentC.model,
-	            modelSystem: sys.model,
-	            tools: tools.toolRuns,
-	            agentX: agentXText,
-	            agentC: agentCText,
-	            system: sys.content
-	          };
-        }
+		            modelSystem: sys.model,
+		            tools: tools.toolRuns,
+		            agentX: agentXText,
+		            agentC: agentCText,
+		            system: sys.content,
+		            ...seals
+		          };
+	        }
 
         function isNearBottom(container) {
           const threshold = 72;
@@ -5077,19 +5433,23 @@
 	          if (sys) sys.value = effectiveModeFor("system");
 	        }
 
-        function render() {
-          document.body.classList.toggle("has-rounds", state.rounds.length > 0);
-          syncModeQuickSelects();
-          el("endpointCode").textContent = displayEndpoint();
-	          const rawModelLabel = state.modelOverride ? state.modelOverride : state.autoModelName || "auto";
-	          el("modelCode").textContent = rawModelLabel === "auto" ? "auto" : displayModelLabel(rawModelLabel) || rawModelLabel;
-	          const toolsStatus = toolsAvailable() ? (state.toolsEnabled ? "on" : "off") : "n/a";
-	          el("toolsCode").textContent = toolsStatus;
+	        function render() {
+	          document.body.classList.toggle("has-rounds", state.rounds.length > 0);
+	          syncModeQuickSelects();
+	          el("endpointCode").textContent = displayEndpoint();
+		          const rawModelLabel = state.modelOverride ? state.modelOverride : state.autoModelName || "auto";
+		          el("modelCode").textContent = rawModelLabel === "auto" ? "auto" : displayModelLabel(rawModelLabel) || rawModelLabel;
+		          const toolsStatus = toolsAvailable() ? (state.toolsEnabled ? "on" : "off") : "n/a";
+		          el("toolsCode").textContent = toolsStatus;
+	          const ioNode = el("ioModeCode");
+	          if (ioNode) {
+	            ioNode.textContent = ioBadgeLabel();
+	          }
 
-          const autoContextBtn = el("autoContextBtn");
-          if (autoContextBtn) {
-            autoContextBtn.setAttribute("aria-pressed", state.autoContext ? "true" : "false");
-          }
+	          const autoContextBtn = el("autoContextBtn");
+	          if (autoContextBtn) {
+	            autoContextBtn.setAttribute("aria-pressed", state.autoContext ? "true" : "false");
+	          }
 
 	          const toolsBtn = el("toolsBtn");
 	          if (toolsBtn) {
@@ -5256,41 +5616,44 @@
 	                  <div>${escapeHTML(new Date(round.at).toLocaleString())}</div>
 	                </div>
 	              </div>
-              <div class="answers">
-                <div class="answer x">
-                  <div class="answer-head">
-                    <div class="name"><span class="sf-ultrathin">Agent</span><span class="sf-light">X</span></div>
-                    <div class="answer-actions">
-                      <div class="role">${escapeHTML(state.profile.agentXLabel || DEFAULT_PROFILE.agentXLabel)}</div>
-                      <button class="btn tiny icon" type="button" data-copy-agent="x" data-copy-round="${i}" title="Copy Agent X">📋</button>
-                      <button class="btn tiny" type="button" data-teach-agent="x" data-teach-round="${i}">Teach</button>
-                    </div>
-                  </div>
-                  <pre>${renderAnswerHTML(round.agentX)}</pre>
-                </div>
-                <div class="answer c">
-                  <div class="answer-head">
-                    <div class="name"><span class="sf-ultrathin">Agent</span><span class="sf-light">C</span></div>
-                    <div class="answer-actions">
-                      <div class="role">${escapeHTML(state.profile.agentCLabel || DEFAULT_PROFILE.agentCLabel)}</div>
-                      <button class="btn tiny icon" type="button" data-copy-agent="c" data-copy-round="${i}" title="Copy Agent C">📋</button>
-                      <button class="btn tiny" type="button" data-teach-agent="c" data-teach-round="${i}">Teach</button>
-                    </div>
-                  </div>
-                  <pre>${renderAnswerHTML(round.agentC)}</pre>
-                </div>
-                <div class="answer system">
+	              <div class="answers">
+	                <div class="answer x">
 	                  <div class="answer-head">
-	                    <div class="name"><span class="sf-ultrathin">System</span></div>
+	                    <div class="name"><span class="sf-ultrathin">Agent</span><span class="sf-light">X</span></div>
 	                    <div class="answer-actions">
-	                      <div class="role">${escapeHTML(systemPanelRoleLabel())}</div>
-	                      <button class="btn tiny icon" type="button" data-copy-agent="system" data-copy-round="${i}" title="Copy System">📋</button>
-	                      <button class="btn tiny" type="button" data-teach-agent="system" data-teach-round="${i}">Teach</button>
+	                      <div class="role">${escapeHTML(state.profile.agentXLabel || DEFAULT_PROFILE.agentXLabel)}</div>
+	                      <button class="btn tiny icon" type="button" data-copy-agent="x" data-copy-round="${i}" title="Copy Agent X">📋</button>
+	                      <button class="btn tiny" type="button" data-teach-agent="x" data-teach-round="${i}">Teach</button>
 	                    </div>
 	                  </div>
-                  <pre>${renderAnswerHTML(round.system || "(System reflection will appear here for new rounds.)")}</pre>
-                </div>
-              </div>
+	                  <pre>${renderAnswerHTML(round.agentX)}</pre>
+	                  ${round.sealX ? renderSealDetailsHTML(round.sealX) : ""}
+	                </div>
+	                <div class="answer c">
+	                  <div class="answer-head">
+	                    <div class="name"><span class="sf-ultrathin">Agent</span><span class="sf-light">C</span></div>
+	                    <div class="answer-actions">
+	                      <div class="role">${escapeHTML(state.profile.agentCLabel || DEFAULT_PROFILE.agentCLabel)}</div>
+	                      <button class="btn tiny icon" type="button" data-copy-agent="c" data-copy-round="${i}" title="Copy Agent C">📋</button>
+	                      <button class="btn tiny" type="button" data-teach-agent="c" data-teach-round="${i}">Teach</button>
+	                    </div>
+	                  </div>
+	                  <pre>${renderAnswerHTML(round.agentC)}</pre>
+	                  ${round.sealC ? renderSealDetailsHTML(round.sealC) : ""}
+	                </div>
+	                <div class="answer system">
+		                  <div class="answer-head">
+		                    <div class="name"><span class="sf-ultrathin">System</span></div>
+		                    <div class="answer-actions">
+		                      <div class="role">${escapeHTML(systemPanelRoleLabel())}</div>
+		                      <button class="btn tiny icon" type="button" data-copy-agent="system" data-copy-round="${i}" title="Copy System">📋</button>
+		                      <button class="btn tiny" type="button" data-teach-agent="system" data-teach-round="${i}">Teach</button>
+		                    </div>
+		                  </div>
+	                  <pre>${renderAnswerHTML(round.system || "(System reflection will appear here for new rounds.)")}</pre>
+	                  ${round.sealSystem ? renderSealDetailsHTML(round.sealSystem) : ""}
+	                </div>
+	              </div>
               ${
                 toolsJSON
                   ? `<details class="tools"><summary class="sf-thin">Tools</summary><pre>${toolsJSON}</pre></details>`
@@ -5634,15 +5997,16 @@
             next.privacy.autoClearCaches = normalizeBool(next.privacy.autoClearCaches, DEFAULT_PROFILE.privacy.autoClearCaches);
             next.privacy.autoClearClipboard = normalizeBool(next.privacy.autoClearClipboard, DEFAULT_PROFILE.privacy.autoClearClipboard);
 
-            const style = clamp(Number(next.style), 0, 100);
-            next.style = Number.isFinite(style) ? style : DEFAULT_PROFILE.style;
-            const gi = clampInt(next.glitchIntensity ?? DEFAULT_PROFILE.glitchIntensity, 0, 10);
-            next.glitchIntensity = gi;
-            const normalizeLang = (value, fallback) => {
-              const raw = String(value || "").trim();
-              if (!raw) return String(fallback || DEFAULT_PROFILE.systemLanguage);
-              return LANGUAGE_LABELS[raw] ? raw : raw;
-            };
+	            const style = clamp(Number(next.style), 0, 100);
+	            next.style = Number.isFinite(style) ? style : DEFAULT_PROFILE.style;
+	            const gi = clampInt(next.glitchIntensity ?? DEFAULT_PROFILE.glitchIntensity, 0, 10);
+	            next.glitchIntensity = gi;
+	            next.ioMode = normalizeIOMode(next.ioMode, DEFAULT_PROFILE.ioMode);
+	            const normalizeLang = (value, fallback) => {
+	              const raw = String(value || "").trim();
+	              if (!raw) return String(fallback || DEFAULT_PROFILE.systemLanguage);
+	              return LANGUAGE_LABELS[raw] ? raw : raw;
+	            };
 	            const legacyLang = String(parsed.language || "").trim();
 	            const legacy = legacyLang && legacyLang !== "auto" ? legacyLang : "";
 	            next.systemLanguage = normalizeLang(next.systemLanguage, legacy || DEFAULT_PROFILE.systemLanguage);
@@ -6102,14 +6466,20 @@
           el("toolsEnabledInput").disabled = !toolsAvailable();
           el("toolsAutoApproveInput").checked = state.toolsAutoApprove;
 
-	          el("agentXLanguageSelect").value = state.profile.agentXLanguage || DEFAULT_PROFILE.agentXLanguage;
-	          el("agentCLanguageSelect").value = state.profile.agentCLanguage || DEFAULT_PROFILE.agentCLanguage;
-	          el("systemLanguageSelect").value = state.profile.systemLanguage || DEFAULT_PROFILE.systemLanguage;
-	          el("glitchIntensityRange").value = String(clampInt(state.profile.glitchIntensity ?? DEFAULT_PROFILE.glitchIntensity, 0, 10));
-	          renderGlitchControlsFromDraft();
-	          el("agentXModeSelect").value = state.profile.agentXMode || DEFAULT_PROFILE.agentXMode;
-	          el("agentCModeSelect").value = state.profile.agentCMode || DEFAULT_PROFILE.agentCMode;
-	          el("systemModeSelect").value = state.profile.systemMode || DEFAULT_PROFILE.systemMode;
+		          el("agentXLanguageSelect").value = state.profile.agentXLanguage || DEFAULT_PROFILE.agentXLanguage;
+		          el("agentCLanguageSelect").value = state.profile.agentCLanguage || DEFAULT_PROFILE.agentCLanguage;
+		          el("systemLanguageSelect").value = state.profile.systemLanguage || DEFAULT_PROFILE.systemLanguage;
+		          el("glitchIntensityRange").value = String(clampInt(state.profile.glitchIntensity ?? DEFAULT_PROFILE.glitchIntensity, 0, 10));
+		          renderGlitchControlsFromDraft();
+	          const ioDraft = normalizeIOMode(state.profile.ioMode, DEFAULT_PROFILE.ioMode);
+	          const ioOnlineSwitch = el("ioOnlineSwitch");
+	          if (ioOnlineSwitch) ioOnlineSwitch.checked = ioDraft !== "local";
+	          const seal = el("sealAesInput");
+	          if (seal) seal.checked = ioDraft === "online_aes";
+	          renderOnlineSealControlsFromDraft();
+		          el("agentXModeSelect").value = state.profile.agentXMode || DEFAULT_PROFILE.agentXMode;
+		          el("agentCModeSelect").value = state.profile.agentCMode || DEFAULT_PROFILE.agentCMode;
+		          el("systemModeSelect").value = state.profile.systemMode || DEFAULT_PROFILE.systemMode;
 	          el("styleRange").value = String(clamp(Number(state.profile.style), 0, 100));
 	          updateStyleValueLabel();
           el("agentXLabelInput").value = state.profile.agentXLabel || DEFAULT_PROFILE.agentXLabel;
@@ -6495,16 +6865,23 @@
 		              setNotice('Free prompt used. Sign in via Auth + Wallet to keep chatting.');
 		            }
 		          }
-				          if (isExternalProfileIntent(topic)) {
-					            setNotice(EXTERNAL_BROWSE_BLOCKED_QUESTION);
-					            setStatusRight("");
-					            render();
-		            return;
-		          }
+					          if (isExternalProfileIntent(topic)) {
+						            setNotice(EXTERNAL_BROWSE_BLOCKED_QUESTION);
+						            setStatusRight("");
+						            render();
+			            return;
+			          }
+			          if (effectiveIOMode() === "online_aes" && !aesSealReady()) {
+			            setNotice("Encryption unavailable — transmission blocked. Open Settings → Arm AES.");
+			            setStatusRight("");
+			            render();
+			            openSettings();
+			            return;
+			          }
 
-	          state.forceScrollToBottomOnce = true;
-	          state.loading = true;
-	          setStatusRight("Running…");
+		          state.forceScrollToBottomOnce = true;
+		          state.loading = true;
+		          setStatusRight("Running…");
 	          render();
 
           try {
@@ -6543,8 +6920,8 @@
 		            render();
 		            return;
 		          }
-		          const snap = getMagicAuthSnapshot();
-		          if (!snap.signedIn && !hasMkAdmin()) {
+			          const snap = getMagicAuthSnapshot();
+			          if (!snap.signedIn && !hasMkAdmin()) {
 		            const before = getFreePromptsRemaining();
 		            const ok = consumeFreePrompt();
 		            if (!ok) {
@@ -6557,11 +6934,18 @@
 		            if (before <= 1) {
 		              setNotice('Free prompt used. Sign in via Auth + Wallet to keep chatting.');
 		            }
-		          }
-			          state.forceScrollToBottomOnce = true;
-			          state.loading = true;
-			          setStatusRight("Continuing…");
-			          render();
+			          }
+			          if (effectiveIOMode() === "online_aes" && !aesSealReady()) {
+			            setNotice("Encryption unavailable — transmission blocked. Open Settings → Arm AES.");
+			            setStatusRight("");
+			            render();
+			            openSettings();
+			            return;
+			          }
+				          state.forceScrollToBottomOnce = true;
+				          state.loading = true;
+				          setStatusRight("Continuing…");
+				          render();
 
           try {
 	            const next = await runLoop();
@@ -6599,8 +6983,8 @@
 	            render();
 	            return;
 	          }
-	          const snap = getMagicAuthSnapshot();
-	          if (!snap.signedIn && !hasMkAdmin()) {
+		          const snap = getMagicAuthSnapshot();
+		          if (!snap.signedIn && !hasMkAdmin()) {
 	            const before = getFreePromptsRemaining();
 	            const ok = consumeFreePrompt();
 	            if (!ok) {
@@ -6613,11 +6997,18 @@
 	            if (before <= 1) {
 	              setNotice('Free prompt used. Sign in via Auth + Wallet to keep chatting.');
 	            }
-	          }
+		          }
+		          if (effectiveIOMode() === "online_aes" && !aesSealReady()) {
+		            setNotice("Encryption unavailable — transmission blocked. Open Settings → Arm AES.");
+		            setStatusRight("");
+		            render();
+		            openSettings();
+		            return;
+		          }
 
-	          state.forceScrollToBottomOnce = true;
-	          state.loading = true;
-	          setStatusRight("Refining…");
+		          state.forceScrollToBottomOnce = true;
+		          state.loading = true;
+		          setStatusRight("Refining…");
 	          render();
 
           try {
@@ -7052,13 +7443,25 @@
             refreshHealth();
           });
 
-          el("settingsBtn").addEventListener("click", openSettings);
-          el("closeSettingsBtn").addEventListener("click", closeSettings);
-          el("dismissFirstRunNoticeBtn")?.addEventListener("click", dismissFirstRunNotice);
-          el("resetEndpointBtn")?.addEventListener("click", async () => {
-            const input = el("endpointInput");
-            if (input) input.value = "";
-            state.endpointMode = "auto";
+	          el("settingsBtn").addEventListener("click", openSettings);
+	          el("closeSettingsBtn").addEventListener("click", closeSettings);
+	          el("dismissFirstRunNoticeBtn")?.addEventListener("click", dismissFirstRunNotice);
+	          el("ioOnlineSwitch")?.addEventListener("change", () => {
+	            renderOnlineSealControlsFromDraft();
+	            applyIOModeFromDraftControls();
+	          });
+	          el("sealAesInput")?.addEventListener("change", () => {
+	            renderOnlineSealControlsFromDraft();
+	            applyIOModeFromDraftControls();
+	          });
+	          el("armAesBtn")?.addEventListener("click", async () => {
+	            await armAesFromSettings();
+	            renderOnlineSealControlsFromDraft();
+	          });
+	          el("resetEndpointBtn")?.addEventListener("click", async () => {
+	            const input = el("endpointInput");
+	            if (input) input.value = "";
+	            state.endpointMode = "auto";
             state.endpoint = DEFAULT_ENDPOINT;
             try {
               localStorage.removeItem(STORAGE.endpoint);
@@ -7156,13 +7559,16 @@
 	            const numPredict = Number(el("numPredictInput").value) || DEFAULT_OPTIONS.numPredict;
 	            const toolsEnabled = Boolean(el("toolsEnabledInput").checked);
 	            const toolsAutoApprove = Boolean(el("toolsAutoApproveInput").checked);
-	            const agentXLanguage = String(el("agentXLanguageSelect")?.value || DEFAULT_PROFILE.agentXLanguage).trim() || DEFAULT_PROFILE.agentXLanguage;
-	            const agentCLanguage = String(el("agentCLanguageSelect")?.value || DEFAULT_PROFILE.agentCLanguage).trim() || DEFAULT_PROFILE.agentCLanguage;
-	            const systemLanguage = String(el("systemLanguageSelect")?.value || DEFAULT_PROFILE.systemLanguage).trim() || DEFAULT_PROFILE.systemLanguage;
-              const glitchIntensity = clampInt(el("glitchIntensityRange")?.value ?? DEFAULT_PROFILE.glitchIntensity, 0, 10);
-	            const agentXMode = normalizeMode(el("agentXModeSelect")?.value, DEFAULT_PROFILE.agentXMode);
-	            const agentCMode = normalizeMode(el("agentCModeSelect")?.value, DEFAULT_PROFILE.agentCMode);
-	            const systemMode = normalizeMode(el("systemModeSelect")?.value, DEFAULT_PROFILE.systemMode);
+		            const agentXLanguage = String(el("agentXLanguageSelect")?.value || DEFAULT_PROFILE.agentXLanguage).trim() || DEFAULT_PROFILE.agentXLanguage;
+		            const agentCLanguage = String(el("agentCLanguageSelect")?.value || DEFAULT_PROFILE.agentCLanguage).trim() || DEFAULT_PROFILE.agentCLanguage;
+		            const systemLanguage = String(el("systemLanguageSelect")?.value || DEFAULT_PROFILE.systemLanguage).trim() || DEFAULT_PROFILE.systemLanguage;
+		            const ioBaseOnline = Boolean(el("ioOnlineSwitch")?.checked);
+		            const wantsSeal = Boolean(el("sealAesInput")?.checked);
+		            const nextIOMode = ioBaseOnline ? (wantsSeal ? "online_aes" : "online_plain") : "local";
+	              const glitchIntensity = clampInt(el("glitchIntensityRange")?.value ?? DEFAULT_PROFILE.glitchIntensity, 0, 10);
+		            const agentXMode = normalizeMode(el("agentXModeSelect")?.value, DEFAULT_PROFILE.agentXMode);
+		            const agentCMode = normalizeMode(el("agentCModeSelect")?.value, DEFAULT_PROFILE.agentCMode);
+		            const systemMode = normalizeMode(el("systemModeSelect")?.value, DEFAULT_PROFILE.systemMode);
 	            const style = clamp(Number(el("styleRange")?.value), 0, 100);
 	            const agentXLabel = String(el("agentXLabelInput")?.value || "").trim() || DEFAULT_PROFILE.agentXLabel;
 	            const agentCLabel = String(el("agentCLabelInput")?.value || "").trim() || DEFAULT_PROFILE.agentCLabel;
@@ -7188,15 +7594,16 @@
 	            state.onlineUrl = onlineUrl || DEFAULT_ONLINE_URL;
 	            state.toolsEnabled = toolsEnabled;
 	            state.toolsAutoApprove = toolsAutoApprove;
-	            state.profile = {
-	              ...state.profile,
-	              agentXLanguage,
-	              agentCLanguage,
-	              systemLanguage,
-	              glitchIntensity,
-	              agentXMode,
-	              agentCMode,
-	              systemMode,
+		            state.profile = {
+		              ...state.profile,
+		              agentXLanguage,
+		              agentCLanguage,
+		              systemLanguage,
+		              ioMode: nextIOMode,
+		              glitchIntensity,
+		              agentXMode,
+		              agentCMode,
+		              systemMode,
 	              style: Number.isFinite(style) ? style : DEFAULT_PROFILE.style,
 	              agentXLabel,
 	              agentCLabel,
@@ -7239,13 +7646,18 @@
               localStorage.removeItem(STORAGE.autoModel);
             }
 
-          await ensureEndpoint();
-	            await refreshHealth();
-	            render();
-              try {
-                window.MKCore?.magicAuth?.showSavedToast?.("Saved", 2000);
-              } catch {
-                // ignore
+	          await ensureEndpoint();
+		            await refreshHealth();
+		            render();
+		            if (nextIOMode === "online_aes" && !aesSealReady()) {
+		              setStatusRight("Saved. AES not armed — transmission blocked until you Arm AES.", true);
+		            } else {
+		              setStatusRight("");
+		            }
+	              try {
+	                window.MKCore?.magicAuth?.showSavedToast?.("Saved", 2000);
+	              } catch {
+	                // ignore
               }
 	            closeSettings();
 	          });
