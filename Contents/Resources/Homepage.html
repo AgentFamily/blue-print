@@ -813,20 +813,48 @@
         --g-delay: 0s;
         --g-dur: 3.2s;
         --g-alpha: 0.12;
+        --g-scan: 0;
         font-weight: 650;
         letter-spacing: 0.012em;
         font-variant-numeric: tabular-nums;
+        font-variant-ligatures: none;
         text-shadow:
           calc(var(--g-amp) * -1) 0 rgba(236, 72, 153, var(--g-alpha)),
           calc(var(--g-amp) * 1) 0 rgba(59, 130, 246, var(--g-alpha));
+        position: relative;
         transform: translateZ(0);
         will-change: transform, filter, text-shadow;
+      }
+
+      .answer pre.mk-glitch::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        opacity: var(--g-scan);
+        background:
+          repeating-linear-gradient(
+            0deg,
+            rgba(2, 6, 23, 0.00) 0px,
+            rgba(2, 6, 23, 0.00) 2px,
+            rgba(2, 6, 23, 0.05) 3px
+          );
+        mix-blend-mode: multiply;
+        transform: translateZ(0);
+      }
+
+      .answer pre.mk-glitch.mk-glitch-pulse {
+        filter: contrast(1.08) saturate(1.08);
       }
 
       @media (prefers-reduced-motion: no-preference) {
         .answer pre.mk-glitch {
           animation: mk-glitch-jitter var(--g-dur) steps(2, end) infinite;
           animation-delay: var(--g-delay);
+        }
+
+        .answer pre.mk-glitch.mk-glitch-pulse::after {
+          animation: mk-glitch-scan 420ms steps(2, end) 1;
         }
       }
 
@@ -838,36 +866,58 @@
             0 0 rgba(59, 130, 246, 0);
           filter: none;
         }
+
+        .answer pre.mk-glitch::after {
+          opacity: 0;
+          animation: none;
+        }
       }
 
       @keyframes mk-glitch-jitter {
-        0% {
-          transform: translate(0, 0);
-          filter: none;
-        }
-        12% {
-          transform: translate(calc(var(--g-amp) * -1), calc(var(--g-amp) * 0.25));
-          filter: saturate(1.04);
-        }
-        24% {
-          transform: translate(calc(var(--g-amp) * 0.75), calc(var(--g-amp) * -0.25));
-          filter: contrast(1.03);
-        }
-        38% {
-          transform: translate(calc(var(--g-amp) * -0.5), calc(var(--g-amp) * -0.2));
-          filter: saturate(1.02);
-        }
-        55% {
-          transform: translate(calc(var(--g-amp) * 1), 0);
-          filter: contrast(1.04);
-        }
-        72% {
-          transform: translate(calc(var(--g-amp) * -0.25), calc(var(--g-amp) * 0.5));
-          filter: none;
-        }
+        0%,
+        78%,
         100% {
           transform: translate(0, 0);
           filter: none;
+        }
+        80% {
+          transform: translate(calc(var(--g-amp) * -0.65), calc(var(--g-amp) * 0.12));
+          filter: saturate(1.03);
+        }
+        82% {
+          transform: translate(calc(var(--g-amp) * 0.95), calc(var(--g-amp) * -0.18));
+          filter: contrast(1.04);
+        }
+        84% {
+          transform: translate(calc(var(--g-amp) * -0.35), calc(var(--g-amp) * -0.10));
+          filter: saturate(1.02);
+        }
+        86% {
+          transform: translate(calc(var(--g-amp) * 1.1), 0);
+          filter: contrast(1.05);
+        }
+        88% {
+          transform: translate(calc(var(--g-amp) * -0.25), calc(var(--g-amp) * 0.35));
+          filter: none;
+        }
+        92% {
+          transform: translate(0, 0);
+          filter: none;
+        }
+      }
+
+      @keyframes mk-glitch-scan {
+        0% {
+          transform: translateZ(0) translateY(0);
+          opacity: var(--g-scan);
+        }
+        50% {
+          transform: translateZ(0) translateY(-1px);
+          opacity: calc(var(--g-scan) * 1.2);
+        }
+        100% {
+          transform: translateZ(0) translateY(0);
+          opacity: var(--g-scan);
         }
       }
 
@@ -3213,27 +3263,28 @@
           }
         }
 
-		        const state = {
-		          endpoint: initialEndpoint,
-		          endpointMode: storedEndpointMode,
-		          modelOverride: (localStorage.getItem(STORAGE.modelOverride) || "").trim(),
-		          agentXModelOverride: (localStorage.getItem(STORAGE.agentXModelOverride) || "").trim(),
-		          agentCModelOverride: (localStorage.getItem(STORAGE.agentCModelOverride) || "").trim(),
-		          options: DEFAULT_OPTIONS,
-		          autoContext: localStorage.getItem(STORAGE.autoContext) !== "false",
-		          autoModelName: (localStorage.getItem(STORAGE.autoModel) || "").trim() || null,
-		          onlineUrl: (storedOnlineUrl || DEFAULT_ONLINE_URL).trim(),
-		          toolsEnabled: localStorage.getItem(STORAGE.toolsEnabled) === "true",
-		          toolsAutoApprove: localStorage.getItem(STORAGE.toolsAutoApprove) === "true",
-	            profile: { ...DEFAULT_PROFILE, templates: [], teachings: [] },
-	            sessionMemory: "",
-	            sessionTeachings: [],
-	            savedSessions: [],
-	            templateEditorId: null,
-	            pendingTeachContext: null,
-	          topic: "",
-	          notice: null,
-	          modelSetupMessage: null,
+		            const state = {
+		              endpoint: initialEndpoint,
+		              endpointMode: storedEndpointMode,
+		              modelOverride: (localStorage.getItem(STORAGE.modelOverride) || "").trim(),
+		              agentXModelOverride: (localStorage.getItem(STORAGE.agentXModelOverride) || "").trim(),
+		              agentCModelOverride: (localStorage.getItem(STORAGE.agentCModelOverride) || "").trim(),
+		              options: DEFAULT_OPTIONS,
+		              autoContext: localStorage.getItem(STORAGE.autoContext) !== "false",
+		              autoModelName: (localStorage.getItem(STORAGE.autoModel) || "").trim() || null,
+		              onlineUrl: (storedOnlineUrl || DEFAULT_ONLINE_URL).trim(),
+		              toolsEnabled: localStorage.getItem(STORAGE.toolsEnabled) === "true",
+		              toolsAutoApprove: localStorage.getItem(STORAGE.toolsAutoApprove) === "true",
+		            profile: { ...DEFAULT_PROFILE, templates: [], teachings: [] },
+		            sessionMemory: "",
+		            sessionTeachings: [],
+		            savedSessions: [],
+		            templateEditorId: null,
+		            pendingTeachContext: null,
+		            runUtc: "",
+		          topic: "",
+		          notice: null,
+		          modelSetupMessage: null,
 	          isPullingModel: false,
 	          pullProgress: 0,
 	          pullLog: "",
@@ -4372,23 +4423,52 @@
 	          return sys || "auto";
 	        }
 	
-	        function effectiveModeFor(agent) {
-	          const p = state.profile || DEFAULT_PROFILE;
-	          if (agent === "system") return normalizeMode(p.systemMode, DEFAULT_PROFILE.systemMode);
-	          if (agent === "x") return normalizeMode(p.agentXMode, DEFAULT_PROFILE.agentXMode);
-	          if (agent === "c") return normalizeMode(p.agentCMode, DEFAULT_PROFILE.agentCMode);
-	          return "chat";
-	        }
+		        function effectiveModeFor(agent) {
+		          const p = state.profile || DEFAULT_PROFILE;
+		          if (agent === "system") return normalizeMode(p.systemMode, DEFAULT_PROFILE.systemMode);
+		          if (agent === "x") return normalizeMode(p.agentXMode, DEFAULT_PROFILE.agentXMode);
+		          if (agent === "c") return normalizeMode(p.agentCMode, DEFAULT_PROFILE.agentCMode);
+		          return "chat";
+		        }
 
-	        function buildProfilePromptBlock(agent) {
-	          const p = state.profile || DEFAULT_PROFILE;
-	          const blocks = [];
+		        function glitchLanguagePromptBlock() {
+		          const mode = effectiveIOMode();
+		          const utc = String(state.runUtc || new Date().toISOString());
+		          const contextLabel =
+		            mode === "local"
+		              ? "Local"
+		              : mode === "online_plain"
+		              ? "Online (Plain)"
+		              : "Online (Sealed; AES-256 attached below by UI)";
+		          const aesLine = mode === "online_aes" ? "Encrypted Copy (AES-256): (attached below by UI)" : "";
+		          return `
+Glitch language is enabled.
 
-          const lang = effectiveLanguageFor(agent);
-          if (lang && lang !== "auto" && lang !== "glitch") {
-            const label = LANGUAGE_LABELS[lang] || lang;
-            blocks.push(`Respond in ${label}.`);
-          }
+Output format:
+1) Write your normal answer first (clear + helpful).
+2) Then append a short GlitchLog footer with EXACT fields:
+Time: ${utc}
+Subject: <3–10 word summary>
+Context: ${contextLabel}
+${aesLine}
+
+Style rules:
+- Use heavy headers (Unicode bold) and light glitch artifacts (░▒█) sparingly; keep readable.
+- Never fabricate ciphertext / IV / HMAC. If AES is enabled, the UI will attach it separately.
+		          `.trim();
+		        }
+
+		        function buildProfilePromptBlock(agent) {
+		          const p = state.profile || DEFAULT_PROFILE;
+		          const blocks = [];
+
+	          const lang = effectiveLanguageFor(agent);
+	          if (lang === "glitch") {
+	            blocks.push(glitchLanguagePromptBlock());
+	          } else if (lang && lang !== "auto") {
+	            const label = LANGUAGE_LABELS[lang] || lang;
+	            blocks.push(`Respond in ${label}.`);
+	          }
 
           const style = clamp(Number(p.style), 0, 100);
           if (Number.isFinite(style)) {
@@ -5087,14 +5167,15 @@
 	            contextParts.push(`MK message: ${prompt}`);
 	          }
 
-          let userContext = contextParts.join("\n\n");
-          const tools = await runToolsIfNeeded(userContext);
-          userContext = tools.userContext;
+	          let userContext = contextParts.join("\n\n");
+	          const tools = await runToolsIfNeeded(userContext);
+	          userContext = tools.userContext;
 
-	          const [agentX, agentC] = await Promise.all([
-	            ollamaChat({
-	              agent: "x",
-	              system: systemPrompt(state.profile.agentXRole || AGENT_X_ROLE, "x"),
+	          state.runUtc = new Date().toISOString();
+		          const [agentX, agentC] = await Promise.all([
+		            ollamaChat({
+		              agent: "x",
+		              system: systemPrompt(state.profile.agentXRole || AGENT_X_ROLE, "x"),
 	              user: `${userContext}\n\n${agentGuidance("x")}`,
 	              temperature: agentTemperature("x")
 	            }),
@@ -5168,14 +5249,15 @@
 
 	          contextParts.push("This is a continuation. Improve and extend the previous answers with at least one new useful detail, avoiding repetition.");
 
-          let context = contextParts.join("\n\n");
-          const tools = await runToolsIfNeeded(context);
-          context = tools.userContext;
+	          let context = contextParts.join("\n\n");
+	          const tools = await runToolsIfNeeded(context);
+	          context = tools.userContext;
 
-	          const [agentX, agentC] = await Promise.all([
-	            ollamaChat({
-	              agent: "x",
-	              system: systemPrompt(state.profile.agentXRole || AGENT_X_ROLE, "x"),
+	          state.runUtc = new Date().toISOString();
+		          const [agentX, agentC] = await Promise.all([
+		            ollamaChat({
+		              agent: "x",
+		              system: systemPrompt(state.profile.agentXRole || AGENT_X_ROLE, "x"),
 	              user: `${context}\n\n${agentGuidance("x")}`,
 	              temperature: agentTemperature("x")
 	            }),
@@ -5249,14 +5331,15 @@
             "Keep it tightly tailored to MK and avoid repetition."
           );
 
-          let baseContext = contextParts.join("\n\n");
-          const tools = await runToolsIfNeeded(baseContext);
-          baseContext = tools.userContext;
+	          let baseContext = contextParts.join("\n\n");
+	          const tools = await runToolsIfNeeded(baseContext);
+	          baseContext = tools.userContext;
 
-	          const [agentX, agentC] = await Promise.all([
-	            ollamaChat({
-	              agent: "x",
-	              system: systemPrompt(state.profile.agentXRole || AGENT_X_ROLE, "x"),
+	          state.runUtc = new Date().toISOString();
+		          const [agentX, agentC] = await Promise.all([
+		            ollamaChat({
+		              agent: "x",
+		              system: systemPrompt(state.profile.agentXRole || AGENT_X_ROLE, "x"),
 	              user: `${baseContext}\n\nAgent C last message:\n${clip(last.agentC, 2200)}\n\nRespond to Agent C while addressing MK.\n\n${agentGuidance(
 	                "x"
 	              )}`,
@@ -5717,22 +5800,150 @@
           return picks.includes("glitch");
         }
 
-        function renderGlitchControlsFromDraft() {
-          const row = el("glitchControlsRow");
-          const range = el("glitchIntensityRange");
-          const label = el("glitchIntensityLabel");
-          if (!row || !range || !label) return;
-          const show = anyGlitchSelectedDraft();
-          row.style.display = show ? "flex" : "none";
-          const n = clampInt(range.value, 0, 10);
-          label.textContent = String(n);
-        }
+	        function renderGlitchControlsFromDraft() {
+	          const row = el("glitchControlsRow");
+	          const range = el("glitchIntensityRange");
+	          const label = el("glitchIntensityLabel");
+	          if (!row || !range || !label) return;
+	          const show = anyGlitchSelectedDraft();
+	          row.style.display = show ? "flex" : "none";
+	          const n = clampInt(range.value, 0, 10);
+	          label.textContent = String(n);
+	        }
 
-        function applyGlitchToConversation() {
-          const container = el("conversation");
-          if (!container) return;
-          const intensity = glitchIntensity();
-          const preferReduced = (() => {
+	        const glitchPulseTimers = new WeakMap();
+
+	        function stopGlitchPulse(pre) {
+	          if (!pre) return;
+	          const entry = glitchPulseTimers.get(pre);
+	          if (entry && entry.timeouts) {
+	            for (const id of entry.timeouts) clearTimeout(id);
+	          }
+	          glitchPulseTimers.delete(pre);
+	          pre.classList.remove("mk-glitch-pulse");
+	          if (entry && entry.base) {
+	            pre.style.setProperty("--g-amp", entry.base.amp);
+	            pre.style.setProperty("--g-alpha", entry.base.alpha);
+	            pre.style.setProperty("--g-dur", entry.base.dur);
+	            pre.style.setProperty("--g-scan", "0");
+	          } else {
+	            pre.style.removeProperty("--g-scan");
+	          }
+	        }
+
+	        function ensureGlitchPulse(pre, { on, roundIndex, agentSalt, preferReduced } = {}) {
+	          if (!pre) return;
+	          if (!on || preferReduced) {
+	            stopGlitchPulse(pre);
+	            return;
+	          }
+	          if (!document.body.contains(pre)) {
+	            stopGlitchPulse(pre);
+	            return;
+	          }
+
+	          const base = {
+	            amp: pre.style.getPropertyValue("--g-amp") || "0.6px",
+	            alpha: pre.style.getPropertyValue("--g-alpha") || "0.12",
+	            dur: pre.style.getPropertyValue("--g-dur") || "3.2s"
+	          };
+
+	          const existing = glitchPulseTimers.get(pre);
+	          if (existing) {
+	            existing.base = base;
+	            return;
+	          }
+
+	          const entry = { base, timeouts: new Set(), roundIndex, agentSalt };
+	          glitchPulseTimers.set(pre, entry);
+
+	          const scheduleNext = () => {
+	            if (!pre.classList.contains("mk-glitch")) return stopGlitchPulse(pre);
+	            if (!document.body.contains(pre)) return stopGlitchPulse(pre);
+
+	            const intensity = glitchIntensity();
+	            const t = Math.max(0, Math.min(1, (Number(intensity) || 0) / 10));
+	            const waitBase = lerp(6800, 900, t);
+	            const wait = Math.round(waitBase * (0.55 + Math.random() * 1.05));
+
+	            const id = window.setTimeout(() => {
+	              entry.timeouts.delete(id);
+	              runBurst();
+	            }, wait);
+	            entry.timeouts.add(id);
+	          };
+
+	          const parsePx = (s) => {
+	            const n = parseFloat(String(s || "").replace("px", "").trim());
+	            return Number.isFinite(n) ? n : 0;
+	          };
+
+	          const parseSec = (s) => {
+	            const raw = String(s || "").trim();
+	            const n = parseFloat(raw.replace("s", ""));
+	            return Number.isFinite(n) ? n : 0;
+	          };
+
+	          const runBurst = () => {
+	            if (!pre.classList.contains("mk-glitch")) return stopGlitchPulse(pre);
+	            if (!document.body.contains(pre)) return stopGlitchPulse(pre);
+
+	            const intensity = glitchIntensity();
+	            const t = Math.max(0, Math.min(1, (Number(intensity) || 0) / 10));
+	            const baseAmp = parsePx(entry.base?.amp);
+	            const baseAlpha = parseFloat(entry.base?.alpha);
+	            const baseDur = parseSec(entry.base?.dur);
+
+	            const bursts =
+	              intensity >= 9 ? 2 + (Math.random() < 0.35 ? 1 : 0) : intensity >= 6 && Math.random() < 0.35 ? 2 : 1;
+
+	            let idx = 0;
+
+	            const fireOne = () => {
+	              idx += 1;
+	              const burstMs = Math.round(lerp(90, 260, t) * (0.7 + Math.random() * 0.9));
+	              const amp = Math.max(0.4, baseAmp * (1.35 + t * 0.9 + Math.random() * 0.7));
+	              const alpha = Math.max(0.08, Math.min(0.32, (Number.isFinite(baseAlpha) ? baseAlpha : 0.12) + 0.06 + t * 0.12));
+	              const dur = Math.max(1.1, (Number.isFinite(baseDur) ? baseDur : 3.2) * (0.55 + Math.random() * 0.25));
+	              const scan = Math.max(0.06, Math.min(0.22, 0.06 + t * 0.16));
+
+	              pre.classList.add("mk-glitch-pulse");
+	              pre.style.setProperty("--g-amp", `${amp.toFixed(2)}px`);
+	              pre.style.setProperty("--g-alpha", alpha.toFixed(2));
+	              pre.style.setProperty("--g-dur", `${dur.toFixed(2)}s`);
+	              pre.style.setProperty("--g-scan", scan.toFixed(2));
+
+	              const id = window.setTimeout(() => {
+	                entry.timeouts.delete(id);
+	                pre.classList.remove("mk-glitch-pulse");
+	                pre.style.setProperty("--g-amp", entry.base.amp);
+	                pre.style.setProperty("--g-alpha", entry.base.alpha);
+	                pre.style.setProperty("--g-dur", entry.base.dur);
+	                pre.style.setProperty("--g-scan", "0");
+	                if (idx < bursts) {
+	                  const gapId = window.setTimeout(() => {
+	                    entry.timeouts.delete(gapId);
+	                    fireOne();
+	                  }, Math.round(40 + Math.random() * 160));
+	                  entry.timeouts.add(gapId);
+	                  return;
+	                }
+	                scheduleNext();
+	              }, burstMs);
+	              entry.timeouts.add(id);
+	            };
+
+	            fireOne();
+	          };
+
+	          scheduleNext();
+	        }
+
+	        function applyGlitchToConversation() {
+	          const container = el("conversation");
+	          if (!container) return;
+	          const intensity = glitchIntensity();
+	          const preferReduced = (() => {
             try {
               return window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
             } catch {
@@ -5766,25 +5977,29 @@
             return { delay, dur, amp, alpha: alpha.toFixed(2) };
           };
 
-          const setGlitch = (pre, on, roundIndex, agentSalt) => {
-            if (!pre) return;
-            if (!on) {
-              pre.classList.remove("mk-glitch");
-              pre.style.removeProperty("--g-i");
-              pre.style.removeProperty("--g-amp");
-              pre.style.removeProperty("--g-delay");
-              pre.style.removeProperty("--g-dur");
-              pre.style.removeProperty("--g-alpha");
-              return;
-            }
-            const s = styleFor(roundIndex, agentSalt);
-            pre.classList.add("mk-glitch");
-            pre.style.setProperty("--g-i", String(intensity));
-            pre.style.setProperty("--g-amp", `${s.amp}px`);
-            pre.style.setProperty("--g-delay", `${s.delay}s`);
-            pre.style.setProperty("--g-dur", `${s.dur}s`);
-            pre.style.setProperty("--g-alpha", s.alpha);
-          };
+	          const setGlitch = (pre, on, roundIndex, agentSalt) => {
+	            if (!pre) return;
+	            if (!on) {
+	              stopGlitchPulse(pre);
+	              pre.classList.remove("mk-glitch");
+	              pre.style.removeProperty("--g-i");
+	              pre.style.removeProperty("--g-amp");
+	              pre.style.removeProperty("--g-delay");
+	              pre.style.removeProperty("--g-dur");
+	              pre.style.removeProperty("--g-alpha");
+	              pre.style.removeProperty("--g-scan");
+	              return;
+	            }
+	            const s = styleFor(roundIndex, agentSalt);
+	            pre.classList.add("mk-glitch");
+	            pre.style.setProperty("--g-i", String(intensity));
+	            pre.style.setProperty("--g-amp", `${s.amp}px`);
+	            pre.style.setProperty("--g-delay", `${s.delay}s`);
+	            pre.style.setProperty("--g-dur", `${s.dur}s`);
+	            pre.style.setProperty("--g-alpha", s.alpha);
+	              pre.style.setProperty("--g-scan", "0");
+	            ensureGlitchPulse(pre, { on: true, roundIndex, agentSalt, preferReduced });
+	          };
 
           container.querySelectorAll(".round").forEach((roundEl) => {
             const roundIndex = clampInt(roundEl?.dataset?.roundIndex, 0, 9999);
