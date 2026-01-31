@@ -46,7 +46,103 @@
 	        --fs-ui: clamp(12px, 0.25vw + 11px, 14px);
 	        --fs-ui-small: clamp(11px, 0.2vw + 10px, 13px);
 	        --fs-code: clamp(10px, 0.18vw + 9px, 12px);
+
+        --page-bg: linear-gradient(180deg, rgba(248, 250, 252, 1), rgba(255, 255, 255, 1));
 	      }
+
+      html.theme-dark {
+        color-scheme: dark;
+        --text: #e5e7eb;
+        --muted: #94a3b8;
+        --border: rgba(226, 232, 240, 0.14);
+        --glass: rgba(2, 6, 23, 0.62);
+        --shadow: 0 22px 56px rgba(0, 0, 0, 0.45);
+        --shadow-soft: 0 12px 30px rgba(0, 0, 0, 0.30);
+        --page-bg: linear-gradient(180deg, #050814, #0b1220);
+      }
+
+      html.theme-dark .online-status-img,
+      html.theme-dark .answer-avatar,
+      html.theme-dark .answer-avatar.system {
+        border-color: rgba(226, 232, 240, 0.16);
+        background: rgba(2, 6, 23, 0.55);
+      }
+
+      html.theme-dark header {
+        border-bottom-color: rgba(226, 232, 240, 0.12);
+        background: rgba(2, 6, 23, 0.60);
+        box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06), 0 14px 34px rgba(0, 0, 0, 0.25);
+      }
+
+      html.theme-dark .panel,
+      html.theme-dark .round,
+      html.theme-dark dialog {
+        border-color: rgba(226, 232, 240, 0.14);
+        background: rgba(2, 6, 23, 0.55);
+      }
+
+      html.theme-dark .panel-head,
+      html.theme-dark .round-meta,
+      html.theme-dark .tools,
+      html.theme-dark dialog {
+        background: rgba(2, 6, 23, 0.58);
+      }
+
+      html.theme-dark dialog::backdrop,
+      html.theme-dark #modalBackdrop {
+        background: rgba(0, 0, 0, 0.45);
+      }
+
+      html.theme-dark .btn {
+        border-color: rgba(226, 232, 240, 0.16);
+        background: rgba(2, 6, 23, 0.48);
+        color: var(--text);
+      }
+
+      html.theme-dark .btn:hover {
+        background: rgba(2, 6, 23, 0.64);
+      }
+
+      html.theme-dark .btn.secondary {
+        background: rgba(2, 6, 23, 0.40);
+      }
+
+      html.theme-dark .btn.primary {
+        background: linear-gradient(90deg, rgba(59, 130, 246, 0.92), rgba(124, 58, 237, 0.92));
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+      }
+
+      html.theme-dark .pill,
+      html.theme-dark .pill-btn {
+        border-color: rgba(226, 232, 240, 0.14);
+        background: rgba(2, 6, 23, 0.46);
+        color: rgba(226, 232, 240, 0.86);
+      }
+
+      html.theme-dark .pill-btn:hover {
+        background: rgba(2, 6, 23, 0.62);
+      }
+
+      html.theme-dark .pill-btn[aria-pressed="true"] {
+        color: rgba(226, 232, 240, 0.92);
+        border-color: rgba(124, 58, 237, 0.32);
+        background: linear-gradient(135deg, rgba(124, 58, 237, 0.20), rgba(37, 99, 235, 0.14));
+      }
+
+      html.theme-dark .answer.x {
+        border-color: rgba(124, 58, 237, 0.30);
+        background: rgba(30, 41, 59, 0.62);
+      }
+
+      html.theme-dark .answer.c {
+        border-color: rgba(37, 99, 235, 0.30);
+        background: rgba(30, 41, 59, 0.62);
+      }
+
+      html.theme-dark .answer.system {
+        border-color: rgba(226, 232, 240, 0.18);
+        background: rgba(15, 23, 42, 0.60);
+      }
 
       * {
         box-sizing: border-box;
@@ -59,6 +155,97 @@
 	        display: flex;
 	        flex-direction: column;
 	      }
+
+      .entry-screen {
+        position: fixed;
+        inset: 0;
+        z-index: 2000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: auto;
+        -webkit-overflow-scrolling: touch;
+        padding: 24px calc(16px + env(safe-area-inset-left)) calc(24px + env(safe-area-inset-bottom))
+          calc(16px + env(safe-area-inset-right));
+        background: linear-gradient(180deg, rgba(248, 250, 252, 0.98), rgba(255, 255, 255, 0.98));
+        transition: opacity 200ms ease, transform 220ms ease;
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      html.entry-accepted .entry-screen {
+        opacity: 0;
+        transform: translateY(-4px);
+        pointer-events: none;
+      }
+
+      html:not(.entry-accepted) body {
+        overflow: hidden;
+      }
+
+      .entry-card {
+        width: min(640px, 100%);
+        border: 1px solid rgba(15, 23, 42, 0.10);
+        border-radius: var(--radius-lg);
+        background: rgba(255, 255, 255, 0.86);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        box-shadow: 0 18px 48px rgba(2, 6, 23, 0.10), 0 1px 0 rgba(255, 255, 255, 0.55);
+        padding: 22px 20px 18px;
+      }
+
+      .entry-brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 10px;
+      }
+
+      .entry-brand img {
+        width: 34px;
+        height: 34px;
+      }
+
+      .entry-title {
+        margin: 0;
+        font-size: clamp(20px, 1.2vw + 16px, 26px);
+        letter-spacing: -0.02em;
+        font-weight: var(--sf-thin);
+      }
+
+      .entry-subtitle {
+        margin: 0 0 14px;
+        color: var(--muted);
+        font-size: var(--fs-lede);
+        line-height: 1.5;
+      }
+
+      .entry-bullets {
+        margin: 0 0 16px;
+        padding-left: 18px;
+        color: rgba(2, 6, 23, 0.78);
+        font-size: var(--fs-ui);
+        line-height: 1.55;
+      }
+
+      .entry-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+        align-items: center;
+        margin-top: 14px;
+      }
+
+      .entry-row input {
+        min-height: 44px;
+      }
+
+      .entry-foot {
+        margin-top: 10px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.4;
+      }
 
       html,
       body {
@@ -75,9 +262,7 @@
 	        font-weight: var(--sf-thin);
 	        font-size: var(--fs-body);
 	        color: var(--text);
-	        background: radial-gradient(1200px 900px at 20% 0%, var(--bg0), transparent 55%),
-	          radial-gradient(1000px 800px at 90% 20%, var(--bg2), transparent 55%),
-	          linear-gradient(135deg, var(--bg0), var(--bg1) 38%, var(--bg2));
+	        background: var(--page-bg);
 	        -webkit-font-smoothing: antialiased;
 	        text-rendering: optimizeLegibility;
 	        overflow-x: hidden;
@@ -305,6 +490,11 @@
 		        box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.12);
 		      }
 
+      .dot.glitch {
+        background: rgba(2, 6, 23, 0.78);
+        box-shadow: 0 0 0 4px rgba(2, 6, 23, 0.10);
+      }
+
       .pill-btn[aria-pressed="false"] .dot.context {
         background: rgba(100, 116, 139, 0.9);
         box-shadow: 0 0 0 4px rgba(100, 116, 139, 0.12);
@@ -324,6 +514,16 @@
 	        background: rgba(100, 116, 139, 0.9);
 	        box-shadow: 0 0 0 4px rgba(100, 116, 139, 0.12);
 	      }
+
+      .pill-btn[aria-pressed="false"] .dot.glitch {
+        background: rgba(100, 116, 139, 0.9);
+        box-shadow: 0 0 0 4px rgba(100, 116, 139, 0.12);
+      }
+
+      .pill-btn[aria-pressed="true"] .dot.glitch {
+        background: rgba(2, 6, 23, 0.82);
+        box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.14);
+      }
 
 	      .pill-btn[aria-pressed="true"] .dot.tools {
 	        background: rgba(124, 58, 237, 0.95);
@@ -349,7 +549,7 @@
 	        font-weight: var(--sf-thin);
 	        font-size: var(--fs-ui);
 	        cursor: pointer;
-	        transition: transform 120ms ease, box-shadow 200ms ease, background 200ms ease;
+	        transition: transform 150ms ease, box-shadow 180ms ease, background 180ms ease, border-color 180ms ease;
 	      }
 
       .btn:hover {
@@ -371,18 +571,34 @@
       .btn.primary {
         border: none;
         color: white;
-        background: linear-gradient(90deg, rgba(37, 99, 235, 0.95), rgba(124, 58, 237, 0.95), rgba(236, 72, 153, 0.95));
-        box-shadow: 0 16px 40px rgba(79, 70, 229, 0.22);
+        background: linear-gradient(90deg, rgba(37, 99, 235, 0.96), rgba(124, 58, 237, 0.96));
+        box-shadow: 0 12px 30px rgba(79, 70, 229, 0.18);
       }
 
       .btn.primary:hover {
-        box-shadow: 0 18px 46px rgba(79, 70, 229, 0.26);
+        box-shadow: 0 14px 34px rgba(79, 70, 229, 0.22);
+      }
+
+      .btn.secondary {
+        border: 1px solid rgba(15, 23, 42, 0.14);
+        background: rgba(255, 255, 255, 0.58);
+        color: rgba(2, 6, 23, 0.86);
       }
 
       .btn.danger {
         border: 1px solid rgba(239, 68, 68, 0.35);
         background: rgba(239, 68, 68, 0.10);
         color: rgb(153, 27, 27);
+      }
+
+      .btn:focus-visible,
+      .pill-btn:focus-visible,
+      input:focus-visible,
+      textarea:focus-visible,
+      select:focus-visible {
+        outline: none;
+        border-color: rgba(37, 99, 235, 0.40);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
       }
 
       .btn.icon {
@@ -562,8 +778,8 @@
       }
 
       .panel {
-        margin-top: 22px;
-        border: 1px solid rgba(15, 23, 42, 0.10);
+        margin-top: 24px;
+        border: 1px solid rgba(15, 23, 42, 0.08);
         border-radius: var(--radius-lg);
         background: rgba(255, 255, 255, 0.72);
         backdrop-filter: blur(18px);
@@ -583,7 +799,7 @@
         justify-content: space-between;
         flex-wrap: wrap;
         gap: 12px;
-        padding: 14px 16px;
+        padding: 16px;
         border-bottom: 1px solid rgba(15, 23, 42, 0.08);
         background: rgba(255, 255, 255, 0.70);
       }
@@ -610,10 +826,10 @@
 	      }
 
 		      .conversation {
-		        padding: 14px 16px;
+		        padding: 16px;
 		        display: flex;
 		        flex-direction: column;
-		        gap: 14px;
+		        gap: 16px;
 		      }
 
       .load-older {
@@ -644,11 +860,27 @@
       }
 
       .round {
-        border: 1px solid rgba(15, 23, 42, 0.10);
+        border: 1px solid rgba(15, 23, 42, 0.08);
         border-radius: var(--radius-lg);
         background: rgba(255, 255, 255, 0.65);
         overflow: hidden;
         scroll-margin-bottom: 16px;
+      }
+
+      .conversation .round + .round {
+        position: relative;
+      }
+
+      .conversation .round + .round::before {
+        content: "";
+        position: absolute;
+        top: -10px;
+        left: 22px;
+        right: 22px;
+        height: 1px;
+        pointer-events: none;
+        background: linear-gradient(90deg, transparent, rgba(15, 23, 42, 0.14), transparent);
+        opacity: 0.9;
       }
 
       .tools {
@@ -679,7 +911,7 @@
       }
 
       .round-meta {
-        padding: 12px 14px;
+        padding: 12px 16px;
         border-bottom: 1px solid rgba(15, 23, 42, 0.08);
         display: flex;
         justify-content: space-between;
@@ -742,7 +974,7 @@
 
       .answer {
         border-radius: var(--radius-md);
-        border: 1px solid rgba(15, 23, 42, 0.10);
+        border: 1px solid rgba(15, 23, 42, 0.08);
         background: rgba(255, 255, 255, 0.70);
         padding: 12px 12px 10px;
         min-height: 110px;
@@ -752,13 +984,13 @@
       }
 
       .answer.x {
-        border-color: rgba(124, 58, 237, 0.26);
-        background: linear-gradient(180deg, rgba(124, 58, 237, 0.08), rgba(255, 255, 255, 0.70));
+        border-color: rgba(124, 58, 237, 0.18);
+        background: linear-gradient(180deg, rgba(124, 58, 237, 0.06), rgba(255, 255, 255, 0.70));
       }
 
       .answer.c {
-        border-color: rgba(37, 99, 235, 0.26);
-        background: linear-gradient(180deg, rgba(37, 99, 235, 0.08), rgba(255, 255, 255, 0.70));
+        border-color: rgba(37, 99, 235, 0.18);
+        background: linear-gradient(180deg, rgba(37, 99, 235, 0.06), rgba(255, 255, 255, 0.70));
       }
 
       .answer.system {
@@ -769,10 +1001,50 @@
 
       .answer-head {
         display: flex;
-        align-items: baseline;
+        align-items: center;
         justify-content: space-between;
         gap: 10px;
         margin-bottom: 8px;
+      }
+
+      .answer-who {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+      }
+
+      .answer-avatar {
+        width: 26px;
+        height: 26px;
+        border-radius: 999px;
+        border: 1px solid rgba(15, 23, 42, 0.10);
+        background: rgba(255, 255, 255, 0.75);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+        overflow: hidden;
+      }
+
+      .answer-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      .answer-avatar.system {
+        color: rgba(2, 6, 23, 0.78);
+        font-size: 14px;
+        line-height: 1;
+      }
+
+      .answer-ident {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
       }
 
       .answer-actions {
@@ -784,11 +1056,17 @@
       .answer-head .name {
         letter-spacing: -0.01em;
         font-size: 14px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
 
       .answer-head .role {
         color: var(--muted);
         font-size: 11px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
 
       .answer pre {
@@ -1605,6 +1883,104 @@
         flex: 1 1 auto;
       }
 
+      #confirmModal .modal-body {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      #confirmModal .confirm-title {
+        font-size: 14px;
+        letter-spacing: -0.01em;
+        color: rgba(2, 6, 23, 0.88);
+      }
+
+      #confirmModal .confirm-message {
+        font-size: 13px;
+        line-height: 1.5;
+        color: rgba(2, 6, 23, 0.78);
+        white-space: pre-wrap;
+      }
+
+      #settingsModal .modal-body.settings-body {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      #settingsModal details.settings-section {
+        border: 1px solid rgba(15, 23, 42, 0.10);
+        border-radius: var(--radius-md);
+        background: rgba(255, 255, 255, 0.66);
+        overflow: hidden;
+      }
+
+      #settingsModal details.settings-section summary {
+        list-style: none;
+        cursor: pointer;
+        user-select: none;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 12px 14px;
+        color: rgba(2, 6, 23, 0.86);
+        font-size: 13px;
+        letter-spacing: -0.01em;
+        background: rgba(255, 255, 255, 0.72);
+        border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+      }
+
+      #settingsModal details.settings-section summary::-webkit-details-marker {
+        display: none;
+      }
+
+      #settingsModal details.settings-section summary::before {
+        content: "▸";
+        color: rgba(100, 116, 139, 0.9);
+        transform: translateY(-1px);
+        transition: transform 140ms ease;
+        margin-right: 6px;
+      }
+
+      #settingsModal details.settings-section[open] summary::before {
+        transform: rotate(90deg) translateX(1px);
+      }
+
+      #settingsModal .settings-grid {
+        padding: 12px 14px 14px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+
+      #settingsModal .settings-effective {
+        border: 1px solid rgba(15, 23, 42, 0.10);
+        border-radius: var(--radius-md);
+        background: rgba(255, 255, 255, 0.60);
+        padding: 12px 14px;
+      }
+
+      #settingsModal .settings-effective-title {
+        font-size: 12px;
+        color: var(--muted);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+      }
+
+      #settingsModal .settings-effective-grid {
+        display: grid;
+        grid-template-columns: 140px 1fr;
+        gap: 8px 12px;
+        align-items: start;
+        font-size: 13px;
+      }
+
+      #settingsModal .settings-effective-grid .k {
+        color: var(--muted);
+      }
+
       .field {
         display: flex;
         flex-direction: column;
@@ -1895,11 +2271,83 @@
         .modal-body {
           grid-template-columns: 1fr;
         }
+        #settingsModal .settings-grid {
+          grid-template-columns: 1fr;
+        }
+        #settingsModal .settings-effective-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (min-width: 980px) {
+        #settingsModal .settings-effective {
+          position: sticky;
+          bottom: 14px;
+          background: rgba(255, 255, 255, 0.82);
+          backdrop-filter: blur(14px);
+          -webkit-backdrop-filter: blur(14px);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .btn,
+        .pill-btn,
+        .chip-btn,
+        .entry-screen {
+          transition: none !important;
+        }
       }
     </style>
+    <script>
+      (function () {
+        try {
+          if (localStorage.getItem("agentcEntryAcceptedV1") === "1") {
+            document.documentElement.classList.add("entry-accepted");
+          }
+        } catch {}
+        try {
+          const theme = String(localStorage.getItem("agentcThemeV1") || "").trim().toLowerCase();
+          if (theme === "dark") document.documentElement.classList.add("theme-dark");
+        } catch {}
+      })();
+    </script>
   </head>
 
   <body>
+    <section class="entry-screen" id="entryScreen" aria-label="Enter local workspace">
+      <div class="entry-card" role="group" aria-label="Local-first entry">
+        <div class="entry-brand">
+          <img src="agentc_button.svg" alt="" aria-hidden="true" />
+          <h1 class="entry-title">
+            <span class="sf-ultrathin">Agent</span><span class="sf-light">C</span>
+          </h1>
+        </div>
+        <p class="entry-subtitle">Calm, local-first multi-agent work — on your device, under your control.</p>
+        <ul class="entry-bullets">
+          <li>Runs fully on your device</li>
+          <li>Nothing is sent unless you intentionally choose ONLINE</li>
+          <li>You control memory and models</li>
+        </ul>
+        <div class="field">
+          <label for="workspaceLabelInput">Workspace label (optional)</label>
+          <input
+            id="workspaceLabelInput"
+            type="text"
+            maxlength="32"
+            placeholder="e.g. Research, Build, Writing…"
+            autocomplete="off"
+          />
+          <div class="hint" id="workspaceLabelHint">
+            Stored locally in this browser on this device. <span id="workspaceLabelCount">0/32</span>
+          </div>
+        </div>
+        <div class="entry-row">
+          <button class="btn secondary" id="saveWorkspaceLabelBtn" type="button" disabled>Save label</button>
+          <button class="btn primary" id="enterWorkspaceBtn" type="button">Enter Local Workspace</button>
+        </div>
+        <div class="entry-foot" id="workspaceLabelStatus">No accounts. No passwords. No telemetry.</div>
+      </div>
+    </section>
     <div class="app-root" id="appRoot">
     <header>
       <div class="wrap header-row">
@@ -1926,14 +2374,18 @@
 	            <span class="dot memory" aria-hidden="true"></span>
 	            <span>Memory</span>
 	          </button>
-			          <button class="pill pill-btn" id="onlineBtn" type="button" aria-pressed="false" title="Sign in / Sign out">
+	          <button class="pill pill-btn" id="glitchBtn" type="button" aria-pressed="false" title="Glitch (dark mode)">
+	            <span class="dot glitch" aria-hidden="true"></span>
+	            <span>Glitch</span>
+	          </button>
+			          <button class="pill pill-btn" id="onlineBtn" type="button" aria-pressed="false" title="Online (optional)">
 		            <img
 		              id="onlineStatusImg"
 		              class="online-status-img"
 		              src="Logged OUT.png"
-		              alt="Logged out"
+		              alt="Online off"
 		            />
-		            <span id="onlineLabel">Sign in</span>
+		            <span id="onlineLabel">Online</span>
 		          </button>
 		          <button
 		            class="pill pill-btn"
@@ -1977,7 +2429,7 @@
 
         <div class="agents" aria-label="Agent profiles">
           <div class="agent-card">
-            <img src="https://ucarecdn.com/82e21364-f8e6-4526-9464-16cac4cfaba6/-/format/auto/" alt="Agent X" />
+            <img src="agent101_bubble.svg" alt="Agent X" />
             <div class="agent-meta">
               <div class="name">
                 <span class="sf-ultrathin">Agent</span><span class="sf-light">X</span>
@@ -1988,7 +2440,7 @@
           </div>
 
           <div class="agent-card">
-            <img src="https://ucarecdn.com/1d3af6f0-a64f-4a71-a100-414802839a19/-/format/auto/" alt="Agent C" />
+            <img src="agentc_bubble.svg" alt="Agent C" />
             <div class="agent-meta">
               <div class="name">
                 <span class="sf-ultrathin">Agent</span><span class="sf-light">C</span>
@@ -2005,11 +2457,12 @@
           <div class="panel-title">
             <strong class="sf-thin">Conversation</strong>
             <span id="subhead">Connecting to Ollama…</span>
+            <span id="roundControlsHint" aria-live="polite"></span>
           </div>
           <div class="header-actions">
             <button class="btn icon" id="refineBtn" type="button" disabled title="Refine (AgentX ↔ AgentC)">🔁</button>
-            <button class="btn" id="nextRoundBtn" type="button" disabled>Next Round</button>
-            <button class="btn danger" id="resetBtn" type="button" disabled>Reset</button>
+            <button class="btn primary" id="nextRoundBtn" type="button" disabled>Next Round</button>
+            <button class="btn secondary" id="resetBtn" type="button" disabled>Reset</button>
           </div>
         </div>
 	        <div class="conversation" id="conversation">
@@ -2073,465 +2526,498 @@
 
     <div id="modalBackdrop" aria-hidden="true"></div>
 
+    <dialog id="confirmModal" aria-label="Confirm action">
+      <div class="modal-head">
+        <strong id="confirmHeading">Confirm</strong>
+        <button class="btn" id="closeConfirmBtn" type="button">Close</button>
+      </div>
+      <div class="modal-body">
+        <div class="confirm-title" id="confirmTitle"></div>
+        <div class="confirm-message" id="confirmMessage"></div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn secondary" id="confirmCancelBtn" type="button">Cancel</button>
+        <button class="btn danger" id="confirmOkBtn" type="button">Confirm</button>
+      </div>
+    </dialog>
+
     <dialog id="settingsModal">
       <div class="modal-head">
         <strong>Settings</strong>
         <button class="btn" id="closeSettingsBtn" type="button">Close</button>
       </div>
-      <div class="modal-body">
-        <div class="field">
-          <label for="endpointInput">Ollama Endpoint (optional)</label>
-          <input id="endpointInput" type="text" placeholder="Leave blank for auto • or use http://127.0.0.1:3030" />
-          <div class="template-row">
-            <span class="hint">If you entered the wrong IP and see “not found”, reset to auto.</span>
-            <button class="btn tiny" id="resetEndpointBtn" type="button">Reset</button>
-          </div>
-        </div>
-	        <div class="field">
-	          <label for="modelInput">System Model Override (optional)</label>
-	          <input id="modelInput" type="text" placeholder="mk-x-gemma:1b" />
-	        </div>
-	        <div class="field">
-	          <label for="agentXModelInput">Agent X Model Override (optional)</label>
-	          <input id="agentXModelInput" type="text" placeholder="(blank = inherit System)" />
-	        </div>
-	        <div class="field">
-	          <label for="agentCModelInput">Agent C Model Override (optional)</label>
-	          <input id="agentCModelInput" type="text" placeholder="(blank = inherit System)" />
-	        </div>
-	        <div class="field">
-	          <label for="onlineUrlInput">Online URL</label>
-		          <input id="onlineUrlInput" type="text" placeholder="https://doi.org/10.5281/zenodo.18334441" />
-		        </div>
-	        <div class="field full">
-	          <label>Mode</label>
-	          <div class="hint">LOCAL runs fully on-device. ONLINE is an intent stamp for the next outputs.</div>
-	          <div class="io-toggle" role="group" aria-label="Local or Online">
-	            <span class="io-tag">LOCAL</span>
-	            <label class="io-switch" aria-label="Toggle Local or Online">
-	              <input id="ioOnlineSwitch" type="checkbox" />
-	              <span class="io-knob" aria-hidden="true"></span>
-	            </label>
-	            <span class="io-tag">ONLINE</span>
-	          </div>
-	          <div class="seal-field" id="onlineSealField" hidden>
-	            <div class="seal-row">
-	              <label>
-	                <input id="sealAesInput" type="checkbox" />
-	                Seal with AES-256 (recommended)
-	              </label>
-	            </div>
-	            <div class="seal-row" style="margin-top:10px">
-	              <input id="aesPassphraseInput" type="password" placeholder="Passphrase (not stored; required each reload)" autocomplete="new-password" />
-	              <button class="btn" id="armAesBtn" type="button">Arm</button>
-	              <span class="seal-status" id="aesSealStatus">Not armed</span>
-	            </div>
-	            <div class="hint" style="margin-top:8px">
-	              AES is edge-applied to the output only, never to the model mid-generation. Ciphertext is never glitched.
-	            </div>
-	          </div>
-	        </div>
-	        <div class="field full" id="lanAccessField">
-	          <label>LAN Party (iPhone Access)</label>
-	          <div class="hint">Turn this on to open the UI on your iPhone on the same Wi‑Fi. Tools stay local‑only.</div>
-	          <div class="lan-card" role="group" aria-label="LAN access">
-            <div class="lan-avatars" aria-hidden="true">
-              <img
-                class="voice-avatar"
-                src="https://ucarecdn.com/82e21364-f8e6-4526-9464-16cac4cfaba6/-/format/auto/"
-                alt=""
-              />
-              <div class="voice-avatar system" aria-hidden="true">⚙️</div>
-              <img
-                class="voice-avatar"
-                src="https://ucarecdn.com/1d3af6f0-a64f-4a71-a100-414802839a19/-/format/auto/"
-                alt=""
-              />
-            </div>
-            <div class="lan-meta">
-              <div class="lan-title" id="lanStatusTitle">LAN: checking…</div>
-              <div class="lan-sub" id="lanStatusSub">Open this page on localhost to change LAN.</div>
-            </div>
-            <label class="lan-toggle" title="Enable LAN (iPhone access)">
-              <input id="lanEnabledInput" type="checkbox" />
-              Enable
-            </label>
-          </div>
-          <div class="lan-url">
-            <input id="lanUrlInput" type="text" readonly placeholder="iPhone URL will appear here…" />
-            <button class="btn" id="copyLanUrlBtn" type="button" disabled>Copy</button>
-          </div>
-        </div>
-        <div class="field full" id="coordinationField">
-          <label>App Coordination</label>
-          <div class="hint">If the macOS app shows “not found” after a wrong host/IP, reset it back to localhost.</div>
-          <div class="coord-grid">
-            <input id="recommendedUiUrlInput" type="text" readonly />
-            <button class="btn" id="openRecommendedUiBtn" type="button">Open</button>
-          </div>
-          <div class="coord-grid">
-            <input id="appPrefsInput" type="text" readonly placeholder="App settings will appear here (localhost only)…" />
-            <button class="btn" id="repairAppPrefsBtn" type="button">Repair</button>
-          </div>
-          <div class="hint" id="appPrefsHint">
-            Repair sets: serverHost=localhost, serverPort=8000, ollamaUpstream=http://localhost:11434.
-          </div>
-        </div>
-        <div class="field">
-          <label for="numCtxInput">Context Window (num_ctx)</label>
-          <input id="numCtxInput" type="number" min="512" step="256" placeholder="2048" />
-        </div>
-        <div class="field">
-          <label for="numPredictInput">Max Tokens (num_predict)</label>
-          <input id="numPredictInput" type="number" min="32" step="32" placeholder="128" />
-        </div>
-		        <div class="field full">
-		          <label>Detected Models</label>
-		          <div class="hint">Pick a model per speaker (selecting fills the matching override input).</div>
-		          <div class="voices">
-		            <div class="voice-card">
-		              <img
-		                class="voice-avatar"
-		                src="https://ucarecdn.com/82e21364-f8e6-4526-9464-16cac4cfaba6/-/format/auto/"
-		                alt="Agent X"
-		              />
-		              <div class="voice-meta">
-		                <div class="voice-title">Agent X</div>
-		                <select id="modelsSelectX" aria-label="Detected models for Agent X">
-		                  <option value="">(refresh to load)</option>
-		                </select>
-		              </div>
-		            </div>
-		            <div class="voice-card">
-		              <div class="voice-avatar system" aria-hidden="true">⚙️</div>
-		              <div class="voice-meta">
-		                <div class="voice-title">System</div>
-		                <select id="modelsSelect" aria-label="Detected models for System">
-		                  <option value="">(refresh to load)</option>
-		                </select>
-		              </div>
-		            </div>
-		            <div class="voice-card">
-		              <img
-		                class="voice-avatar"
-		                src="https://ucarecdn.com/1d3af6f0-a64f-4a71-a100-414802839a19/-/format/auto/"
-		                alt="Agent C"
-		              />
-		              <div class="voice-meta">
-		                <div class="voice-title">Agent C</div>
-		                <select id="modelsSelectC" aria-label="Detected models for Agent C">
-		                  <option value="">(refresh to load)</option>
-		                </select>
-		              </div>
-		            </div>
-		          </div>
-		        </div>
-	        <div class="field full">
-	          <label for="modelDownloadInput">Download a Model</label>
-	          <div class="model-download-row">
-	            <input id="modelDownloadInput" type="text" placeholder="gemma3:1b" />
-	            <button class="btn" id="downloadModelBtn" type="button">Download</button>
-	          </div>
-	          <div class="model-recs" aria-label="Recommended models">
-	            <button class="model-rec" type="button" data-model="gemma3:1b">gemma3:1b</button>
-	            <button class="model-rec" type="button" data-model="gemma3:4b">gemma3:4b</button>
-	            <button class="model-rec" type="button" data-model="gemma3:12b">gemma3:12b</button>
-	          </div>
-	          <progress class="model-progress" id="modelDownloadProgress" max="1" value="0" hidden></progress>
-	          <pre class="tools-pre" id="modelDownloadLog" hidden></pre>
-	          <div class="hint">Downloads via Ollama <span class="terminal">/api/pull</span> (streaming progress).</div>
-	        </div>
-	        <div class="field checkbox">
-	          <label>
-	            <input id="toolsEnabledInput" type="checkbox" />
-	            Enable Tools (local workspace)
-          </label>
-          <div class="hint">Tools can write files + run commands inside <span class="terminal">./workspace</span>.</div>
-        </div>
-        <div class="field checkbox">
-          <label>
-            <input id="toolsAutoApproveInput" type="checkbox" />
-            Auto-approve tool runs
-          </label>
-          <div class="hint">If enabled, planned actions run immediately without asking.</div>
-        </div>
-        <div class="field">
-          <label>&nbsp;</label>
-          <button class="btn" id="refreshModelsBtn" type="button">Refresh Models</button>
-        </div>
-	        <div class="field full">
-	          <label>Language Voices</label>
-	          <div class="hint">Playfully give each speaker a language “voice”.</div>
-          <div class="voices">
-            <div class="voice-card">
-              <img
-                class="voice-avatar"
-                src="https://ucarecdn.com/82e21364-f8e6-4526-9464-16cac4cfaba6/-/format/auto/"
-                alt="Agent X"
-              />
-              <div class="voice-meta">
-                <div class="voice-title">Agent X</div>
-                <select id="agentXLanguageSelect" aria-label="Agent X language">
-                  <option value="auto">Auto</option>
-                  <option value="glitch">Glitch</option>
-                  <option value="en">English</option>
-                  <option value="es">Español</option>
-                  <option value="fr">Français</option>
-                  <option value="de">Deutsch</option>
-                  <option value="pt">Português</option>
-                  <option value="it">Italiano</option>
-                  <option value="zh">中文 (简体)</option>
-                  <option value="ja">日本語</option>
-                  <option value="ko">한국어</option>
-                </select>
+      <div class="modal-body settings-body">
+        <details class="settings-section" open>
+          <summary>Models &amp; Execution</summary>
+          <div class="settings-grid">
+            <div class="field">
+              <label for="endpointInput">Ollama Endpoint (optional)</label>
+              <input id="endpointInput" type="text" placeholder="Leave blank for auto • or use http://127.0.0.1:3030" />
+              <div class="template-row">
+                <span class="hint">If you entered the wrong IP and see “not found”, reset to auto.</span>
+                <button class="btn tiny secondary" id="resetEndpointBtn" type="button">Reset</button>
               </div>
             </div>
-            <div class="voice-card">
-              <div class="voice-avatar system" aria-hidden="true">⚙️</div>
-              <div class="voice-meta">
-                <div class="voice-title">System</div>
-                <select id="systemLanguageSelect" aria-label="System language">
-                  <option value="auto">Auto</option>
-                  <option value="glitch">Glitch</option>
-                  <option value="en">English</option>
-                  <option value="es">Español</option>
-                  <option value="fr">Français</option>
-                  <option value="de">Deutsch</option>
-                  <option value="pt">Português</option>
-                  <option value="it">Italiano</option>
-                  <option value="zh">中文 (简体)</option>
-                  <option value="ja">日本語</option>
-                  <option value="ko">한국어</option>
-                </select>
+            <div class="field">
+              <label for="numCtxInput">Context Window (num_ctx)</label>
+              <input id="numCtxInput" type="number" min="512" step="256" placeholder="2048" />
+            </div>
+            <div class="field">
+              <label for="numPredictInput">Max Tokens (num_predict)</label>
+              <input id="numPredictInput" type="number" min="32" step="32" placeholder="128" />
+            </div>
+            <div class="field">
+              <label for="modelInput">System Model Override (optional)</label>
+              <input id="modelInput" type="text" placeholder="mk-x-gemma:1b" />
+            </div>
+            <div class="field">
+              <label for="agentXModelInput">Agent X Model Override (optional)</label>
+              <input id="agentXModelInput" type="text" placeholder="(blank = inherit System)" />
+            </div>
+            <div class="field">
+              <label for="agentCModelInput">Agent C Model Override (optional)</label>
+              <input id="agentCModelInput" type="text" placeholder="(blank = inherit System)" />
+            </div>
+            <div class="field full">
+              <label>Detected Models</label>
+              <div class="hint">Pick a model per speaker (selecting fills the matching override input).</div>
+              <div class="voices">
+                <div class="voice-card">
+                  <img class="voice-avatar" src="agent101_bubble.svg" alt="Agent X" />
+                  <div class="voice-meta">
+                    <div class="voice-title">Agent X</div>
+                    <select id="modelsSelectX" aria-label="Detected models for Agent X">
+                      <option value="">(refresh to load)</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="voice-card">
+                  <div class="voice-avatar system" aria-hidden="true">⚙️</div>
+                  <div class="voice-meta">
+                    <div class="voice-title">System</div>
+                    <select id="modelsSelect" aria-label="Detected models for System">
+                      <option value="">(refresh to load)</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="voice-card">
+                  <img class="voice-avatar" src="agentc_bubble.svg" alt="Agent C" />
+                  <div class="voice-meta">
+                    <div class="voice-title">Agent C</div>
+                    <select id="modelsSelectC" aria-label="Detected models for Agent C">
+                      <option value="">(refresh to load)</option>
+                    </select>
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="voice-card">
-              <img
-                class="voice-avatar"
-                src="https://ucarecdn.com/1d3af6f0-a64f-4a71-a100-414802839a19/-/format/auto/"
-                alt="Agent C"
-              />
-              <div class="voice-meta">
-                <div class="voice-title">Agent C</div>
-                <select id="agentCLanguageSelect" aria-label="Agent C language">
-                  <option value="auto">Auto</option>
-                  <option value="glitch">Glitch</option>
-                  <option value="en">English</option>
-                  <option value="es">Español</option>
-                  <option value="fr">Français</option>
-                  <option value="de">Deutsch</option>
-                  <option value="pt">Português</option>
-                  <option value="it">Italiano</option>
-                  <option value="zh">中文 (简体)</option>
-                  <option value="ja">日本語</option>
-                  <option value="ko">한국어</option>
-                </select>
+            <div class="field full">
+              <label for="modelDownloadInput">Download a Model</label>
+              <div class="model-download-row">
+                <input id="modelDownloadInput" type="text" placeholder="gemma3:1b" />
+                <button class="btn secondary" id="downloadModelBtn" type="button">Download</button>
               </div>
+              <div class="model-recs" aria-label="Recommended models">
+                <button class="model-rec" type="button" data-model="gemma3:1b">gemma3:1b</button>
+                <button class="model-rec" type="button" data-model="gemma3:4b">gemma3:4b</button>
+                <button class="model-rec" type="button" data-model="gemma3:12b">gemma3:12b</button>
+              </div>
+              <progress class="model-progress" id="modelDownloadProgress" max="1" value="0" hidden></progress>
+              <pre class="tools-pre" id="modelDownloadLog" hidden></pre>
+              <div class="hint">Downloads via Ollama <span class="terminal">/api/pull</span> (streaming progress).</div>
+            </div>
+            <div class="field checkbox">
+              <label>
+                <input id="toolsEnabledInput" type="checkbox" />
+                Enable Tools (local workspace)
+              </label>
+              <div class="hint">Tools can write files + run commands inside <span class="terminal">./workspace</span>.</div>
+            </div>
+            <div class="field checkbox">
+              <label>
+                <input id="toolsAutoApproveInput" type="checkbox" />
+                Auto-approve tool runs
+              </label>
+              <div class="hint">If enabled, planned actions run immediately without asking.</div>
+            </div>
+            <div class="field">
+              <label>&nbsp;</label>
+              <button class="btn secondary" id="refreshModelsBtn" type="button">Refresh Models</button>
             </div>
           </div>
-	          <div class="template-row" id="glitchControlsRow" style="display:none; align-items:center">
-	            <div class="hint" style="flex:1 1 auto; min-width:220px">
-	              Glitch is visual-only (client-side). The model still answers normally.
-	            </div>
-	            <div style="display:flex;gap:10px;align-items:center;justify-content:flex-end;flex:0 0 auto">
-	              <span class="hint" style="white-space:nowrap">Intensity</span>
-	              <input id="glitchIntensityRange" type="range" min="0" max="10" step="1" value="2" style="width:160px" />
-	              <span id="glitchIntensityLabel" class="hint" style="min-width:44px;text-align:right">2</span>
-	            </div>
-	          </div>
-	          <div class="template-row">
-	            <button class="btn" id="shuffleLanguagesBtn" type="button">Shuffle Agent Languages</button>
-	          </div>
-	        </div>
-	        <div class="field full">
-	          <label>Modes</label>
-	          <div class="hint">Pick how each speaker responds (chatty, teaching, test-first, behavior-first, or automation).</div>
-	          <div class="voices">
-	            <div class="voice-card">
-	              <img
-	                class="voice-avatar"
-	                src="https://ucarecdn.com/82e21364-f8e6-4526-9464-16cac4cfaba6/-/format/auto/"
-	                alt="Agent X"
-	              />
-	              <div class="voice-meta">
-	                <div class="voice-title">Agent X</div>
-	                <select id="agentXModeSelect" aria-label="Agent X mode">
-	                  <option value="chat">Chat</option>
-	                  <option value="teach">Teach</option>
-	                  <option value="tdd">TDD</option>
-	                  <option value="bdd">BDD</option>
-	                  <option value="automate">Automate</option>
-	                </select>
-	              </div>
-	            </div>
-	            <div class="voice-card">
-	              <div class="voice-avatar system" aria-hidden="true">⚙️</div>
-	              <div class="voice-meta">
-	                <div class="voice-title">System</div>
-	                <select id="systemModeSelect" aria-label="System mode">
-	                  <option value="chat">Chat</option>
-	                  <option value="teach">Teach</option>
-	                  <option value="tdd">TDD</option>
-	                  <option value="bdd">BDD</option>
-	                  <option value="automate">Automate</option>
-	                </select>
-	              </div>
-	            </div>
-	            <div class="voice-card">
-	              <img
-	                class="voice-avatar"
-	                src="https://ucarecdn.com/1d3af6f0-a64f-4a71-a100-414802839a19/-/format/auto/"
-	                alt="Agent C"
-	              />
-	              <div class="voice-meta">
-	                <div class="voice-title">Agent C</div>
-	                <select id="agentCModeSelect" aria-label="Agent C mode">
-	                  <option value="chat">Chat</option>
-	                  <option value="teach">Teach</option>
-	                  <option value="tdd">TDD</option>
-	                  <option value="bdd">BDD</option>
-	                  <option value="automate">Automate</option>
-	                </select>
-	              </div>
-	            </div>
-	          </div>
-	        </div>
-	        <div class="field full" id="voicePreviewField">
-	          <label>Voice Preview</label>
-	          <div class="hint">Live preview based on your current Settings (before you hit Save).</div>
-          <div class="preview-grid">
-            <div class="preview-card x">
-              <div class="preview-head">
-                <div class="preview-left">
-                  <img
-                    class="preview-avatar"
-                    src="https://ucarecdn.com/82e21364-f8e6-4526-9464-16cac4cfaba6/-/format/auto/"
-                    alt="Agent X"
+        </details>
+
+        <details class="settings-section" open>
+          <summary>Agents &amp; Voices</summary>
+          <div class="settings-grid">
+            <div class="field full">
+              <label>Language Voices</label>
+              <div class="hint">Playfully give each speaker a language “voice”.</div>
+              <div class="voices">
+                <div class="voice-card">
+                  <img class="voice-avatar" src="agent101_bubble.svg" alt="Agent X" />
+                  <div class="voice-meta">
+                    <div class="voice-title">Agent X</div>
+                    <select id="agentXLanguageSelect" aria-label="Agent X language">
+                      <option value="auto">Auto</option>
+                      <option value="glitch">Glitch</option>
+                      <option value="en">English</option>
+                      <option value="es">Español</option>
+                      <option value="fr">Français</option>
+                      <option value="de">Deutsch</option>
+                      <option value="pt">Português</option>
+                      <option value="it">Italiano</option>
+                      <option value="zh">中文 (简体)</option>
+                      <option value="ja">日本語</option>
+                      <option value="ko">한국어</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="voice-card">
+                  <div class="voice-avatar system" aria-hidden="true">⚙️</div>
+                  <div class="voice-meta">
+                    <div class="voice-title">System</div>
+                    <select id="systemLanguageSelect" aria-label="System language">
+                      <option value="auto">Auto</option>
+                      <option value="glitch">Glitch</option>
+                      <option value="en">English</option>
+                      <option value="es">Español</option>
+                      <option value="fr">Français</option>
+                      <option value="de">Deutsch</option>
+                      <option value="pt">Português</option>
+                      <option value="it">Italiano</option>
+                      <option value="zh">中文 (简体)</option>
+                      <option value="ja">日本語</option>
+                      <option value="ko">한국어</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="voice-card">
+                  <img class="voice-avatar" src="agentc_bubble.svg" alt="Agent C" />
+                  <div class="voice-meta">
+                    <div class="voice-title">Agent C</div>
+                    <select id="agentCLanguageSelect" aria-label="Agent C language">
+                      <option value="auto">Auto</option>
+                      <option value="glitch">Glitch</option>
+                      <option value="en">English</option>
+                      <option value="es">Español</option>
+                      <option value="fr">Français</option>
+                      <option value="de">Deutsch</option>
+                      <option value="pt">Português</option>
+                      <option value="it">Italiano</option>
+                      <option value="zh">中文 (简体)</option>
+                      <option value="ja">日本語</option>
+                      <option value="ko">한국어</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div class="template-row" id="glitchControlsRow" style="display:none; align-items:center">
+                <div class="hint" style="flex:1 1 auto; min-width:220px">
+                  Glitch is visual-only (client-side). The model still answers normally.
+                </div>
+                <div style="display:flex;gap:10px;align-items:center;justify-content:flex-end;flex:0 0 auto">
+                  <span class="hint" style="white-space:nowrap">Intensity</span>
+                  <input id="glitchIntensityRange" type="range" min="0" max="10" step="1" value="2" style="width:160px" />
+                  <span id="glitchIntensityLabel" class="hint" style="min-width:44px;text-align:right">2</span>
+                </div>
+              </div>
+              <div class="template-row">
+                <button class="btn secondary" id="shuffleLanguagesBtn" type="button">Shuffle Agent Languages</button>
+              </div>
+            </div>
+            <div class="field full">
+              <label>Modes</label>
+              <div class="hint">Pick how each speaker responds (chatty, teaching, test-first, behavior-first, or automation).</div>
+              <div class="voices">
+                <div class="voice-card">
+                  <img class="voice-avatar" src="agent101_bubble.svg" alt="Agent X" />
+                  <div class="voice-meta">
+                    <div class="voice-title">Agent X</div>
+                    <select id="agentXModeSelect" aria-label="Agent X mode">
+                      <option value="chat">Chat</option>
+                      <option value="teach">Teach</option>
+                      <option value="tdd">TDD</option>
+                      <option value="bdd">BDD</option>
+                      <option value="automate">Automate</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="voice-card">
+                  <div class="voice-avatar system" aria-hidden="true">⚙️</div>
+                  <div class="voice-meta">
+                    <div class="voice-title">System</div>
+                    <select id="systemModeSelect" aria-label="System mode">
+                      <option value="chat">Chat</option>
+                      <option value="teach">Teach</option>
+                      <option value="tdd">TDD</option>
+                      <option value="bdd">BDD</option>
+                      <option value="automate">Automate</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="voice-card">
+                  <img class="voice-avatar" src="agentc_bubble.svg" alt="Agent C" />
+                  <div class="voice-meta">
+                    <div class="voice-title">Agent C</div>
+                    <select id="agentCModeSelect" aria-label="Agent C mode">
+                      <option value="chat">Chat</option>
+                      <option value="teach">Teach</option>
+                      <option value="tdd">TDD</option>
+                      <option value="bdd">BDD</option>
+                      <option value="automate">Automate</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="field full" id="voicePreviewField">
+              <label>Voice Preview</label>
+              <div class="hint">Live preview based on your current Settings (before you hit Save).</div>
+              <div class="preview-grid">
+                <div class="preview-card x">
+                  <div class="preview-head">
+                    <div class="preview-left">
+                      <img class="preview-avatar" src="agent101_bubble.svg" alt="Agent X" />
+                      <div class="preview-meta">
+                        <div class="preview-title">Agent X</div>
+                        <div class="preview-sub" id="previewLangX"></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="preview-text" id="previewTextX"></div>
+                </div>
+                <div class="preview-card system">
+                  <div class="preview-head">
+                    <div class="preview-left">
+                      <div class="preview-avatar system" aria-hidden="true">⚙️</div>
+                      <div class="preview-meta">
+                        <div class="preview-title">System</div>
+                        <div class="preview-sub" id="previewLangSystem"></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="preview-text" id="previewTextSystem"></div>
+                </div>
+                <div class="preview-card c">
+                  <div class="preview-head">
+                    <div class="preview-left">
+                      <img class="preview-avatar" src="agentc_bubble.svg" alt="Agent C" />
+                      <div class="preview-meta">
+                        <div class="preview-title">Agent C</div>
+                        <div class="preview-sub" id="previewLangC"></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="preview-text" id="previewTextC"></div>
+                </div>
+              </div>
+            </div>
+            <div class="field">
+              <label for="styleRange">Response Style <span id="styleValue" class="sf-light"></span></label>
+              <input id="styleRange" type="range" min="0" max="100" step="1" />
+              <div class="hint">0 = more systematic • 100 = more creative</div>
+            </div>
+            <div class="field">
+              <label for="agentXLabelInput">Agent X Display Role</label>
+              <input id="agentXLabelInput" type="text" placeholder="Creative Engineer" />
+            </div>
+            <div class="field">
+              <label for="agentCLabelInput">Agent C Display Role</label>
+              <input id="agentCLabelInput" type="text" placeholder="Logical Engineer" />
+            </div>
+            <div class="field full">
+              <label for="agentXRoleInput">Agent X System Role</label>
+              <input id="agentXRoleInput" type="text" placeholder="You are Agent X, a creative, exploratory senior engineer." />
+            </div>
+            <div class="field full">
+              <label for="agentCRoleInput">Agent C System Role</label>
+              <input id="agentCRoleInput" type="text" placeholder="You are Agent C, a logical and skeptical senior engineer." />
+            </div>
+          </div>
+        </details>
+
+        <details class="settings-section" open>
+          <summary>Modes &amp; Behavior</summary>
+          <div class="settings-grid">
+            <div class="field">
+              <label for="onlineUrlInput">Online URL</label>
+              <input id="onlineUrlInput" type="text" placeholder="https://doi.org/10.5281/zenodo.18334441" />
+            </div>
+            <div class="field full">
+              <label>Mode</label>
+              <div class="hint">LOCAL runs fully on-device. ONLINE is an intent stamp for the next outputs.</div>
+              <div class="io-toggle" role="group" aria-label="Local or Online">
+                <span class="io-tag">LOCAL</span>
+                <label class="io-switch" aria-label="Toggle Local or Online">
+                  <input id="ioOnlineSwitch" type="checkbox" />
+                  <span class="io-knob" aria-hidden="true"></span>
+                </label>
+                <span class="io-tag">ONLINE</span>
+              </div>
+              <div class="seal-field" id="onlineSealField" hidden>
+                <div class="seal-row">
+                  <label>
+                    <input id="sealAesInput" type="checkbox" />
+                    Seal with AES-256 (recommended)
+                  </label>
+                </div>
+                <div class="seal-row" style="margin-top:10px">
+                  <input
+                    id="aesPassphraseInput"
+                    type="password"
+                    placeholder="Passphrase (not stored; required each reload)"
+                    autocomplete="new-password"
                   />
-                  <div class="preview-meta">
-                    <div class="preview-title">Agent X</div>
-                    <div class="preview-sub" id="previewLangX"></div>
-                  </div>
+                  <button class="btn secondary" id="armAesBtn" type="button">Arm</button>
+                  <span class="seal-status" id="aesSealStatus">Not armed</span>
+                </div>
+                <div class="hint" style="margin-top:8px">
+                  AES is edge-applied to the output only, never to the model mid-generation. Ciphertext is never glitched.
                 </div>
               </div>
-              <div class="preview-text" id="previewTextX"></div>
             </div>
-            <div class="preview-card system">
-              <div class="preview-head">
-                <div class="preview-left">
-                  <div class="preview-avatar system" aria-hidden="true">⚙️</div>
-                  <div class="preview-meta">
-                    <div class="preview-title">System</div>
-                    <div class="preview-sub" id="previewLangSystem"></div>
-                  </div>
-                </div>
+            <div class="field full">
+              <label for="customInstructionsInput">Custom Instructions</label>
+              <textarea id="customInstructionsInput" placeholder="Saved locally and applied to future rounds."></textarea>
+            </div>
+            <div class="field full">
+              <label for="sessionMemoryInput">Session Memory (this tab only)</label>
+              <textarea id="sessionMemoryInput" placeholder="Not persisted across sessions."></textarea>
+            </div>
+            <div class="field full" id="templatesField">
+              <label>Templates</label>
+              <div class="template-row">
+                <select id="templatesSelect">
+                  <option value="">(no templates)</option>
+                </select>
+                <button class="btn secondary" id="newTemplateBtn" type="button">New</button>
+                <button class="btn secondary" id="saveTemplateBtn" type="button">Save Template</button>
+                <button class="btn danger" id="deleteTemplateBtn" type="button">Delete</button>
               </div>
-              <div class="preview-text" id="previewTextSystem"></div>
+              <input id="templateNameInput" type="text" placeholder="Template name" />
+              <textarea id="templateBodyInput" placeholder="Template text…"></textarea>
+              <div class="hint">Use Templates in the composer to insert.</div>
             </div>
-            <div class="preview-card c">
-              <div class="preview-head">
-                <div class="preview-left">
-                  <img
-                    class="preview-avatar"
-                    src="https://ucarecdn.com/1d3af6f0-a64f-4a71-a100-414802839a19/-/format/auto/"
-                    alt="Agent C"
-                  />
-                  <div class="preview-meta">
-                    <div class="preview-title">Agent C</div>
-                    <div class="preview-sub" id="previewLangC"></div>
-                  </div>
-                </div>
+          </div>
+        </details>
+
+        <details class="settings-section">
+          <summary>Privacy &amp; Local Data</summary>
+          <div class="settings-grid">
+            <div class="field full">
+              <label>Teachings (saved corrections)</label>
+              <pre class="tools-pre" id="teachingsPre"></pre>
+              <div class="template-row">
+                <button class="btn danger" id="clearTeachingsBtn" type="button">Clear Teachings</button>
               </div>
-              <div class="preview-text" id="previewTextC"></div>
+              <div class="hint">Teachings are appended to future rounds.</div>
+            </div>
+            <div class="field checkbox">
+              <label>
+                <input id="saveHistoryInput" type="checkbox" />
+                Save conversation history locally
+              </label>
+              <div class="hint">If disabled, new rounds won’t be written to localStorage.</div>
+            </div>
+            <div class="field checkbox">
+              <label>
+                <input id="autoClearCachesInput" type="checkbox" />
+                Clear caches after each task
+              </label>
+              <div class="hint">Clears the local history cache after every run (keeps what’s on screen until reload).</div>
+            </div>
+            <div class="field checkbox">
+              <label>
+                <input id="autoClearClipboardInput" type="checkbox" />
+                Clear copied responses (clipboard)
+              </label>
+              <div class="template-row">
+                <span class="hint">Best-effort: clears on your next tap/click to reduce LAN visibility.</span>
+                <button class="btn tiny secondary" id="privacyViewBtn" type="button">View</button>
+                <button class="btn tiny secondary" id="clearClipboardNowBtn" type="button">Clear</button>
+              </div>
+            </div>
+            <div class="field full">
+              <label>Privacy</label>
+              <div class="template-row">
+                <button class="btn danger" id="clearLocalDataBtn" type="button">Clear Local Data</button>
+              </div>
+              <div class="hint">Clears history, profile, templates, and teachings from this device.</div>
             </div>
           </div>
-        </div>
-        <div class="field">
-          <label for="styleRange">Response Style <span id="styleValue" class="sf-light"></span></label>
-          <input id="styleRange" type="range" min="0" max="100" step="1" />
-          <div class="hint">0 = more systematic • 100 = more creative</div>
-        </div>
-        <div class="field">
-          <label for="agentXLabelInput">Agent X Display Role</label>
-          <input id="agentXLabelInput" type="text" placeholder="Creative Engineer" />
-        </div>
-        <div class="field">
-          <label for="agentCLabelInput">Agent C Display Role</label>
-          <input id="agentCLabelInput" type="text" placeholder="Logical Engineer" />
-        </div>
-        <div class="field full">
-          <label for="agentXRoleInput">Agent X System Role</label>
-          <input id="agentXRoleInput" type="text" placeholder="You are Agent X, a creative, exploratory senior engineer." />
-        </div>
-        <div class="field full">
-          <label for="agentCRoleInput">Agent C System Role</label>
-          <input id="agentCRoleInput" type="text" placeholder="You are Agent C, a logical and skeptical senior engineer." />
-        </div>
-        <div class="field full">
-          <label for="customInstructionsInput">Custom Instructions</label>
-          <textarea id="customInstructionsInput" placeholder="Saved locally and applied to future rounds."></textarea>
-        </div>
-        <div class="field full">
-          <label for="sessionMemoryInput">Session Memory (this tab only)</label>
-          <textarea id="sessionMemoryInput" placeholder="Not persisted across sessions."></textarea>
-        </div>
-        <div class="field full" id="templatesField">
-          <label>Templates</label>
-          <div class="template-row">
-            <select id="templatesSelect">
-              <option value="">(no templates)</option>
-            </select>
-            <button class="btn" id="newTemplateBtn" type="button">New</button>
-            <button class="btn" id="saveTemplateBtn" type="button">Save Template</button>
-            <button class="btn danger" id="deleteTemplateBtn" type="button">Delete</button>
+        </details>
+
+        <details class="settings-section">
+          <summary>Network / LAN (Advanced)</summary>
+          <div class="settings-grid">
+            <div class="field full" id="lanAccessField">
+              <label>LAN Party (iPhone Access)</label>
+              <div class="hint">Turn this on to open the UI on your iPhone on the same Wi‑Fi. Tools stay local‑only.</div>
+              <div class="lan-card" role="group" aria-label="LAN access">
+                <div class="lan-avatars" aria-hidden="true">
+                  <img class="voice-avatar" src="agent101_bubble.svg" alt="" />
+                  <div class="voice-avatar system" aria-hidden="true">⚙️</div>
+                  <img class="voice-avatar" src="agentc_bubble.svg" alt="" />
+                </div>
+                <div class="lan-meta">
+                  <div class="lan-title" id="lanStatusTitle">LAN: checking…</div>
+                  <div class="lan-sub" id="lanStatusSub">Open this page on localhost to change LAN.</div>
+                </div>
+                <label class="lan-toggle" title="Enable LAN (iPhone access)">
+                  <input id="lanEnabledInput" type="checkbox" />
+                  Enable
+                </label>
+              </div>
+              <div class="lan-url">
+                <input id="lanUrlInput" type="text" readonly placeholder="iPhone URL will appear here…" />
+                <button class="btn secondary" id="copyLanUrlBtn" type="button" disabled>Copy</button>
+              </div>
+            </div>
+            <div class="field full" id="coordinationField">
+              <label>App Coordination</label>
+              <div class="hint">If the macOS app shows “not found” after a wrong host/IP, reset it back to localhost.</div>
+              <div class="coord-grid">
+                <input id="recommendedUiUrlInput" type="text" readonly />
+                <button class="btn secondary" id="openRecommendedUiBtn" type="button">Open</button>
+              </div>
+              <div class="coord-grid">
+                <input id="appPrefsInput" type="text" readonly placeholder="App settings will appear here (localhost only)…" />
+                <button class="btn secondary" id="repairAppPrefsBtn" type="button">Repair</button>
+              </div>
+              <div class="hint" id="appPrefsHint">
+                Repair sets: serverHost=localhost, serverPort=8000, ollamaUpstream=http://localhost:11434.
+              </div>
+            </div>
           </div>
-          <input id="templateNameInput" type="text" placeholder="Template name" />
-          <textarea id="templateBodyInput" placeholder="Template text…"></textarea>
-          <div class="hint">Use Templates in the composer to insert.</div>
-        </div>
-        <div class="field full">
-          <label>Teachings (saved corrections)</label>
-          <pre class="tools-pre" id="teachingsPre"></pre>
-          <div class="template-row">
-            <button class="btn danger" id="clearTeachingsBtn" type="button">Clear Teachings</button>
+        </details>
+
+        <div class="settings-effective" aria-label="Effective configuration summary">
+          <div class="settings-effective-title">Effective configuration</div>
+          <div class="settings-effective-grid">
+            <div class="k">Endpoint</div>
+            <div class="v"><code id="effectiveEndpointCode"></code></div>
+            <div class="k">System model</div>
+            <div class="v"><code id="effectiveSystemModelCode"></code></div>
+            <div class="k">Agent X</div>
+            <div class="v">
+              <code id="effectiveAgentXModelCode"></code>
+              <span class="hint" id="effectiveAgentXModelNote"></span>
+            </div>
+            <div class="k">Agent C</div>
+            <div class="v">
+              <code id="effectiveAgentCModelCode"></code>
+              <span class="hint" id="effectiveAgentCModelNote"></span>
+            </div>
+            <div class="k">Mode</div>
+            <div class="v"><code id="effectiveIOModeCode"></code></div>
+            <div class="k">Tools</div>
+            <div class="v"><code id="effectiveToolsCode"></code></div>
           </div>
-          <div class="hint">Teachings are appended to future rounds.</div>
-        </div>
-        <div class="field checkbox">
-          <label>
-            <input id="saveHistoryInput" type="checkbox" />
-            Save conversation history locally
-          </label>
-          <div class="hint">If disabled, new rounds won’t be written to localStorage.</div>
-        </div>
-        <div class="field checkbox">
-          <label>
-            <input id="autoClearCachesInput" type="checkbox" />
-            Clear caches after each task
-          </label>
-          <div class="hint">Clears the local history cache after every run (keeps what’s on screen until reload).</div>
-        </div>
-        <div class="field checkbox">
-          <label>
-            <input id="autoClearClipboardInput" type="checkbox" />
-            Clear copied responses (clipboard)
-          </label>
-          <div class="template-row">
-            <span class="hint">Best-effort: clears on your next tap/click to reduce LAN visibility.</span>
-            <button class="btn tiny" id="privacyViewBtn" type="button">View</button>
-            <button class="btn tiny" id="clearClipboardNowBtn" type="button">Clear</button>
-          </div>
-        </div>
-        <div class="field full">
-          <label>Privacy</label>
-          <div class="template-row">
-            <button class="btn danger" id="clearLocalDataBtn" type="button">Clear Local Data</button>
-          </div>
-          <div class="hint">Clears history, profile, templates, and teachings from this device.</div>
         </div>
       </div>
       <div class="modal-foot">
-        <button class="btn" id="testBtn" type="button">Test Connection</button>
+        <button class="btn secondary" id="testBtn" type="button">Test Connection</button>
         <button class="btn primary" id="saveBtn" type="button">Save</button>
       </div>
     </dialog>
@@ -2681,7 +3167,10 @@
 	          onlineUrl: "debateOnlineUrlV1",
 	          toolsEnabled: "debateToolsEnabledV1",
 	          toolsAutoApprove: "debateToolsAutoApproveV1",
-	          firstRunNoticeDismissed: "debateFirstRunNoticeDismissedV1"
+	          firstRunNoticeDismissed: "debateFirstRunNoticeDismissedV1",
+            entryAccepted: "agentcEntryAcceptedV1",
+            workspaceLabel: "agentcWorkspaceLabelV1",
+            theme: "agentcThemeV1"
 	        };
         const IS_HTTP_ORIGIN = ["http:", "https:"].includes(window.location.protocol);
         const IS_LOOPBACK_HOST = ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
@@ -3029,6 +3518,36 @@
 
 	        const el = (id) => document.getElementById(id);
 
+        function createBus() {
+          const listeners = new Map();
+          const on = (event, handler) => {
+            const key = String(event || "").trim();
+            if (!key || typeof handler !== "function") return () => {};
+            const list = listeners.get(key) || [];
+            list.push(handler);
+            listeners.set(key, list);
+            return () => {
+              const next = (listeners.get(key) || []).filter((h) => h !== handler);
+              listeners.set(key, next);
+            };
+          };
+          const emit = (event, payload) => {
+            const key = String(event || "").trim();
+            if (!key) return;
+            const list = listeners.get(key) || [];
+            for (const h of list.slice()) {
+              try {
+                h(payload);
+              } catch {
+                // ignore
+              }
+            }
+          };
+          return { on, emit };
+        }
+
+        const bus = createBus();
+
         const FORCE_DIALOG_FALLBACK = true;
 
         const DIALOG_FALLBACK = FORCE_DIALOG_FALLBACK || (() => {
@@ -3170,6 +3689,68 @@
 	          });
 	        }
 
+          let pendingConfirm = null;
+          function resolveConfirm(result) {
+            const pending = pendingConfirm;
+            pendingConfirm = null;
+            if (!pending) return;
+            try {
+              pending.resolve(Boolean(result));
+            } catch {
+              // ignore
+            }
+            try {
+              pending.restoreFocus?.();
+            } catch {
+              // ignore
+            }
+          }
+
+          function openConfirmModal({
+            title = "Confirm",
+            message = "",
+            confirmText = "Confirm",
+            cancelText = "Cancel",
+            danger = true
+          } = {}) {
+            if (pendingConfirm) resolveConfirm(false);
+            return new Promise((resolve) => {
+              const active = document.activeElement;
+              const restoreFocus = () => {
+                try {
+                  active?.focus?.();
+                } catch {
+                  // ignore
+                }
+              };
+              pendingConfirm = { resolve, restoreFocus };
+
+              const heading = el("confirmHeading");
+              const t = el("confirmTitle");
+              const m = el("confirmMessage");
+              const ok = el("confirmOkBtn");
+              const cancel = el("confirmCancelBtn");
+
+              if (heading) heading.textContent = "Confirm";
+              if (t) t.textContent = String(title || "").trim() || "Confirm";
+              if (m) m.textContent = String(message || "").trim();
+              if (ok) {
+                ok.textContent = String(confirmText || "").trim() || "Confirm";
+                ok.className = danger ? "btn danger" : "btn primary";
+              }
+              if (cancel) cancel.textContent = String(cancelText || "").trim() || "Cancel";
+
+              openDialogById("confirmModal");
+              window.setTimeout(() => {
+                try {
+                  ok?.focus?.();
+                } catch {
+                  // ignore
+                }
+              }, 30);
+            });
+          }
+
 		        function normalizeEndpoint(raw) {
 		          return String(raw || "")
 		            .trim()
@@ -3275,6 +3856,7 @@
 		              onlineUrl: (storedOnlineUrl || DEFAULT_ONLINE_URL).trim(),
 		              toolsEnabled: localStorage.getItem(STORAGE.toolsEnabled) === "true",
 		              toolsAutoApprove: localStorage.getItem(STORAGE.toolsAutoApprove) === "true",
+                  workspaceLabel: (localStorage.getItem(STORAGE.workspaceLabel) || "").trim(),
 		            profile: { ...DEFAULT_PROFILE, templates: [], teachings: [] },
 		            sessionMemory: "",
 		            sessionTeachings: [],
@@ -3289,12 +3871,14 @@
 	          pullProgress: 0,
 	          pullLog: "",
 	          rounds: [],
+            roundsRev: 0,
 	          loading: false,
 	          coins: null,
 	          coinsLoading: false,
 	          coinsUserId: "",
 	          error: null,
 	          lastRenderedCount: 0,
+            conversationRenderKey: "",
 	          visibleStart: 0,
 	          historyExpanded: false,
 	          stickToBottom: true,
@@ -3306,6 +3890,112 @@
 
         function displayEndpoint() {
           return state.endpoint || window.location.origin;
+        }
+
+        function waitForEntryAcceptance() {
+          if (document.documentElement.classList.contains("entry-accepted")) {
+            try {
+              const screen = document.getElementById("entryScreen");
+              if (screen) {
+                screen.hidden = true;
+                screen.setAttribute("aria-hidden", "true");
+              }
+            } catch {
+              // ignore
+            }
+            return Promise.resolve(true);
+          }
+          return new Promise((resolve) => {
+            const screen = document.getElementById("entryScreen");
+            const input = document.getElementById("workspaceLabelInput");
+            const count = document.getElementById("workspaceLabelCount");
+            const hint = document.getElementById("workspaceLabelHint");
+            const status = document.getElementById("workspaceLabelStatus");
+            const saveBtn = document.getElementById("saveWorkspaceLabelBtn");
+            const btn = document.getElementById("enterWorkspaceBtn");
+
+            if (!screen || !btn) {
+              document.documentElement.classList.add("entry-accepted");
+              resolve(true);
+              return;
+            }
+
+            const BASELINE_FOOTER = "No accounts. No passwords. No telemetry.";
+            const MAX_LEN = 32;
+            const normalizeLabel = (raw) => {
+              const s = String(raw || "").replace(/\s+/g, " ").trim();
+              if (!s) return "";
+              return s.slice(0, MAX_LEN);
+            };
+
+            const setFooter = (msg) => {
+              if (!status) return;
+              status.textContent = String(msg || "").trim() || BASELINE_FOOTER;
+            };
+
+            const renderLabelUI = () => {
+              const current = normalizeLabel(input?.value || "");
+              const saved = normalizeLabel(state.workspaceLabel || "");
+              if (input && input.value !== current) input.value = current;
+              if (count) count.textContent = `${current.length}/${MAX_LEN}`;
+              if (hint) hint.title = "Stored locally. You can change this anytime.";
+              if (saveBtn) saveBtn.disabled = current === saved;
+            };
+
+            if (input && !input.value) input.value = normalizeLabel(state.workspaceLabel || "");
+            setFooter(BASELINE_FOOTER);
+            renderLabelUI();
+
+            const saveLabel = () => {
+              const label = normalizeLabel(input?.value || "");
+              state.workspaceLabel = label;
+              try {
+                localStorage.setItem(STORAGE.workspaceLabel, label);
+              } catch {
+                // ignore
+              }
+              renderLabelUI();
+              if (!label) setFooter("Workspace label cleared (stored locally).");
+              else setFooter(`Saved workspace label: “${label}” (stored locally).`);
+              window.setTimeout(() => setFooter(BASELINE_FOOTER), 1800);
+            };
+
+            const accept = () => {
+              saveLabel();
+              try {
+                localStorage.setItem(STORAGE.entryAccepted, "1");
+              } catch {
+                // ignore
+              }
+              document.documentElement.classList.add("entry-accepted");
+              window.setTimeout(() => {
+                try {
+                  screen.hidden = true;
+                  screen.setAttribute("aria-hidden", "true");
+                } catch {
+                  // ignore
+                }
+              }, 240);
+              resolve(true);
+            };
+
+            btn.addEventListener("click", accept, { once: true });
+            saveBtn?.addEventListener("click", saveLabel);
+            input?.addEventListener("input", renderLabelUI);
+            input?.addEventListener("keydown", (e) => {
+              if (e.key !== "Enter") return;
+              e.preventDefault();
+              accept();
+            });
+
+            window.setTimeout(() => {
+              try {
+                (input || btn).focus?.();
+              } catch {
+                // ignore
+              }
+            }, 30);
+          });
         }
 
 	        const CLIPBOARD_CLEAR_DELAY_MS = 60_000;
@@ -3641,7 +4331,18 @@
           if (!field) return;
 
           if (!IS_HTTP_ORIGIN) {
-            field.hidden = true;
+            field.hidden = false;
+            const toggle = el("lanEnabledInput");
+            const urlInput = el("lanUrlInput");
+            const copyBtn = el("copyLanUrlBtn");
+            const title = el("lanStatusTitle");
+            const sub = el("lanStatusSub");
+            if (toggle) toggle.disabled = true;
+            if (copyBtn) copyBtn.disabled = true;
+            if (toggle) toggle.checked = false;
+            if (urlInput) urlInput.value = "";
+            if (title) title.textContent = "LAN: disabled";
+            if (sub) sub.textContent = "LAN sharing is disabled by design or unavailable on this device.";
             return;
           }
           field.hidden = false;
@@ -3663,9 +4364,10 @@
           const info = await probeServerInfo();
           if (!info || typeof info !== "object" || !info.ok) {
             const err = String(info?.error || "LAN status unavailable.");
-            if (!quiet) setStatusRight(err, true);
+            const msg = "LAN sharing is disabled by design or unavailable on this device.";
+            if (!quiet) setStatusRight(msg, true);
             if (title) title.textContent = "LAN: unavailable";
-            if (sub) sub.textContent = err;
+            if (sub) sub.textContent = msg;
             if (toggle) toggle.checked = false;
             return;
           }
@@ -4177,6 +4879,13 @@
 		        }
 
 	        function openMagicAuthPanel() {
+            const THE_AGENT_FAMILY_URL = "https://theagentfamily.com/";
+            try {
+              const w = window.open(THE_AGENT_FAMILY_URL, "_blank", "noopener,noreferrer");
+              if (w) return true;
+            } catch {
+              // ignore
+            }
 	          try {
 	            if (window.MKMagicAuth?.openPanel) {
 	              window.MKMagicAuth.openPanel();
@@ -4938,7 +5647,7 @@ Style rules:
 	        }
 
         async function toolFetch(toolName, payload) {
-          if (!toolsAvailable()) throw new Error("Tools unavailable (run scripts/dev_server.py).");
+          if (!toolsAvailable()) throw new Error("Tools unavailable. Run `python3 ./Contents/Resources/dev_server.py` and reload.");
           const res = await fetch(`/tool/${toolName}`, {
             method: "POST",
             headers: {
@@ -5058,7 +5767,7 @@ Style rules:
 	          if (!toolsAvailable()) {
 	            state.toolsEnabled = false;
 	            localStorage.setItem(STORAGE.toolsEnabled, "false");
-	            setStatusRight("Tools unavailable here. Run `python3 ./scripts/dev_server.py`.", true);
+	            setStatusRight("Tools unavailable here. Run `python3 ./Contents/Resources/dev_server.py`.", true);
 	            return { toolRuns: [], userContext };
 	          }
 
@@ -5540,7 +6249,7 @@ Style rules:
 	            toolsBtn.style.display = available ? "" : "none";
 	            toolsBtn.disabled = state.loading || !available;
 	            toolsBtn.setAttribute("aria-pressed", state.toolsEnabled && available ? "true" : "false");
-	            toolsBtn.title = available ? "Enable local tools (workspace)" : "Tools unavailable (run python3 ./scripts/dev_server.py)";
+	            toolsBtn.title = available ? "Enable local tools (workspace)" : "Tools unavailable (run python3 ./Contents/Resources/dev_server.py)";
 	          }
 	
 	          const memoryBtn = el("memoryBtn");
@@ -5563,16 +6272,24 @@ Style rules:
 	            if (onlineBtn && onlineLabel) {
 	              onlineBtn.disabled = Boolean(state.loading);
 	              onlineBtn.setAttribute("aria-pressed", signedIn ? "true" : "false");
-	              onlineBtn.title = signedIn ? "Sign out" : "Sign in";
-	              onlineLabel.textContent = signedIn ? "Log out" : "Sign in";
+	              onlineBtn.title = signedIn ? "Online (signed in — click to sign out)" : "Online (opens TheAgentFamily.com)";
+	              onlineLabel.textContent = "Online";
 	              if (onlineStatusImg) {
 	              const LOGGED_OUT_PNG = "Logged OUT.png";
 	              const LOGGED_IN_PNG = "Logged IN.png";
 	              // Root fix: avoid legacy SVG→PNG localStorage caches (they can keep showing oversized icons).
 	              onlineStatusImg.src = signedIn ? LOGGED_IN_PNG : LOGGED_OUT_PNG;
-	              onlineStatusImg.alt = signedIn ? "Logged in" : "Logged out";
+	              onlineStatusImg.alt = signedIn ? "Online on" : "Online off";
 	            }
 	          }
+
+            const glitchBtn = el("glitchBtn");
+            if (glitchBtn) {
+              const on = document.documentElement.classList.contains("theme-dark");
+              glitchBtn.disabled = Boolean(state.loading);
+              glitchBtn.setAttribute("aria-pressed", on ? "true" : "false");
+              glitchBtn.title = on ? "Glitch (dark mode on)" : "Glitch (dark mode off)";
+            }
 
 	            const coinsBtn = el("coinsBtn");
 	            const coinsLabel = el("coinsLabel");
@@ -5594,12 +6311,44 @@ Style rules:
 	                maybeRefreshCoinsBalance();
 	              }
 	            }
-	          })();
+          })();
 
           el("nextRoundBtn").disabled = state.loading || state.rounds.length === 0;
           el("refineBtn").disabled = state.loading || state.rounds.length === 0;
           el("resetBtn").disabled = state.loading || state.rounds.length === 0;
+          const roundHint = el("roundControlsHint");
+          if (roundHint) {
+            if (state.loading) {
+              roundHint.textContent = "Working…";
+            } else if (!state.rounds.length) {
+              roundHint.textContent = "Send your first message to enable Next Round.";
+            } else {
+              roundHint.textContent = "";
+            }
+          }
           updateComposerDisabled();
+
+          const computeConversationKey = () => {
+            const p = state.profile || DEFAULT_PROFILE;
+            return [
+              String(state.roundsRev || 0),
+              String(state.visibleStart || 0),
+              state.historyExpanded ? "1" : "0",
+              String(state.notice || ""),
+              String(state.modelSetupMessage || ""),
+              String(p.agentXLabel || DEFAULT_PROFILE.agentXLabel),
+              String(p.agentCLabel || DEFAULT_PROFILE.agentCLabel),
+              String(systemPanelRoleLabel()),
+              String(p.ioMode || DEFAULT_PROFILE.ioMode)
+            ].join("\u0001");
+          };
+
+          const preKey = computeConversationKey();
+          if (state.conversationRenderKey === preKey && !state.forceScrollToBottomOnce && !state.suppressAutoScrollOnce) {
+            applyGlitchToConversation();
+            updateJumpLatestButton();
+            return;
+          }
 
           const container = el("conversation");
           const canScroll = container.scrollHeight - container.clientHeight > 2;
@@ -5659,9 +6408,10 @@ Style rules:
               state.visibleStart = 0;
               state.historyExpanded = false;
               state.stickToBottom = true;
-              state.unseenRounds = 0;
-              state.initialScrollDone = false;
-              updateJumpLatestButton();
+            state.unseenRounds = 0;
+            state.initialScrollDone = false;
+            updateJumpLatestButton();
+            state.conversationRenderKey = computeConversationKey();
 	            return;
 	          }
 
@@ -5702,36 +6452,51 @@ Style rules:
 	              <div class="answers">
 	                <div class="answer x">
 	                  <div class="answer-head">
-	                    <div class="name"><span class="sf-ultrathin">Agent</span><span class="sf-light">X</span></div>
-	                    <div class="answer-actions">
-	                      <div class="role">${escapeHTML(state.profile.agentXLabel || DEFAULT_PROFILE.agentXLabel)}</div>
-	                      <button class="btn tiny icon" type="button" data-copy-agent="x" data-copy-round="${i}" title="Copy Agent X">📋</button>
-	                      <button class="btn tiny" type="button" data-teach-agent="x" data-teach-round="${i}">Teach</button>
-	                    </div>
+                      <div class="answer-who">
+                        <span class="answer-avatar" aria-hidden="true"><img src="agent101_bubble.svg" alt="" /></span>
+                        <div class="answer-ident">
+                          <div class="name"><span class="sf-ultrathin">Agent</span><span class="sf-light">X</span></div>
+                          <div class="role">${escapeHTML(state.profile.agentXLabel || DEFAULT_PROFILE.agentXLabel)}</div>
+                        </div>
+                      </div>
+                      <div class="answer-actions">
+                        <button class="btn tiny icon" type="button" data-copy-agent="x" data-copy-round="${i}" title="Copy Agent X">📋</button>
+                        <button class="btn tiny secondary" type="button" data-teach-agent="x" data-teach-round="${i}">Teach</button>
+                      </div>
 	                  </div>
 	                  <pre>${renderAnswerHTML(round.agentX)}</pre>
 	                  ${round.sealX ? renderSealDetailsHTML(round.sealX) : ""}
 	                </div>
 	                <div class="answer c">
 	                  <div class="answer-head">
-	                    <div class="name"><span class="sf-ultrathin">Agent</span><span class="sf-light">C</span></div>
-	                    <div class="answer-actions">
-	                      <div class="role">${escapeHTML(state.profile.agentCLabel || DEFAULT_PROFILE.agentCLabel)}</div>
-	                      <button class="btn tiny icon" type="button" data-copy-agent="c" data-copy-round="${i}" title="Copy Agent C">📋</button>
-	                      <button class="btn tiny" type="button" data-teach-agent="c" data-teach-round="${i}">Teach</button>
-	                    </div>
+                      <div class="answer-who">
+                        <span class="answer-avatar" aria-hidden="true"><img src="agentc_bubble.svg" alt="" /></span>
+                        <div class="answer-ident">
+                          <div class="name"><span class="sf-ultrathin">Agent</span><span class="sf-light">C</span></div>
+                          <div class="role">${escapeHTML(state.profile.agentCLabel || DEFAULT_PROFILE.agentCLabel)}</div>
+                        </div>
+                      </div>
+                      <div class="answer-actions">
+                        <button class="btn tiny icon" type="button" data-copy-agent="c" data-copy-round="${i}" title="Copy Agent C">📋</button>
+                        <button class="btn tiny secondary" type="button" data-teach-agent="c" data-teach-round="${i}">Teach</button>
+                      </div>
 	                  </div>
 	                  <pre>${renderAnswerHTML(round.agentC)}</pre>
 	                  ${round.sealC ? renderSealDetailsHTML(round.sealC) : ""}
 	                </div>
 	                <div class="answer system">
 		                  <div class="answer-head">
-		                    <div class="name"><span class="sf-ultrathin">System</span></div>
-		                    <div class="answer-actions">
-		                      <div class="role">${escapeHTML(systemPanelRoleLabel())}</div>
-		                      <button class="btn tiny icon" type="button" data-copy-agent="system" data-copy-round="${i}" title="Copy System">📋</button>
-		                      <button class="btn tiny" type="button" data-teach-agent="system" data-teach-round="${i}">Teach</button>
-		                    </div>
+                        <div class="answer-who">
+                          <span class="answer-avatar system" aria-hidden="true">⚙️</span>
+                          <div class="answer-ident">
+                            <div class="name"><span class="sf-ultrathin">System</span></div>
+                            <div class="role">${escapeHTML(systemPanelRoleLabel())}</div>
+                          </div>
+                        </div>
+                        <div class="answer-actions">
+                          <button class="btn tiny icon" type="button" data-copy-agent="system" data-copy-round="${i}" title="Copy System">📋</button>
+                          <button class="btn tiny secondary" type="button" data-teach-agent="system" data-teach-round="${i}">Teach</button>
+                        </div>
 		                  </div>
 	                  <pre>${renderAnswerHTML(round.system || "(System reflection will appear here for new rounds.)")}</pre>
 	                  ${round.sealSystem ? renderSealDetailsHTML(round.sealSystem) : ""}
@@ -5779,6 +6544,7 @@ Style rules:
 
             updateJumpLatestButton();
             applyGlitchToConversation();
+            state.conversationRenderKey = computeConversationKey();
         }
 
         function clampInt(n, min, max) {
@@ -6630,6 +7396,7 @@ Style rules:
             const parsed = JSON.parse(raw);
             if (Array.isArray(parsed)) {
               state.rounds = parsed.filter((r) => r && typeof r === "object");
+              touchRounds();
               state.visibleStart = Math.max(0, state.rounds.length - DEFAULT_VISIBLE_ROUNDS);
               state.historyExpanded = false;
               state.unseenRounds = 0;
@@ -6659,6 +7426,7 @@ Style rules:
               try {
                 localStorage.setItem(STORAGE.debate, JSON.stringify(copy));
                 state.rounds = copy;
+                touchRounds();
                 return;
               } catch {
                 // keep trimming
@@ -6667,6 +7435,195 @@ Style rules:
           } catch {
             // ignore
           }
+        }
+
+        function touchRounds() {
+          state.roundsRev = (Number(state.roundsRev) || 0) + 1;
+          state.conversationRenderKey = "";
+        }
+
+        function collectSettingsDraft() {
+          const endpoint = normalizeEndpoint(el("endpointInput")?.value);
+          const modelOverride = String(el("modelInput")?.value || "").trim();
+          const agentXModelOverride = String(el("agentXModelInput")?.value || "").trim();
+          const agentCModelOverride = String(el("agentCModelInput")?.value || "").trim();
+          const onlineUrl = String(el("onlineUrlInput")?.value || "").trim();
+
+          const numCtx = Number(el("numCtxInput")?.value) || DEFAULT_OPTIONS.numCtx;
+          const numPredict = Number(el("numPredictInput")?.value) || DEFAULT_OPTIONS.numPredict;
+
+          const toolsEnabled = Boolean(el("toolsEnabledInput")?.checked);
+          const toolsAutoApprove = Boolean(el("toolsAutoApproveInput")?.checked);
+
+          const agentXLanguage =
+            String(el("agentXLanguageSelect")?.value || DEFAULT_PROFILE.agentXLanguage).trim() || DEFAULT_PROFILE.agentXLanguage;
+          const agentCLanguage =
+            String(el("agentCLanguageSelect")?.value || DEFAULT_PROFILE.agentCLanguage).trim() || DEFAULT_PROFILE.agentCLanguage;
+          const systemLanguage =
+            String(el("systemLanguageSelect")?.value || DEFAULT_PROFILE.systemLanguage).trim() || DEFAULT_PROFILE.systemLanguage;
+
+          const ioBaseOnline = Boolean(el("ioOnlineSwitch")?.checked);
+          const wantsSeal = Boolean(el("sealAesInput")?.checked);
+          const nextIOMode = ioBaseOnline ? (wantsSeal ? "online_aes" : "online_plain") : "local";
+
+          const glitchIntensity = clampInt(el("glitchIntensityRange")?.value ?? DEFAULT_PROFILE.glitchIntensity, 0, 10);
+          const agentXMode = normalizeMode(el("agentXModeSelect")?.value, DEFAULT_PROFILE.agentXMode);
+          const agentCMode = normalizeMode(el("agentCModeSelect")?.value, DEFAULT_PROFILE.agentCMode);
+          const systemMode = normalizeMode(el("systemModeSelect")?.value, DEFAULT_PROFILE.systemMode);
+
+          const style = clamp(Number(el("styleRange")?.value), 0, 100);
+          const agentXLabel = String(el("agentXLabelInput")?.value || "").trim() || DEFAULT_PROFILE.agentXLabel;
+          const agentCLabel = String(el("agentCLabelInput")?.value || "").trim() || DEFAULT_PROFILE.agentCLabel;
+          const agentXRole = String(el("agentXRoleInput")?.value || "").trim() || DEFAULT_PROFILE.agentXRole;
+          const agentCRole = String(el("agentCRoleInput")?.value || "").trim() || DEFAULT_PROFILE.agentCRole;
+          const customInstructions = String(el("customInstructionsInput")?.value || "").trim();
+          const sessionMemory = String(el("sessionMemoryInput")?.value || "").trim();
+
+          const saveHistory = Boolean(el("saveHistoryInput")?.checked);
+          const autoClearCaches = Boolean(el("autoClearCachesInput")?.checked);
+          const autoClearClipboard = Boolean(el("autoClearClipboardInput")?.checked);
+
+          return {
+            endpoint,
+            modelOverride,
+            agentXModelOverride,
+            agentCModelOverride,
+            onlineUrl,
+            options: { numCtx, numPredict },
+            toolsEnabled,
+            toolsAutoApprove,
+            profile: {
+              agentXLanguage,
+              agentCLanguage,
+              systemLanguage,
+              ioMode: nextIOMode,
+              glitchIntensity,
+              agentXMode,
+              agentCMode,
+              systemMode,
+              style: Number.isFinite(style) ? style : DEFAULT_PROFILE.style,
+              agentXLabel,
+              agentCLabel,
+              agentXRole,
+              agentCRole,
+              customInstructions,
+              privacy: { saveHistory, autoClearCaches, autoClearClipboard }
+            },
+            sessionMemory
+          };
+        }
+
+        function updateEffectiveSettingsSummaryFromDraft() {
+          const endpointCode = el("effectiveEndpointCode");
+          const sysCode = el("effectiveSystemModelCode");
+          const xCode = el("effectiveAgentXModelCode");
+          const xNote = el("effectiveAgentXModelNote");
+          const cCode = el("effectiveAgentCModelCode");
+          const cNote = el("effectiveAgentCModelNote");
+          const modeCode = el("effectiveIOModeCode");
+          const toolsCode = el("effectiveToolsCode");
+
+          if (!endpointCode || !sysCode || !xCode || !cCode || !modeCode || !toolsCode) return;
+
+          const draft = collectSettingsDraft();
+
+          const endpointResolved = draft.endpoint || DEFAULT_ENDPOINT || window.location.origin;
+          endpointCode.textContent = draft.endpoint ? draft.endpoint : "auto";
+          endpointCode.title = endpointResolved;
+
+          const sysOverride = String(draft.modelOverride || "").trim();
+          const xOverride = String(draft.agentXModelOverride || "").trim();
+          const cOverride = String(draft.agentCModelOverride || "").trim();
+          const auto = String(state.autoModelName || "").trim();
+
+          const sysEff = sysOverride || auto || "";
+          const xEff = xOverride || sysOverride || auto || "";
+          const cEff = cOverride || sysOverride || auto || "";
+
+          sysCode.textContent = sysEff ? displayModelLabel(sysEff) : "auto";
+          xCode.textContent = xEff ? displayModelLabel(xEff) : "auto";
+          cCode.textContent = cEff ? displayModelLabel(cEff) : "auto";
+
+          if (xNote) xNote.textContent = xOverride ? " (override)" : sysOverride ? " (inherits System)" : "";
+          if (cNote) cNote.textContent = cOverride ? " (override)" : sysOverride ? " (inherits System)" : "";
+
+          modeCode.textContent = draft.profile.ioMode === "local" ? "LOCAL" : draft.profile.ioMode === "online_aes" ? "ONLINE (AES)" : "ONLINE";
+
+          const toolsAvailableHere = toolsAvailable();
+          toolsCode.textContent = toolsAvailableHere ? (draft.toolsEnabled ? "ON" : "OFF") : "Unavailable here";
+        }
+
+        function validateSettingsDraft(draft) {
+          const endpoint = String(draft?.endpoint || "").trim();
+          if (endpoint && /:11434$/.test(endpoint)) {
+            return "Use the proxy (e.g. http://127.0.0.1:3030). Browsers can’t call :11434 directly (CORS).";
+          }
+          return "";
+        }
+
+        async function applySettingsDraft(draft) {
+          state.endpointMode = draft.endpoint ? "manual" : "auto";
+          state.endpoint = draft.endpoint || DEFAULT_ENDPOINT;
+          state.modelOverride = draft.modelOverride;
+          state.agentXModelOverride = draft.agentXModelOverride;
+          state.agentCModelOverride = draft.agentCModelOverride;
+          state.options = draft.options || { ...DEFAULT_OPTIONS };
+          state.onlineUrl = (draft.onlineUrl || DEFAULT_ONLINE_URL).trim();
+          state.toolsEnabled = Boolean(draft.toolsEnabled);
+          state.toolsAutoApprove = Boolean(draft.toolsAutoApprove);
+
+          state.profile = {
+            ...state.profile,
+            ...draft.profile,
+            privacy: {
+              ...(state.profile.privacy || DEFAULT_PROFILE.privacy),
+              ...(draft.profile?.privacy || {})
+            }
+          };
+          state.sessionMemory = String(draft.sessionMemory || "").trim();
+
+          saveProfile();
+          saveSessionMemory();
+          refreshTemplateSelects();
+          refreshTeachingsPre();
+          if (!shouldPersistHistory()) clearHistoryCache();
+          updatePrivacyLight();
+
+          if (state.endpointMode === "manual") {
+            localStorage.setItem(STORAGE.endpoint, state.endpoint);
+          } else {
+            localStorage.removeItem(STORAGE.endpoint);
+          }
+          localStorage.setItem(STORAGE.modelOverride, state.modelOverride);
+          localStorage.setItem(STORAGE.agentXModelOverride, state.agentXModelOverride);
+          localStorage.setItem(STORAGE.agentCModelOverride, state.agentCModelOverride);
+          localStorage.setItem(STORAGE.options, JSON.stringify(state.options));
+          localStorage.setItem(STORAGE.onlineUrl, state.onlineUrl);
+          localStorage.setItem(STORAGE.toolsEnabled, state.toolsEnabled ? "true" : "false");
+          localStorage.setItem(STORAGE.toolsAutoApprove, state.toolsAutoApprove ? "true" : "false");
+
+          modelPromise = null;
+          if (state.modelOverride) {
+            state.autoModelName = null;
+          } else {
+            state.autoModelName = null;
+            localStorage.removeItem(STORAGE.autoModel);
+          }
+
+          await ensureEndpoint();
+          await refreshHealth();
+          render();
+          if (draft.profile?.ioMode === "online_aes" && !aesSealReady()) {
+            setStatusRight("Saved. AES not armed — transmission blocked until you Arm AES.", true);
+          } else {
+            setStatusRight("");
+          }
+          try {
+            window.MKCore?.magicAuth?.showSavedToast?.("Saved", 2000);
+          } catch {
+            // ignore
+          }
+          closeSettings();
         }
 
 	        function openSettings() {
@@ -6717,6 +7674,7 @@ Style rules:
 	          setTemplateEditorFromId(selected);
 	          refreshTeachingsPre();
 	          renderVoicePreviewFromDraft();
+            updateEffectiveSettingsSummaryFromDraft();
 
 	          openDialogById("settingsModal");
 		          updateModelDownloadUI();
@@ -6808,6 +7766,7 @@ Style rules:
 	          state.sessionMemory = String(p.sessionMemory || "").trim();
 	          state.sessionTeachings = normalizeTeachings(p.sessionTeachings);
 	          state.rounds = normalizeRoundsForPack(p.rounds);
+            touchRounds();
 	          state.visibleStart = Math.max(0, state.rounds.length - DEFAULT_VISIBLE_ROUNDS);
 	          state.historyExpanded = false;
 	          state.unseenRounds = 0;
@@ -6897,7 +7856,17 @@ Style rules:
           setStatusRight("Teachings cleared.");
         }
 
-	        function clearLocalData() {
+	        async function clearLocalData() {
+            const ok = await openConfirmModal({
+              title: "Clear local data?",
+              message:
+                "This removes: history, profile, templates, teachings, and saved sessions.\n\nThis cannot be undone.",
+              confirmText: "Clear Local Data",
+              cancelText: "Cancel",
+              danger: true
+            });
+            if (!ok) return;
+
 	          try {
 	            for (const key of Object.values(STORAGE)) {
 	              try {
@@ -6931,9 +7900,10 @@ Style rules:
 	          state.sessionMemory = "";
 	          state.sessionTeachings = [];
 	          state.savedSessions = [];
-	          state.templateEditorId = null;
+          state.templateEditorId = null;
 
           state.rounds = [];
+          touchRounds();
           state.visibleStart = 0;
           state.historyExpanded = false;
           state.unseenRounds = 0;
@@ -7113,6 +8083,7 @@ Style rules:
 	              system: first.system,
 	              at: Date.now()
             });
+            touchRounds();
             saveHistory();
             afterTaskPrivacyCleanup();
             setStatusRight("");
@@ -7176,6 +8147,7 @@ Style rules:
 	              system: next.system,
 	              at: Date.now()
             });
+            touchRounds();
             saveHistory();
             afterTaskPrivacyCleanup();
             setStatusRight("");
@@ -7240,6 +8212,7 @@ Style rules:
 	              system: next.system,
 	              at: Date.now()
             });
+            touchRounds();
             saveHistory();
             afterTaskPrivacyCleanup();
             setStatusRight("");
@@ -7255,6 +8228,7 @@ Style rules:
 
 	        function resetDebate() {
 	          state.rounds = [];
+            touchRounds();
             state.visibleStart = 0;
             state.historyExpanded = false;
             state.unseenRounds = 0;
@@ -7311,6 +8285,35 @@ Style rules:
 		          wireDialogLifecycle("memoryModal", { onClose: () => setStatusRight("") });
 		          wireDialogLifecycle("teachModal", { onClose: () => (state.pendingTeachContext = null) });
 		          wireDialogLifecycle("toolsModal", { onClose: () => resolveToolApproval(false) });
+              wireDialogLifecycle("confirmModal", { onClose: () => resolveConfirm(false) });
+              el("closeConfirmBtn")?.addEventListener("click", () => closeDialogById("confirmModal"));
+              el("confirmCancelBtn")?.addEventListener("click", () => {
+                resolveConfirm(false);
+                closeDialogById("confirmModal");
+              });
+              el("confirmOkBtn")?.addEventListener("click", () => {
+                resolveConfirm(true);
+                closeDialogById("confirmModal");
+              });
+              bus.on("settings:draftChanged", () => {
+                updateEffectiveSettingsSummaryFromDraft();
+              });
+              const emitDraft = () => bus.emit("settings:draftChanged");
+              [
+                "endpointInput",
+                "modelInput",
+                "agentXModelInput",
+                "agentCModelInput",
+                "ioOnlineSwitch",
+                "sealAesInput",
+                "toolsEnabledInput",
+                "toolsAutoApproveInput"
+              ].forEach((id) => {
+                const node = el(id);
+                if (!node) return;
+                node.addEventListener("input", emitDraft);
+                node.addEventListener("change", emitDraft);
+              });
 	          el("modalBackdrop")?.addEventListener("click", closeTopModal);
 	          window.addEventListener("keydown", (e) => {
 	            if (e.key !== "Escape") return;
@@ -7321,12 +8324,23 @@ Style rules:
 		          updateModalLayerState();
 
 		          el("onlineBtn").addEventListener("click", () => toggleAuth());
+              el("glitchBtn")?.addEventListener("click", () => {
+                const html = document.documentElement;
+                const on = !html.classList.contains("theme-dark");
+                html.classList.toggle("theme-dark", on);
+                try {
+                  localStorage.setItem(STORAGE.theme, on ? "dark" : "light");
+                } catch {
+                  // ignore
+                }
+                render();
+              });
 		          el("coinsBtn")?.addEventListener("click", () => openCoinsPurchase());
 		          el("downloadBtn")?.addEventListener("click", openDownload);
 		          el("memoryBtn")?.addEventListener("click", openMemoryModal);
 		          el("toolsBtn").addEventListener("click", () => {
 		            if (!toolsAvailable()) {
-		              setStatusRight("Tools unavailable. Run `python3 ./scripts/dev_server.py` and reload.", true);
+		              setStatusRight("Tools unavailable. Run `python3 ./Contents/Resources/dev_server.py` and reload.", true);
 		              return;
 		            }
             state.toolsEnabled = !state.toolsEnabled;
@@ -7477,10 +8491,16 @@ Style rules:
 	              setStatusRight(String(err?.message || err), true);
 	            }
 	          });
-	          el("deleteSessionSnapshotBtn")?.addEventListener("click", () => {
+	          el("deleteSessionSnapshotBtn")?.addEventListener("click", async () => {
 	            const id = String(el("savedSessionsSelect")?.value || "").trim();
 	            if (!id) return;
-	            const ok = window.confirm("Delete this saved session snapshot?");
+	            const ok = await openConfirmModal({
+	              title: "Delete snapshot?",
+	              message: "This removes the selected snapshot from this device.",
+	              confirmText: "Delete",
+	              cancelText: "Cancel",
+	              danger: true
+	            });
 	            if (!ok) return;
 	            deleteSavedSessionById(id);
 	            setStatusRight("Snapshot deleted.");
@@ -7760,157 +8780,80 @@ Style rules:
           });
 
           el("saveBtn").addEventListener("click", async () => {
-	            const endpoint = normalizeEndpoint(el("endpointInput").value);
-	            if (endpoint && /:11434$/.test(endpoint)) {
-	              setStatusRight("Use the proxy (e.g. http://127.0.0.1:3030). Browsers can’t call :11434 directly (CORS).", true);
-	              el("endpointInput").focus();
-	              return;
-	            }
-	            const modelOverride = el("modelInput").value.trim();
-	            const agentXModelOverride = el("agentXModelInput").value.trim();
-	            const agentCModelOverride = el("agentCModelInput").value.trim();
-	            const onlineUrl = el("onlineUrlInput").value.trim();
-	            const numCtx = Number(el("numCtxInput").value) || DEFAULT_OPTIONS.numCtx;
-	            const numPredict = Number(el("numPredictInput").value) || DEFAULT_OPTIONS.numPredict;
-	            const toolsEnabled = Boolean(el("toolsEnabledInput").checked);
-	            const toolsAutoApprove = Boolean(el("toolsAutoApproveInput").checked);
-		            const agentXLanguage = String(el("agentXLanguageSelect")?.value || DEFAULT_PROFILE.agentXLanguage).trim() || DEFAULT_PROFILE.agentXLanguage;
-		            const agentCLanguage = String(el("agentCLanguageSelect")?.value || DEFAULT_PROFILE.agentCLanguage).trim() || DEFAULT_PROFILE.agentCLanguage;
-		            const systemLanguage = String(el("systemLanguageSelect")?.value || DEFAULT_PROFILE.systemLanguage).trim() || DEFAULT_PROFILE.systemLanguage;
-		            const ioBaseOnline = Boolean(el("ioOnlineSwitch")?.checked);
-		            const wantsSeal = Boolean(el("sealAesInput")?.checked);
-		            const nextIOMode = ioBaseOnline ? (wantsSeal ? "online_aes" : "online_plain") : "local";
-	              const glitchIntensity = clampInt(el("glitchIntensityRange")?.value ?? DEFAULT_PROFILE.glitchIntensity, 0, 10);
-		            const agentXMode = normalizeMode(el("agentXModeSelect")?.value, DEFAULT_PROFILE.agentXMode);
-		            const agentCMode = normalizeMode(el("agentCModeSelect")?.value, DEFAULT_PROFILE.agentCMode);
-		            const systemMode = normalizeMode(el("systemModeSelect")?.value, DEFAULT_PROFILE.systemMode);
-	            const style = clamp(Number(el("styleRange")?.value), 0, 100);
-	            const agentXLabel = String(el("agentXLabelInput")?.value || "").trim() || DEFAULT_PROFILE.agentXLabel;
-	            const agentCLabel = String(el("agentCLabelInput")?.value || "").trim() || DEFAULT_PROFILE.agentCLabel;
-	            const agentXRole = String(el("agentXRoleInput")?.value || "").trim() || DEFAULT_PROFILE.agentXRole;
-	            const agentCRole = String(el("agentCRoleInput")?.value || "").trim() || DEFAULT_PROFILE.agentCRole;
-	            const customInstructions = String(el("customInstructionsInput")?.value || "").trim();
-            const sessionMemory = String(el("sessionMemoryInput")?.value || "").trim();
-            const saveHistoryPref = Boolean(el("saveHistoryInput")?.checked);
-            const autoClearCaches = Boolean(el("autoClearCachesInput")?.checked);
-            const autoClearClipboard = Boolean(el("autoClearClipboardInput")?.checked);
-
-            if (toolsEnabled && !toolsAvailable()) {
-              setStatusRight("Tools are unavailable in this mode. Run `python3 ./scripts/dev_server.py` and reload.", true);
+            const draft = collectSettingsDraft();
+            const err = validateSettingsDraft(draft);
+            if (err) {
+              setStatusRight(err, true);
+              try {
+                el("endpointInput")?.focus?.();
+              } catch {
+                // ignore
+              }
               return;
             }
 
-	            state.endpointMode = endpoint ? "manual" : "auto";
-	            state.endpoint = endpoint || DEFAULT_ENDPOINT;
-	            state.modelOverride = modelOverride;
-	            state.agentXModelOverride = agentXModelOverride;
-	            state.agentCModelOverride = agentCModelOverride;
-	            state.options = { numCtx, numPredict };
-	            state.onlineUrl = onlineUrl || DEFAULT_ONLINE_URL;
-	            state.toolsEnabled = toolsEnabled;
-	            state.toolsAutoApprove = toolsAutoApprove;
-		            state.profile = {
-		              ...state.profile,
-		              agentXLanguage,
-		              agentCLanguage,
-		              systemLanguage,
-		              ioMode: nextIOMode,
-		              glitchIntensity,
-		              agentXMode,
-		              agentCMode,
-		              systemMode,
-	              style: Number.isFinite(style) ? style : DEFAULT_PROFILE.style,
-	              agentXLabel,
-	              agentCLabel,
-	              agentXRole,
-	              agentCRole,
-              privacy: {
-                ...(state.profile.privacy || DEFAULT_PROFILE.privacy),
-                saveHistory: saveHistoryPref,
-                autoClearCaches,
-                autoClearClipboard
-              },
-              customInstructions
-            };
-            state.sessionMemory = sessionMemory;
-	            saveProfile();
-            saveSessionMemory();
-            refreshTemplateSelects();
-            refreshTeachingsPre();
-            if (!shouldPersistHistory()) clearHistoryCache();
-            updatePrivacyLight();
-
-            if (state.endpointMode === "manual") {
-              localStorage.setItem(STORAGE.endpoint, state.endpoint);
-	            } else {
-	              localStorage.removeItem(STORAGE.endpoint);
-	            }
-	            localStorage.setItem(STORAGE.modelOverride, state.modelOverride);
-	            localStorage.setItem(STORAGE.agentXModelOverride, state.agentXModelOverride);
-	            localStorage.setItem(STORAGE.agentCModelOverride, state.agentCModelOverride);
-	            localStorage.setItem(STORAGE.options, JSON.stringify(state.options));
-	            localStorage.setItem(STORAGE.onlineUrl, state.onlineUrl);
-	            localStorage.setItem(STORAGE.toolsEnabled, state.toolsEnabled ? "true" : "false");
-	            localStorage.setItem(STORAGE.toolsAutoApprove, state.toolsAutoApprove ? "true" : "false");
-
-            modelPromise = null;
-            if (state.modelOverride) {
-              state.autoModelName = null;
-            } else {
-              state.autoModelName = null;
-              localStorage.removeItem(STORAGE.autoModel);
+            if (draft.toolsEnabled && !toolsAvailable()) {
+              setStatusRight("Tools are unavailable in this mode. Run `python3 ./Contents/Resources/dev_server.py` and reload.", true);
+              return;
             }
 
-	          await ensureEndpoint();
-		            await refreshHealth();
-		            render();
-		            if (nextIOMode === "online_aes" && !aesSealReady()) {
-		              setStatusRight("Saved. AES not armed — transmission blocked until you Arm AES.", true);
-		            } else {
-		              setStatusRight("");
-		            }
-	              try {
-	                window.MKCore?.magicAuth?.showSavedToast?.("Saved", 2000);
-	              } catch {
-	                // ignore
-              }
-	            closeSettings();
+            try {
+              await applySettingsDraft(draft);
+            } catch (e) {
+              setStatusRight(String(e?.message || e) || "Could not save settings.", true);
+            }
 	          });
 	        }
 
+        const BOOT_STATE = Object.freeze({
+          locked: "locked",
+          localEntered: "localEntered",
+          onlineEnabled: "onlineEnabled"
+        });
+
+        const boot = {
+          state: document.documentElement.classList.contains("entry-accepted") ? BOOT_STATE.localEntered : BOOT_STATE.locked
+        };
+
+        const startBackgroundStartup = () => {
+          // Background startup (don’t block UI actions like Online).
+          (async () => {
+            try {
+              await loadEmojiPalette();
+            } catch {
+              // ignore
+            }
+            try {
+              await validateManualEndpointOnLoad();
+            } catch {
+              // ignore
+            }
+            try {
+              await ensureEndpoint();
+            } catch {
+              // ignore
+            }
+            render();
+            try {
+              await refreshHealth();
+            } catch {
+              // ignore
+            }
+            try {
+              await refreshModels({ quiet: true });
+            } catch {
+              // ignore
+            }
+            updateModelDownloadUI();
+            refreshCoordinationUi({ quiet: true }).catch(() => {});
+            render();
+          })();
+        };
+
+        await waitForEntryAcceptance();
+        boot.state = BOOT_STATE.localEntered;
         wire();
-        // Background startup (don’t block UI actions like Sign in).
-        (async () => {
-          try {
-            await loadEmojiPalette();
-          } catch {
-            // ignore
-          }
-          try {
-            await validateManualEndpointOnLoad();
-          } catch {
-            // ignore
-          }
-          try {
-            await ensureEndpoint();
-          } catch {
-            // ignore
-          }
-          render();
-          try {
-            await refreshHealth();
-          } catch {
-            // ignore
-          }
-          try {
-            await refreshModels({ quiet: true });
-          } catch {
-            // ignore
-          }
-          updateModelDownloadUI();
-          refreshCoordinationUi({ quiet: true }).catch(() => {});
-          render();
-        })();
+        startBackgroundStartup();
       })();
     </script>
   </body>
