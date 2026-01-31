@@ -50,100 +50,6 @@
         --page-bg: linear-gradient(180deg, rgba(248, 250, 252, 1), rgba(255, 255, 255, 1));
 	      }
 
-      html.theme-dark {
-        color-scheme: dark;
-        --text: #e5e7eb;
-        --muted: #94a3b8;
-        --border: rgba(226, 232, 240, 0.14);
-        --glass: rgba(2, 6, 23, 0.62);
-        --shadow: 0 22px 56px rgba(0, 0, 0, 0.45);
-        --shadow-soft: 0 12px 30px rgba(0, 0, 0, 0.30);
-        --page-bg: linear-gradient(180deg, #050814, #0b1220);
-      }
-
-      html.theme-dark .online-status-img,
-      html.theme-dark .answer-avatar,
-      html.theme-dark .answer-avatar.system {
-        border-color: rgba(226, 232, 240, 0.16);
-        background: rgba(2, 6, 23, 0.55);
-      }
-
-      html.theme-dark header {
-        border-bottom-color: rgba(226, 232, 240, 0.12);
-        background: rgba(2, 6, 23, 0.60);
-        box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06), 0 14px 34px rgba(0, 0, 0, 0.25);
-      }
-
-      html.theme-dark .panel,
-      html.theme-dark .round,
-      html.theme-dark dialog {
-        border-color: rgba(226, 232, 240, 0.14);
-        background: rgba(2, 6, 23, 0.55);
-      }
-
-      html.theme-dark .panel-head,
-      html.theme-dark .round-meta,
-      html.theme-dark .tools,
-      html.theme-dark dialog {
-        background: rgba(2, 6, 23, 0.58);
-      }
-
-      html.theme-dark dialog::backdrop,
-      html.theme-dark #modalBackdrop {
-        background: rgba(0, 0, 0, 0.45);
-      }
-
-      html.theme-dark .btn {
-        border-color: rgba(226, 232, 240, 0.16);
-        background: rgba(2, 6, 23, 0.48);
-        color: var(--text);
-      }
-
-      html.theme-dark .btn:hover {
-        background: rgba(2, 6, 23, 0.64);
-      }
-
-      html.theme-dark .btn.secondary {
-        background: rgba(2, 6, 23, 0.40);
-      }
-
-      html.theme-dark .btn.primary {
-        background: linear-gradient(90deg, rgba(59, 130, 246, 0.92), rgba(124, 58, 237, 0.92));
-        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
-      }
-
-      html.theme-dark .pill,
-      html.theme-dark .pill-btn {
-        border-color: rgba(226, 232, 240, 0.14);
-        background: rgba(2, 6, 23, 0.46);
-        color: rgba(226, 232, 240, 0.86);
-      }
-
-      html.theme-dark .pill-btn:hover {
-        background: rgba(2, 6, 23, 0.62);
-      }
-
-      html.theme-dark .pill-btn[aria-pressed="true"] {
-        color: rgba(226, 232, 240, 0.92);
-        border-color: rgba(124, 58, 237, 0.32);
-        background: linear-gradient(135deg, rgba(124, 58, 237, 0.20), rgba(37, 99, 235, 0.14));
-      }
-
-      html.theme-dark .answer.x {
-        border-color: rgba(124, 58, 237, 0.30);
-        background: rgba(30, 41, 59, 0.62);
-      }
-
-      html.theme-dark .answer.c {
-        border-color: rgba(37, 99, 235, 0.30);
-        background: rgba(30, 41, 59, 0.62);
-      }
-
-      html.theme-dark .answer.system {
-        border-color: rgba(226, 232, 240, 0.18);
-        background: rgba(15, 23, 42, 0.60);
-      }
-
       * {
         box-sizing: border-box;
       }
@@ -521,8 +427,18 @@
       }
 
       .pill-btn[aria-pressed="true"] .dot.glitch {
-        background: rgba(2, 6, 23, 0.82);
+        background: linear-gradient(135deg, rgba(124, 58, 237, 0.92), rgba(37, 99, 235, 0.92));
         box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.14);
+      }
+
+      html.glitch-mode .dot.glitch {
+        animation: glitch-dot-flicker 900ms steps(2, end) infinite;
+      }
+
+      @keyframes glitch-dot-flicker {
+        0% { filter: none; transform: translateY(0); }
+        50% { filter: blur(0.3px) contrast(1.2); transform: translateY(-0.5px); }
+        100% { filter: none; transform: translateY(0); }
       }
 
 	      .pill-btn[aria-pressed="true"] .dot.tools {
@@ -2296,6 +2212,91 @@
         .entry-screen {
           transition: none !important;
         }
+        html.glitch-mode .app-root,
+        html.glitch-mode .composer-inner,
+        html.glitch-mode .dot.glitch,
+        .rt-banner {
+          animation: none !important;
+        }
+      }
+
+      /* Runtime Glitch Mode (presentation-only disturbance layer) */
+      html.glitch-mode:not(.native-wrapper) .app-root {
+        animation: glitch-jitter 860ms steps(2, end) infinite;
+      }
+
+      html.glitch-bump .app-root {
+        transform: translate3d(0.9px, -0.6px, 0);
+      }
+
+      html.glitch-mode .composer-inner {
+        animation: glitch-flicker 1400ms steps(3, end) infinite;
+      }
+
+      html.glitch-mode .answer pre {
+        position: relative;
+      }
+
+      .rt-interrupt {
+        display: inline;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: 0.02em;
+        font-weight: 650;
+      }
+
+      .rt-interrupt .rt-label {
+        opacity: 0.9;
+      }
+
+      .rt-interrupt .rt-utc {
+        opacity: 0.95;
+      }
+
+      .rt-banner {
+        font-family: var(--sf-font);
+        font-size: 11px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: rgba(2, 6, 23, 0.62);
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(15, 23, 42, 0.10);
+        background: rgba(255, 255, 255, 0.72);
+        width: fit-content;
+        margin: 8px 0 10px;
+        animation: glitch-banner 420ms steps(2, end) infinite;
+      }
+
+      .rt-shards {
+        font-family: var(--sf-font);
+        font-size: 12px;
+        line-height: 1.35;
+        color: rgba(2, 6, 23, 0.74);
+        border-left: 2px solid rgba(15, 23, 42, 0.16);
+        padding-left: 10px;
+        margin: 10px 0 8px;
+        white-space: pre-wrap;
+      }
+
+      @keyframes glitch-jitter {
+        0% { transform: translate3d(0,0,0); }
+        30% { transform: translate3d(0.35px,-0.25px,0); }
+        60% { transform: translate3d(-0.35px,0.25px,0); }
+        100% { transform: translate3d(0,0,0); }
+      }
+
+      @keyframes glitch-flicker {
+        0% { opacity: 1; }
+        40% { opacity: 0.985; }
+        41% { opacity: 0.94; }
+        45% { opacity: 1; }
+        100% { opacity: 1; }
+      }
+
+      @keyframes glitch-banner {
+        0% { filter: none; transform: translateY(0); }
+        50% { filter: blur(0.4px) contrast(1.1); transform: translateY(-0.5px); }
+        100% { filter: none; transform: translateY(0); }
       }
     </style>
     <script>
@@ -2306,8 +2307,9 @@
           }
         } catch {}
         try {
-          const theme = String(localStorage.getItem("agentcThemeV1") || "").trim().toLowerCase();
-          if (theme === "dark") document.documentElement.classList.add("theme-dark");
+          const accepted = String(localStorage.getItem("agentcEntryAcceptedV1") || "") === "1";
+          const enabled = String(localStorage.getItem("agentcGlitchModeV1") || "").trim() === "true";
+          if (accepted && enabled) document.documentElement.classList.add("glitch-mode");
         } catch {}
       })();
     </script>
@@ -2374,7 +2376,7 @@
 	            <span class="dot memory" aria-hidden="true"></span>
 	            <span>Memory</span>
 	          </button>
-	          <button class="pill pill-btn" id="glitchBtn" type="button" aria-pressed="false" title="Glitch (dark mode)">
+	          <button class="pill pill-btn" id="glitchBtn" type="button" aria-pressed="false" title="Glitch Mode (runtime disturbance layer)">
 	            <span class="dot glitch" aria-hidden="true"></span>
 	            <span>Glitch</span>
 	          </button>
@@ -2396,6 +2398,7 @@
 		          >
 		            <span class="dot coins" aria-hidden="true"></span>
 		            <span id="coinsLabel">C-oins</span>
+                <span id="coinsAccount" style="margin-left:6px; font-size:11px; color:rgba(100,116,139,0.92)"></span>
 		          </button>
 	          <button class="pill pill-btn" id="downloadBtn" type="button" title="Download paper">
 	            <span class="dot download" aria-hidden="true"></span>
@@ -2995,6 +2998,10 @@
         <div class="settings-effective" aria-label="Effective configuration summary">
           <div class="settings-effective-title">Effective configuration</div>
           <div class="settings-effective-grid">
+            <div class="k">Account</div>
+            <div class="v"><code id="effectiveAccountCode"></code></div>
+            <div class="k">Balance</div>
+            <div class="v"><code id="effectiveBalanceCode"></code></div>
             <div class="k">Endpoint</div>
             <div class="v"><code id="effectiveEndpointCode"></code></div>
             <div class="k">System model</div>
@@ -3170,7 +3177,7 @@
 	          firstRunNoticeDismissed: "debateFirstRunNoticeDismissedV1",
             entryAccepted: "agentcEntryAcceptedV1",
             workspaceLabel: "agentcWorkspaceLabelV1",
-            theme: "agentcThemeV1"
+            runtimeGlitch: "agentcGlitchModeV1"
 	        };
         const IS_HTTP_ORIGIN = ["http:", "https:"].includes(window.location.protocol);
         const IS_LOOPBACK_HOST = ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
@@ -3518,7 +3525,7 @@
 
 	        const el = (id) => document.getElementById(id);
 
-        function createBus() {
+	        function createBus() {
           const listeners = new Map();
           const on = (event, handler) => {
             const key = String(event || "").trim();
@@ -3547,6 +3554,403 @@
         }
 
         const bus = createBus();
+
+        // Runtime Glitch Mode: presentation-only, event-driven disturbance layer.
+        const runtimeGlitch = (() => {
+          const timersById = new Map(); // id -> Set(timeoutId)
+          const decisions = new Map(); // id -> { on, severity, prob, seed }
+          let bumpTimer = 0;
+
+          const randSeed32 = () => {
+            try {
+              const a = new Uint32Array(1);
+              (window.crypto || window.msCrypto).getRandomValues(a);
+              return a[0] >>> 0;
+            } catch {
+              return (Math.random() * 0xffffffff) >>> 0;
+            }
+          };
+
+          const mulberry32 = (a) => () => {
+            let t = (a += 0x6d2b79f5);
+            t = Math.imul(t ^ (t >>> 15), t | 1);
+            t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+            return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+          };
+
+          const choose = (r, arr) => arr[Math.max(0, Math.min(arr.length - 1, Math.floor(r() * arr.length)))];
+
+          const combining = [
+            "\u0300",
+            "\u0301",
+            "\u0302",
+            "\u0303",
+            "\u0304",
+            "\u0307",
+            "\u0308",
+            "\u030A",
+            "\u0311",
+            "\u0313",
+            "\u0314",
+            "\u0315",
+            "\u031B",
+            "\u0334",
+            "\u0335",
+            "\u0336",
+            "\u034F",
+            "\u035C",
+            "\u035D",
+            "\u035E",
+            "\u0360",
+            "\u0361"
+          ];
+
+          const zalgo = (text, r, severity) => {
+            const s = String(text || "");
+            const density = Math.max(0.06, Math.min(0.28, 0.04 + (severity / 10) * 0.22));
+            let out = "";
+            for (const ch of s) {
+              out += ch;
+              if (/\s/.test(ch)) continue;
+              if (r() > density) continue;
+              const marks = 1 + Math.floor(r() * (severity >= 7 ? 4 : 2));
+              for (let i = 0; i < marks; i++) out += choose(r, combining);
+            }
+            return out;
+          };
+
+          const clearTimers = (id) => {
+            const set = timersById.get(id);
+            if (!set) return;
+            for (const t of set) {
+              try {
+                window.clearTimeout(t);
+              } catch {
+                // ignore
+              }
+            }
+            timersById.delete(id);
+          };
+
+          const trackTimeout = (id, t) => {
+            const set = timersById.get(id) || new Set();
+            set.add(t);
+            timersById.set(id, set);
+          };
+
+          const clearAll = () => {
+            for (const id of Array.from(timersById.keys())) clearTimers(id);
+            decisions.clear();
+            if (bumpTimer) {
+              try {
+                window.clearInterval(bumpTimer);
+              } catch {
+                // ignore
+              }
+              bumpTimer = 0;
+            }
+          };
+
+          const messageId = (pre) => {
+            const round = String(pre?.dataset?.round || "");
+            const agent = String(pre?.dataset?.agent || "");
+            return `${round}:${agent}`;
+          };
+
+          const approximateWordBoundary = (text, idx) => {
+            const s = String(text || "");
+            const i = Math.max(0, Math.min(s.length, Number(idx) || 0));
+            const radius = 12;
+            let best = i;
+            let bestScore = Infinity;
+            for (let j = Math.max(0, i - radius); j <= Math.min(s.length, i + radius); j++) {
+              if (!/\s/.test(s[j] || "")) continue;
+              const score = Math.abs(j - i);
+              if (score < bestScore) {
+                best = j;
+                bestScore = score;
+              }
+            }
+            return best;
+          };
+
+          const insertNodeAtTextOffset = (root, offset, node) => {
+            try {
+              const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+              let remaining = Math.max(0, Number(offset) || 0);
+              let current = walker.nextNode();
+              while (current) {
+                const len = current.nodeValue ? current.nodeValue.length : 0;
+                if (remaining <= len) {
+                  const range = document.createRange();
+                  range.setStart(current, remaining);
+                  range.collapse(true);
+                  range.insertNode(node);
+                  return true;
+                }
+                remaining -= len;
+                current = walker.nextNode();
+              }
+              root.appendChild(node);
+              return true;
+            } catch {
+              return false;
+            }
+          };
+
+          const makeTimeInterruptNode = ({ utc, severity, seed }) => {
+            const r = mulberry32(seed >>> 0);
+            const wrap = document.createElement("span");
+            wrap.className = "rt-interrupt";
+            wrap.dataset.cleanUtc = String(utc || "");
+            const label = document.createElement("span");
+            label.className = "rt-label";
+            const blocks = choose(r, ["", " ░", " ▒", " █", " ░▒█"]);
+            label.textContent = zalgo(`⟦TIME INTERRUPT⟧${blocks}`, r, severity);
+            const ts = document.createElement("span");
+            ts.className = "rt-utc";
+            ts.textContent = ` ${String(utc || "").trim()} `;
+            wrap.appendChild(label);
+            wrap.appendChild(ts);
+            return wrap;
+          };
+
+          const makeMetaInterruptNode = ({ labelText, valueText, severity, seed }) => {
+            const r = mulberry32(seed >>> 0);
+            const wrap = document.createElement("span");
+            wrap.className = "rt-interrupt";
+            const label = document.createElement("span");
+            label.className = "rt-label";
+            const blocks = choose(r, ["", " ░", " ▒", " █", " ░▒█"]);
+            label.textContent = zalgo(`⟦${String(labelText || "META").toUpperCase()}⟧${blocks}`, r, severity);
+            const val = document.createElement("span");
+            val.className = "rt-utc";
+            val.textContent = ` ${String(valueText || "").trim()} `;
+            wrap.appendChild(label);
+            wrap.appendChild(val);
+            return wrap;
+          };
+
+          const scheduleMetaIntrusion = ({ pre, labelText, valueText, severity, seed, delayMs }) => {
+            const text = String(pre?.textContent || "");
+            if (!text) return;
+            const id = messageId(pre);
+            const r = mulberry32(seed >>> 0);
+            const offset0 = Math.floor(r() * Math.max(1, text.length));
+            const offset = approximateWordBoundary(text, offset0);
+            const t = window.setTimeout(() => {
+              try {
+                const node = makeMetaInterruptNode({ labelText, valueText, severity, seed: seed ^ 0x7f4a7c15 });
+                insertNodeAtTextOffset(pre, offset, node);
+              } catch {
+                // ignore
+              }
+            }, Math.max(0, Number(delayMs) || 0));
+            trackTimeout(id, t);
+          };
+
+          const maybeBanner = (answerEl, severity, seed, id) => {
+            if (!answerEl) return;
+            const r = mulberry32(seed >>> 0);
+            if (r() > 0.55) return;
+            const banner = document.createElement("div");
+            banner.className = "rt-banner";
+            banner.textContent = zalgo("███ SIGNAL DESYNC ███", r, severity);
+            try {
+              const pre = answerEl.querySelector("pre");
+              if (pre && pre.parentElement) {
+                pre.parentElement.insertBefore(banner, pre);
+              } else {
+                answerEl.insertBefore(banner, answerEl.firstChild);
+              }
+            } catch {
+              // ignore
+            }
+            const removeAfter = 480 + Math.floor(r() * 1200);
+            const t = window.setTimeout(() => {
+              try {
+                banner.remove();
+              } catch {
+                // ignore
+              }
+            }, removeAfter);
+            trackTimeout(id, t);
+          };
+
+          const scheduleShardBlock = ({ pre, utc, subject, contextLabel, aesLabel, severity, seed, delayMs }) => {
+            const r = mulberry32(seed >>> 0);
+            if (r() > 0.55) return;
+            const id = messageId(pre);
+            const t = window.setTimeout(() => {
+              const shards = document.createElement("div");
+              shards.className = "rt-shards";
+              const lines = [
+                `[Shard 1/3] Time: ${String(utc || "").trim()}`,
+                `[Shard 2/3] Subject: ${String(subject || "").trim()}`,
+                `[Shard 3/3] Context: ${String(contextLabel || "").trim()}${aesLabel ? ` • ${aesLabel}` : ""}`
+              ];
+              shards.textContent = zalgo(lines.join("\n"), r, Math.max(3, Math.floor(severity * 0.8)));
+              try {
+                const answerEl = pre?.closest?.(".answer");
+                if (!answerEl) return;
+                answerEl.insertBefore(shards, pre);
+              } catch {
+                // ignore
+              }
+              const life = 650 + Math.floor(r() * 1500);
+              const t2 = window.setTimeout(() => {
+                try {
+                  shards.remove();
+                } catch {
+                  // ignore
+                }
+              }, life);
+              trackTimeout(id, t2);
+            }, Math.max(0, Number(delayMs) || 0));
+            trackTimeout(id, t);
+          };
+
+          const scheduleTimeIntrusions = ({ pre, utc, severity, seed }) => {
+            const text = String(pre?.textContent || "");
+            if (!text) return;
+            const baseR = mulberry32(seed >>> 0);
+            const count = 1 + Math.floor(baseR() * 3); // 1..3 (time triggers first)
+
+            const id = messageId(pre);
+            clearTimers(id);
+
+            for (let i = 0; i < count; i++) {
+              const delay = i === 0 ? 50 + Math.floor(baseR() * 160) : 50 + Math.floor(baseR() * 750);
+              const offset0 = Math.floor(baseR() * Math.max(1, text.length));
+              const offset = approximateWordBoundary(text, offset0);
+              const t = window.setTimeout(() => {
+                try {
+                  const node = makeTimeInterruptNode({ utc, severity, seed: (seed ^ ((i + 1) * 2654435761)) >>> 0 });
+                  insertNodeAtTextOffset(pre, offset, node);
+                } catch {
+                  // ignore
+                }
+              }, delay);
+              trackTimeout(id, t);
+            }
+          };
+
+          const shouldGlitchMessage = (id, seed) => {
+            if (decisions.has(id)) return decisions.get(id);
+            const r = mulberry32(seed >>> 0);
+            const prob = 0.2 + r() * 0.2;
+            const severity = 1 + Math.floor(r() * 10);
+            const on = r() < prob;
+            const d = { on, severity, prob, seed };
+            decisions.set(id, d);
+            return d;
+          };
+
+          const sync = () => {
+            const enabled = Boolean(state.runtimeGlitchEnabled);
+            document.documentElement.classList.toggle("glitch-mode", enabled);
+            if (!enabled) {
+              clearAll();
+              return;
+            }
+
+            if (!state.runtimeGlitchSessionSeed) state.runtimeGlitchSessionSeed = randSeed32();
+            const seedBase = state.runtimeGlitchSessionSeed >>> 0;
+
+            // Micro-stutters: occasional single-frame bumps (presentation-only).
+            if (!bumpTimer) {
+              bumpTimer = window.setInterval(() => {
+                try {
+                  if (PREFERS_REDUCED_MOTION) return;
+                  if (!state.runtimeGlitchEnabled) return;
+                  if (Math.random() > 0.25) return;
+                  document.documentElement.classList.add("glitch-bump");
+                  window.setTimeout(() => document.documentElement.classList.remove("glitch-bump"), 70);
+                } catch {
+                  // ignore
+                }
+              }, 900);
+            }
+
+            const container = el("conversation");
+            if (!container) return;
+
+            container.querySelectorAll(".answer pre").forEach((pre) => {
+              if (!pre) return;
+              const id = messageId(pre);
+              if (pre.dataset.rtApplied === "1") return;
+              const round = clampInt(pre.dataset.round, 0, 99999);
+              const agent = String(pre.dataset.agent || "");
+              const utc = String(pre.dataset.utc || "").trim();
+              const subject = String(pre.dataset.subject || "").trim() || subjectFromTopic(pre.dataset.topic || "");
+              const context = String(pre.dataset.context || "").trim() || "Local";
+              const aes = String(pre.dataset.aes || "").trim() === "1";
+
+              const seed =
+                (seedBase ^
+                  ((round + 1) * 2654435761) ^
+                  (agent === "x" ? 0x78 : agent === "c" ? 0x63 : 0x73)) >>>
+                0;
+              const d = shouldGlitchMessage(id, seed);
+              if (!d.on) return;
+
+              const answerEl = pre.closest(".answer");
+              pre.dataset.rtApplied = "1";
+              maybeBanner(answerEl, d.severity, seed ^ 0xa3b1c2d3, id);
+
+              // Temporal first (time intrusions), then structural/metadata.
+              scheduleTimeIntrusions({ pre, utc, severity: d.severity, seed: seed ^ 0x51ed270b });
+              const aesLabel = context.toLowerCase().includes("online") ? `AES-256: ${aes ? "ARMED" : "OFF"}` : "";
+              // Subject second (lightweight interrupt)
+              scheduleMetaIntrusion({
+                pre,
+                labelText: "Subject",
+                valueText: subject,
+                severity: Math.max(2, Math.floor(d.severity * 0.85)),
+                seed: seed ^ 0x0ddba11a,
+                delayMs: 220 + Math.floor(mulberry32(seed ^ 0x2222222)() * 760)
+              });
+              scheduleShardBlock({
+                pre,
+                utc,
+                subject,
+                contextLabel: context,
+                aesLabel,
+                severity: d.severity,
+                seed: seed ^ 0x9e3779b9,
+                delayMs: 180 + Math.floor(mulberry32(seed ^ 0x1234567)() * 640)
+              });
+              // Context last
+              scheduleMetaIntrusion({
+                pre,
+                labelText: "Context",
+                valueText: context.toLowerCase().includes("online") ? `${context} • ${aesLabel || "AES-256: OFF"}` : context,
+                severity: Math.max(2, Math.floor(d.severity * 0.75)),
+                seed: seed ^ 0xc0ffee01,
+                delayMs: 420 + Math.floor(mulberry32(seed ^ 0x7777777)() * 880)
+              });
+            });
+          };
+
+          const setEnabled = (next) => {
+            const on = Boolean(next);
+            state.runtimeGlitchEnabled = on;
+            try {
+              localStorage.setItem(STORAGE.runtimeGlitch, on ? "true" : "false");
+            } catch {
+              // ignore
+            }
+            if (on) {
+              state.runtimeGlitchSessionSeed = randSeed32();
+              decisions.clear();
+            } else {
+              clearAll();
+              state.runtimeGlitchSessionSeed = 0;
+            }
+          };
+
+          return { sync, setEnabled, clearAll };
+        })();
 
         const FORCE_DIALOG_FALLBACK = true;
 
@@ -3876,6 +4280,7 @@
 	          coins: null,
 	          coinsLoading: false,
 	          coinsUserId: "",
+            coinsError: "",
 	          error: null,
 	          lastRenderedCount: 0,
             conversationRenderKey: "",
@@ -3885,7 +4290,9 @@
 	          unseenRounds: 0,
 	          initialScrollDone: false,
 	          forceScrollToBottomOnce: false,
-	          suppressAutoScrollOnce: false
+	          suppressAutoScrollOnce: false,
+            runtimeGlitchEnabled: localStorage.getItem(STORAGE.runtimeGlitch) === "true",
+            runtimeGlitchSessionSeed: 0
 	        };
 
         function displayEndpoint() {
@@ -4734,7 +5141,7 @@
 	          return url.toString();
 	        }
 
-	        async function refreshCoinsBalance({ quiet = false } = {}) {
+        async function refreshCoinsBalance({ quiet = false } = {}) {
 	          const snap = getMagicAuthSnapshot();
 	          const signedIn = Boolean(snap && snap.signedIn);
 	          const userId = signedIn ? magicUserIdFromJwt(snap.jwt) : "";
@@ -4743,6 +5150,7 @@
 	            state.coins = null;
 	            state.coinsLoading = false;
 	            state.coinsUserId = "";
+              state.coinsError = "";
 	            if (!quiet) render();
 	            return;
 	          }
@@ -4750,6 +5158,7 @@
 	          if (state.coinsLoading && state.coinsUserId === userId) return;
 	          state.coinsLoading = true;
 	          state.coinsUserId = userId;
+            state.coinsError = "";
 	          if (!quiet) render();
 	          try {
 	            const jwt = String(snap?.jwt || "").trim();
@@ -4769,7 +5178,8 @@
 	            const n = parseInt(String(json?.tokens ?? ""), 10);
 	            state.coins = Number.isFinite(n) ? Math.max(0, n) : 0;
 	          } catch {
-	            state.coins = 0;
+	            state.coins = null;
+              state.coinsError = "Balance unavailable.";
 	          } finally {
 	            state.coinsLoading = false;
 	            if (!quiet) render();
@@ -4788,7 +5198,7 @@
 	          const snap = getMagicAuthSnapshot();
 	          if (!snap?.signedIn) {
 	            setNotice("Sign in via Auth + Wallet (Magic Link) to buy AgentC-oins.");
-	            openMagicAuthPanel();
+	            openTheAgentFamily();
 	            render();
 	            return;
 	          }
@@ -4879,13 +5289,6 @@
 		        }
 
 	        function openMagicAuthPanel() {
-            const THE_AGENT_FAMILY_URL = "https://theagentfamily.com/";
-            try {
-              const w = window.open(THE_AGENT_FAMILY_URL, "_blank", "noopener,noreferrer");
-              if (w) return true;
-            } catch {
-              // ignore
-            }
 	          try {
 	            if (window.MKMagicAuth?.openPanel) {
 	              window.MKMagicAuth.openPanel();
@@ -4910,6 +5313,22 @@
 	            return false;
 	          }
 	        }
+
+          function openTheAgentFamily() {
+            const url = "https://theagentfamily.com/";
+            try {
+              const w = window.open(url, "_blank", "noopener,noreferrer");
+              if (w) return true;
+            } catch {
+              // ignore
+            }
+            try {
+              window.location.href = url;
+              return true;
+            } catch {
+              return false;
+            }
+          }
 
 		        function magicAuthContextForLLM(prompt) {
 		          const snap = getMagicAuthSnapshot();
@@ -4948,6 +5367,20 @@
           } catch {
             return "";
           }
+        }
+
+        function subjectFromTopic(topic) {
+          const raw = String(topic || "")
+            .replace(/\s+/g, " ")
+            .trim();
+          if (!raw) return "Untitled";
+          const words = raw
+            .replace(/[^\p{L}\p{N}\s-]/gu, "")
+            .split(/\s+/)
+            .filter(Boolean)
+            .slice(0, 10);
+          if (words.length >= 3) return words.slice(0, 10).join(" ");
+          return raw.split(/\s+/).slice(0, 10).join(" ");
         }
 
         async function loadEmojiPalette() {
@@ -6262,9 +6695,9 @@ Style rules:
 	          }
 
 	          // Auth + coins header (rendered even when there are no rounds yet).
-	          (() => {
-	            const snap = getMagicAuthSnapshot();
-	            const signedIn = Boolean(snap && snap.signedIn);
+          (() => {
+            const snap = getMagicAuthSnapshot();
+            const signedIn = Boolean(snap && snap.signedIn);
 
 	            const onlineBtn = el("onlineBtn");
 	            const onlineLabel = el("onlineLabel");
@@ -6285,29 +6718,40 @@ Style rules:
 
             const glitchBtn = el("glitchBtn");
             if (glitchBtn) {
-              const on = document.documentElement.classList.contains("theme-dark");
+              const on = Boolean(state.runtimeGlitchEnabled);
               glitchBtn.disabled = Boolean(state.loading);
               glitchBtn.setAttribute("aria-pressed", on ? "true" : "false");
-              glitchBtn.title = on ? "Glitch (dark mode on)" : "Glitch (dark mode off)";
+              glitchBtn.title = on ? "Glitch Mode (runtime disturbance layer) — ON" : "Glitch Mode (runtime disturbance layer) — OFF";
             }
 
 	            const coinsBtn = el("coinsBtn");
 	            const coinsLabel = el("coinsLabel");
+            const coinsAccount = el("coinsAccount");
 	            if (coinsBtn && coinsLabel) {
 	              if (!signedIn) {
 	                coinsBtn.disabled = Boolean(state.loading);
 	                coinsBtn.setAttribute("aria-pressed", "false");
-	                coinsBtn.title = "Sign in to buy AgentC-oins";
+	                coinsBtn.title = "Sign in to view your account + balance";
 	                coinsLabel.textContent = "C-oins";
+                  if (coinsAccount) coinsAccount.textContent = "";
 	                state.coins = null;
 	                state.coinsLoading = false;
 	                state.coinsUserId = "";
+                  state.coinsError = "";
 	              } else {
 	                coinsBtn.disabled = Boolean(state.loading) || Boolean(state.coinsLoading);
 	                const tokens = state.coins == null ? null : Math.max(0, Number(state.coins) || 0);
 	                coinsBtn.setAttribute("aria-pressed", tokens && tokens > 0 ? "true" : "false");
-	                coinsBtn.title = tokens && tokens > 0 ? `AgentC-oins: ${tokens}` : "Buy AgentC-oins (1 C-oin = 1 prompt)";
-	                coinsLabel.textContent = state.coinsLoading ? "C-oins…" : `C-oins ${tokens ?? 0}`;
+                  const addr = String(snap?.embeddedAddress || "").trim();
+                  const short = addr ? `${addr.slice(0, 6)}…${addr.slice(-4)}` : "";
+                  if (coinsAccount) coinsAccount.textContent = short ? `Acct ${short}` : "";
+	                coinsBtn.title = [
+                    addr ? `Account: ${addr}` : "",
+                    state.coinsLoading ? "Balance: loading…" : tokens == null ? "Balance: unavailable" : `Balance: ${tokens} C-oins`
+                  ]
+                    .filter(Boolean)
+                    .join(" • ");
+	                coinsLabel.textContent = state.coinsLoading ? "Balance…" : tokens == null ? "Balance —" : `Balance ${tokens}`;
 	                maybeRefreshCoinsBalance();
 	              }
 	            }
@@ -6327,6 +6771,23 @@ Style rules:
             }
           }
           updateComposerDisabled();
+
+          // Settings summary (account/balance are runtime, not draft).
+          try {
+            const acct = el("effectiveAccountCode");
+            const bal = el("effectiveBalanceCode");
+            if (acct || bal) {
+              const snap = getMagicAuthSnapshot();
+              const addr = String(snap?.embeddedAddress || "").trim();
+              if (acct) acct.textContent = addr ? addr : "Not signed in";
+              const tokens = state.coins == null ? null : Math.max(0, Number(state.coins) || 0);
+              if (bal) {
+                bal.textContent = snap?.signedIn ? (state.coinsLoading ? "Loading…" : tokens == null ? "Unavailable" : `${tokens} C-oins`) : "—";
+              }
+            }
+          } catch {
+            // ignore
+          }
 
           const computeConversationKey = () => {
             const p = state.profile || DEFAULT_PROFILE;
@@ -6464,7 +6925,7 @@ Style rules:
                         <button class="btn tiny secondary" type="button" data-teach-agent="x" data-teach-round="${i}">Teach</button>
                       </div>
 	                  </div>
-	                  <pre>${renderAnswerHTML(round.agentX)}</pre>
+	                  <pre data-agent="x" data-round="${i}" data-utc="${escapeHTML(new Date(round.at).toISOString())}" data-topic="${escapeHTML(String(round.topic || ""))}" data-subject="${escapeHTML(String(round.subject || "").trim() || "")}" data-context="${escapeHTML(String(round.context || "").trim() || "")}" data-aes="${round.sealX ? "1" : "0"}">${renderAnswerHTML(round.agentX)}</pre>
 	                  ${round.sealX ? renderSealDetailsHTML(round.sealX) : ""}
 	                </div>
 	                <div class="answer c">
@@ -6481,7 +6942,7 @@ Style rules:
                         <button class="btn tiny secondary" type="button" data-teach-agent="c" data-teach-round="${i}">Teach</button>
                       </div>
 	                  </div>
-	                  <pre>${renderAnswerHTML(round.agentC)}</pre>
+	                  <pre data-agent="c" data-round="${i}" data-utc="${escapeHTML(new Date(round.at).toISOString())}" data-topic="${escapeHTML(String(round.topic || ""))}" data-subject="${escapeHTML(String(round.subject || "").trim() || "")}" data-context="${escapeHTML(String(round.context || "").trim() || "")}" data-aes="${round.sealC ? "1" : "0"}">${renderAnswerHTML(round.agentC)}</pre>
 	                  ${round.sealC ? renderSealDetailsHTML(round.sealC) : ""}
 	                </div>
 	                <div class="answer system">
@@ -6498,7 +6959,7 @@ Style rules:
                           <button class="btn tiny secondary" type="button" data-teach-agent="system" data-teach-round="${i}">Teach</button>
                         </div>
 		                  </div>
-	                  <pre>${renderAnswerHTML(round.system || "(System reflection will appear here for new rounds.)")}</pre>
+	                  <pre data-agent="system" data-round="${i}" data-utc="${escapeHTML(new Date(round.at).toISOString())}" data-topic="${escapeHTML(String(round.topic || ""))}" data-subject="${escapeHTML(String(round.subject || "").trim() || "")}" data-context="${escapeHTML(String(round.context || "").trim() || "")}" data-aes="${round.sealSystem ? "1" : "0"}">${renderAnswerHTML(round.system || "(System reflection will appear here for new rounds.)")}</pre>
 	                  ${round.sealSystem ? renderSealDetailsHTML(round.sealSystem) : ""}
 	                </div>
 	              </div>
@@ -6705,9 +7166,9 @@ Style rules:
 	          scheduleNext();
 	        }
 
-	        function applyGlitchToConversation() {
-	          const container = el("conversation");
-	          if (!container) return;
+        function applyGlitchToConversation() {
+          const container = el("conversation");
+          if (!container) return;
 	          const intensity = glitchIntensity();
 	          const preferReduced = (() => {
             try {
@@ -6773,6 +7234,13 @@ Style rules:
             setGlitch(roundEl.querySelector(".answer.c pre"), onC, roundIndex, 0x63);
             setGlitch(roundEl.querySelector(".answer.system pre"), onS, roundIndex, 0x73);
           });
+
+          // Always apply runtime glitch layer last (presentation-only).
+          try {
+            runtimeGlitch.sync();
+          } catch {
+            // ignore
+          }
         }
 
         async function refreshHealth() {
@@ -7940,7 +8408,7 @@ Style rules:
 			            }
 			            return;
 			          }
-			          openMagicAuthPanel();
+			          openTheAgentFamily();
 			        }
 
 		        function openDownload() {
@@ -8071,8 +8539,15 @@ Style rules:
 
           try {
 	            const first = await runDebate(topic);
+              const at = Date.now();
+              const utc = new Date(at).toISOString();
+              const ctxMode = effectiveIOMode();
 	            state.rounds.push({
 	              topic: first.topic,
+                subject: subjectFromTopic(first.topic),
+                context: ctxMode === "local" ? "Local" : "Online",
+                utc,
+                ioMode: ctxMode,
 	              model: first.model,
 	              modelX: first.modelX || first.model,
 	              modelC: first.modelC || first.model,
@@ -8081,7 +8556,7 @@ Style rules:
 	              agentX: first.agentX,
 	              agentC: first.agentC,
 	              system: first.system,
-	              at: Date.now()
+	              at
             });
             touchRounds();
             saveHistory();
@@ -8135,8 +8610,15 @@ Style rules:
 
           try {
 	            const next = await runLoop();
+              const at = Date.now();
+              const utc = new Date(at).toISOString();
+              const ctxMode = effectiveIOMode();
 	            state.rounds.push({
 	              topic: next.topic,
+                subject: subjectFromTopic(next.topic),
+                context: ctxMode === "local" ? "Local" : "Online",
+                utc,
+                ioMode: ctxMode,
 	              model: next.model,
 	              modelX: next.modelX || next.model,
 	              modelC: next.modelC || next.model,
@@ -8145,7 +8627,7 @@ Style rules:
 	              agentX: next.agentX,
 	              agentC: next.agentC,
 	              system: next.system,
-	              at: Date.now()
+	              at
             });
             touchRounds();
             saveHistory();
@@ -8200,8 +8682,15 @@ Style rules:
 
           try {
 	            const next = await runRefineLoop();
+              const at = Date.now();
+              const utc = new Date(at).toISOString();
+              const ctxMode = effectiveIOMode();
 	            state.rounds.push({
 	              topic: next.topic,
+                subject: subjectFromTopic(next.topic),
+                context: ctxMode === "local" ? "Local" : "Online",
+                utc,
+                ioMode: ctxMode,
 	              model: next.model,
 	              modelX: next.modelX || next.model,
 	              modelC: next.modelC || next.model,
@@ -8210,7 +8699,7 @@ Style rules:
 	              agentX: next.agentX,
 	              agentC: next.agentC,
 	              system: next.system,
-	              at: Date.now()
+	              at
             });
             touchRounds();
             saveHistory();
@@ -8325,15 +8814,10 @@ Style rules:
 
 		          el("onlineBtn").addEventListener("click", () => toggleAuth());
               el("glitchBtn")?.addEventListener("click", () => {
-                const html = document.documentElement;
-                const on = !html.classList.contains("theme-dark");
-                html.classList.toggle("theme-dark", on);
-                try {
-                  localStorage.setItem(STORAGE.theme, on ? "dark" : "light");
-                } catch {
-                  // ignore
-                }
+                runtimeGlitch.setEnabled(!state.runtimeGlitchEnabled);
+                state.conversationRenderKey = "";
                 render();
+                runtimeGlitch.sync();
               });
 		          el("coinsBtn")?.addEventListener("click", () => openCoinsPurchase());
 		          el("downloadBtn")?.addEventListener("click", openDownload);
