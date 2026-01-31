@@ -1822,6 +1822,8 @@
         display: flex;
         flex-direction: column;
         gap: 12px;
+        overflow: auto;
+        -webkit-overflow-scrolling: touch;
       }
 
       #settingsModal details.settings-section {
@@ -1866,7 +1868,7 @@
       #settingsModal .settings-grid {
         padding: 12px 14px 14px;
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
         gap: 12px;
       }
 
@@ -2041,20 +2043,39 @@
         box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12);
       }
 
-	      .modal-body textarea {
-	        resize: vertical;
-	        width: 100%;
-	        border: 1px solid rgba(15, 23, 42, 0.18);
-	        border-radius: 14px;
-	        padding: 10px 12px;
-	        font-family: var(--sf-font);
-	        font-weight: var(--sf-thin);
-	        font-size: var(--fs-ui);
-	        background: rgba(255, 255, 255, 0.82);
-	        outline: none;
-	        min-height: 96px;
-        max-height: 260px;
+      .modal-body textarea {
+        resize: vertical;
+        width: 100%;
+        border: 1px solid rgba(15, 23, 42, 0.18);
+        border-radius: 14px;
+        padding: 10px 12px;
+        font-family: var(--sf-font);
+        font-weight: var(--sf-thin);
+        font-size: var(--fs-body);
+        line-height: 1.45;
+        background: rgba(255, 255, 255, 0.82);
+        outline: none;
+        min-height: 120px;
+        max-height: min(58vh, 720px);
         box-shadow: none;
+      }
+
+      #settingsModal .modal-body textarea {
+        min-height: 132px;
+      }
+
+      #settingsModal #sessionMemoryInput {
+        min-height: 110px;
+      }
+
+      #settingsModal #customInstructionsInput {
+        min-height: 140px;
+      }
+
+      #settingsModal #tuningSystemInput,
+      #settingsModal #tuningAgentXInput,
+      #settingsModal #tuningAgentCInput {
+        min-height: 150px;
       }
 
       .modal-body textarea:focus {
