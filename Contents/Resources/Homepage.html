@@ -1797,6 +1797,8 @@
         gap: 12px;
         overflow: auto;
         flex: 1 1 auto;
+        min-height: 0; /* critical for scroll inside flex dialog (Safari/iPad) */
+        min-width: 0;
       }
 
       #confirmModal .modal-body {
@@ -1824,6 +1826,7 @@
         gap: 12px;
         overflow: auto;
         -webkit-overflow-scrolling: touch;
+        min-height: 0; /* allow full settings scroll */
       }
 
       #settingsModal details.settings-section {
