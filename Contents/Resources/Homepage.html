@@ -1823,36 +1823,18 @@
       #settingsModal .modal-body.settings-body {
         display: flex;
         flex-direction: column;
-        gap: 12px;
+        gap: 14px;
         overflow: auto;
         -webkit-overflow-scrolling: touch;
         min-height: 0; /* allow full settings scroll */
       }
 
-      #settingsModal .settings-columns {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr);
-        gap: 12px;
-        align-items: start;
-        min-width: 0;
-      }
-
-      #settingsModal .settings-left {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        min-width: 0;
-      }
-
-      #settingsModal .settings-right {
-        min-width: 0;
-      }
-
       #settingsModal details.settings-section {
         border: 1px solid rgba(15, 23, 42, 0.10);
         border-radius: var(--radius-md);
-        background: rgba(255, 255, 255, 0.66);
+        background: rgba(255, 255, 255, 0.70);
         overflow: hidden;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
       }
 
       #settingsModal details.settings-section summary {
@@ -1861,14 +1843,16 @@
         user-select: none;
         display: flex;
         align-items: center;
-        justify-content: space-between;
+        justify-content: flex-start;
         gap: 10px;
-        padding: 12px 14px;
+        padding: 13px 14px;
         color: rgba(2, 6, 23, 0.86);
         font-size: 13px;
         letter-spacing: -0.01em;
         background: rgba(255, 255, 255, 0.72);
         border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+        position: relative;
+        overflow: hidden;
       }
 
       #settingsModal details.settings-section summary::-webkit-details-marker {
@@ -1880,18 +1864,35 @@
         color: rgba(100, 116, 139, 0.9);
         transform: translateY(-1px);
         transition: transform 140ms ease;
-        margin-right: 6px;
       }
 
       #settingsModal details.settings-section[open] summary::before {
         transform: rotate(90deg) translateX(1px);
       }
 
+      /* Subtle “sheen” on hover/focus (quiet luxury) */
+      #settingsModal details.settings-section summary::after {
+        content: "";
+        position: absolute;
+        inset: -1px;
+        background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.55) 48%, transparent 100%);
+        transform: translateX(-120%);
+        opacity: 0;
+        pointer-events: none;
+        transition: transform 680ms ease, opacity 180ms ease;
+      }
+
+      #settingsModal details.settings-section summary:hover::after,
+      #settingsModal details.settings-section summary:focus-visible::after {
+        transform: translateX(120%);
+        opacity: 0.35;
+      }
+
       #settingsModal .settings-grid {
-        padding: 12px 14px 14px;
+        padding: 14px 16px 16px;
         display: grid;
         grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-        gap: 12px;
+        gap: 14px;
       }
 
       #settingsModal .settings-effective {
@@ -1899,8 +1900,26 @@
         border-radius: var(--radius-md);
         background: rgba(255, 255, 255, 0.60);
         padding: 12px 14px;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+        position: relative;
+        overflow: hidden;
       }
 
+      #settingsModal .settings-effective::after {
+        content: "";
+        position: absolute;
+        inset: -1px;
+        background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.50) 52%, transparent 100%);
+        transform: translateX(-120%);
+        opacity: 0;
+        pointer-events: none;
+        transition: transform 720ms ease, opacity 200ms ease;
+      }
+
+      #settingsModal .settings-effective:hover::after {
+        transform: translateX(120%);
+        opacity: 0.22;
+      }
       #settingsModal .settings-effective-title {
         font-size: 12px;
         color: var(--muted);
@@ -2239,37 +2258,32 @@
       }
 
       @media (min-width: 980px) {
-        #settingsModal .settings-columns {
-          grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
-          gap: 14px;
-        }
         #settingsModal .settings-effective {
-          position: sticky;
-          top: 12px;
-          align-self: start;
-          z-index: 1;
-          max-height: min(62vh, 720px);
-          overflow: auto;
-          background: rgba(255, 255, 255, 0.82);
+          background: rgba(255, 255, 255, 0.72);
           backdrop-filter: blur(14px);
           -webkit-backdrop-filter: blur(14px);
         }
       }
 
-      @media (prefers-reduced-motion: reduce) {
-        .btn,
-        .pill-btn,
-        .chip-btn,
-        .entry-screen {
-          transition: none !important;
-        }
-        html.glitch-mode .app-root,
-        html.glitch-mode .composer-inner,
-        html.glitch-mode .dot.glitch,
-        .rt-banner {
-          animation: none !important;
-        }
-      }
+	      @media (prefers-reduced-motion: reduce) {
+	        .btn,
+	        .pill-btn,
+	        .chip-btn,
+	        .entry-screen {
+	          transition: none !important;
+	        }
+	        html.glitch-mode .app-root,
+	        html.glitch-mode .composer-inner,
+	        html.glitch-mode .dot.glitch,
+	        .rt-banner {
+	          animation: none !important;
+	        }
+	        #settingsModal details.settings-section summary::after,
+	        #settingsModal .settings-effective::after {
+	          transition: none !important;
+	          opacity: 0 !important;
+	        }
+	      }
 
 	      /* Runtime Glitch Mode (presentation-only disturbance layer) */
 	      html.glitch-mode {
@@ -2609,25 +2623,23 @@
       </div>
     </dialog>
 
-	    <dialog id="settingsModal">
-	      <div class="modal-head">
-	        <strong>Settings</strong>
-	        <button class="btn" id="closeSettingsBtn" type="button">Close</button>
-	      </div>
-	      <div class="modal-body settings-body">
-	        <div class="settings-columns" aria-label="Settings layout">
-	          <div class="settings-left" aria-label="Settings sections">
-	            <details class="settings-section" open>
-	              <summary>Models &amp; Execution</summary>
-	              <div class="settings-grid">
-	            <div class="field">
-	              <label for="endpointInput">Ollama Endpoint (optional)</label>
-	              <input id="endpointInput" type="text" placeholder="Leave blank for auto • or use http://127.0.0.1:3030" />
-	              <div class="template-row">
-	                <span class="hint">If you entered the wrong IP and see “not found”, reset to auto.</span>
-                <button class="btn tiny secondary" id="resetEndpointBtn" type="button">Reset</button>
-              </div>
-            </div>
+		    <dialog id="settingsModal">
+		      <div class="modal-head">
+		        <strong>Settings</strong>
+		        <button class="btn" id="closeSettingsBtn" type="button">Close</button>
+		      </div>
+		      <div class="modal-body settings-body">
+		        <details class="settings-section" open>
+		          <summary>Models &amp; Execution</summary>
+		          <div class="settings-grid">
+		            <div class="field">
+		              <label for="endpointInput">Ollama Endpoint (optional)</label>
+		              <input id="endpointInput" type="text" placeholder="Leave blank for auto • or use http://127.0.0.1:3030" />
+		              <div class="template-row">
+		                <span class="hint">If you entered the wrong IP and see “not found”, reset to auto.</span>
+	                <button class="btn tiny secondary" id="resetEndpointBtn" type="button">Reset</button>
+	              </div>
+	            </div>
             <div class="field">
               <label for="numCtxInput">Context Window (num_ctx)</label>
               <input id="numCtxInput" type="number" min="512" step="256" placeholder="2048" />
@@ -2714,12 +2726,12 @@
 	              <label>&nbsp;</label>
 	              <button class="btn secondary" id="refreshModelsBtn" type="button">Refresh Models</button>
 	            </div>
-	              </div>
-	            </details>
+	          </div>
+	        </details>
 
-	            <details class="settings-section" open>
-	              <summary>Agents &amp; Voices</summary>
-	              <div class="settings-grid">
+	        <details class="settings-section" open>
+	          <summary>Agents &amp; Voices</summary>
+	          <div class="settings-grid">
 	            <div class="field full">
 	              <label>Language Voices</label>
 	              <div class="hint">Playfully give each speaker a language “voice”.</div>
@@ -2938,12 +2950,12 @@
 	              ></textarea>
 	              <div class="hint"><span id="tuningAgentCCount">0/800</span></div>
 	            </div>
-	              </div>
-	            </details>
+	          </div>
+	        </details>
 
-	            <details class="settings-section" open>
-	              <summary>Modes &amp; Behavior</summary>
-	              <div class="settings-grid">
+	        <details class="settings-section" open>
+	          <summary>Modes &amp; Behavior</summary>
+	          <div class="settings-grid">
 	            <div class="field">
 	              <label for="onlineUrlInput">Online URL</label>
 	              <input id="onlineUrlInput" type="text" placeholder="https://doi.org/10.5281/zenodo.18334441" />
@@ -3003,12 +3015,12 @@
               <textarea id="templateBodyInput" placeholder="Template text…"></textarea>
 	              <div class="hint">Use Templates in the composer to insert.</div>
 	            </div>
-	              </div>
-	            </details>
+	          </div>
+	        </details>
 
-	            <details class="settings-section">
-	              <summary>Privacy &amp; Local Data</summary>
-	              <div class="settings-grid">
+	        <details class="settings-section">
+	          <summary>Privacy &amp; Local Data</summary>
+	          <div class="settings-grid">
 	            <div class="field full">
 	              <label>Teachings (saved corrections)</label>
 	              <pre class="tools-pre" id="teachingsPre"></pre>
@@ -3049,12 +3061,12 @@
               </div>
 	              <div class="hint">Clears history, profile, templates, and teachings from this device.</div>
 	            </div>
-	              </div>
-	            </details>
+	          </div>
+	        </details>
 
-	            <details class="settings-section">
-	              <summary>Network / LAN (Advanced)</summary>
-	              <div class="settings-grid">
+	        <details class="settings-section">
+	          <summary>Network / LAN (Advanced)</summary>
+	          <div class="settings-grid">
 	            <div class="field full" id="lanAccessField">
 	              <label>LAN Party (iPhone Access)</label>
 	              <div class="hint">Turn this on to open the UI on your iPhone on the same Wi‑Fi. Tools stay local‑only.</div>
@@ -3090,51 +3102,47 @@
                 <button class="btn secondary" id="repairAppPrefsBtn" type="button">Repair</button>
               </div>
               <div class="hint" id="appPrefsHint">
-	                Repair sets: serverHost=localhost, serverPort=8000, ollamaUpstream=http://localhost:11434.
-	              </div>
-	            </div>
-	              </div>
-	            </details>
+		                Repair sets: serverHost=localhost, serverPort=8000, ollamaUpstream=http://localhost:11434.
+		              </div>
+		            </div>
 	          </div>
+	        </details>
 
-	          <div class="settings-right" aria-label="Effective configuration summary">
-	            <div class="settings-effective">
-	              <div class="settings-effective-title">Effective configuration</div>
-	              <div class="settings-effective-grid">
-	                <div class="k">Account</div>
-	                <div class="v"><code id="effectiveAccountCode"></code></div>
-	                <div class="k">Balance</div>
-	                <div class="v"><code id="effectiveBalanceCode"></code></div>
-	                <div class="k">Endpoint</div>
-	                <div class="v"><code id="effectiveEndpointCode"></code></div>
-	                <div class="k">System model</div>
-	                <div class="v"><code id="effectiveSystemModelCode"></code></div>
-	                <div class="k">Agent X</div>
-	                <div class="v">
-	                  <code id="effectiveAgentXModelCode"></code>
-	                  <span class="hint" id="effectiveAgentXModelNote"></span>
-	                </div>
-	                <div class="k">Agent C</div>
-	                <div class="v">
-	                  <code id="effectiveAgentCModelCode"></code>
-	                  <span class="hint" id="effectiveAgentCModelNote"></span>
-	                </div>
-	                <div class="k">Mode</div>
-	                <div class="v"><code id="effectiveIOModeCode"></code></div>
-	                <div class="k">Tools</div>
-	                <div class="v"><code id="effectiveToolsCode"></code></div>
-	                <div class="k">Tuning</div>
-	                <div class="v"><code id="effectiveTuningCode"></code></div>
-	              </div>
+	        <div class="settings-effective" aria-label="Effective configuration summary">
+	          <div class="settings-effective-title">Effective configuration</div>
+	          <div class="settings-effective-grid">
+	            <div class="k">Account</div>
+	            <div class="v"><code id="effectiveAccountCode"></code></div>
+	            <div class="k">Balance</div>
+	            <div class="v"><code id="effectiveBalanceCode"></code></div>
+	            <div class="k">Endpoint</div>
+	            <div class="v"><code id="effectiveEndpointCode"></code></div>
+	            <div class="k">System model</div>
+	            <div class="v"><code id="effectiveSystemModelCode"></code></div>
+	            <div class="k">Agent X</div>
+	            <div class="v">
+	              <code id="effectiveAgentXModelCode"></code>
+	              <span class="hint" id="effectiveAgentXModelNote"></span>
 	            </div>
+	            <div class="k">Agent C</div>
+	            <div class="v">
+	              <code id="effectiveAgentCModelCode"></code>
+	              <span class="hint" id="effectiveAgentCModelNote"></span>
+	            </div>
+	            <div class="k">Mode</div>
+	            <div class="v"><code id="effectiveIOModeCode"></code></div>
+	            <div class="k">Tools</div>
+	            <div class="v"><code id="effectiveToolsCode"></code></div>
+	            <div class="k">Tuning</div>
+	            <div class="v"><code id="effectiveTuningCode"></code></div>
 	          </div>
 	        </div>
 	      </div>
 	      <div class="modal-foot">
 	        <button class="btn secondary" id="testBtn" type="button">Test Connection</button>
 	        <button class="btn primary" id="saveBtn" type="button">Save</button>
-      </div>
-    </dialog>
+	      </div>
+	    </dialog>
 
     <dialog id="privacyModal">
       <div class="modal-head">
