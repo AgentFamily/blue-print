@@ -1829,6 +1829,25 @@
         min-height: 0; /* allow full settings scroll */
       }
 
+      #settingsModal .settings-columns {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 12px;
+        align-items: start;
+        min-width: 0;
+      }
+
+      #settingsModal .settings-left {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        min-width: 0;
+      }
+
+      #settingsModal .settings-right {
+        min-width: 0;
+      }
+
       #settingsModal details.settings-section {
         border: 1px solid rgba(15, 23, 42, 0.10);
         border-radius: var(--radius-md);
@@ -2220,9 +2239,17 @@
       }
 
       @media (min-width: 980px) {
+        #settingsModal .settings-columns {
+          grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+          gap: 14px;
+        }
         #settingsModal .settings-effective {
           position: sticky;
-          bottom: 14px;
+          top: 12px;
+          align-self: start;
+          z-index: 1;
+          max-height: min(62vh, 720px);
+          overflow: auto;
           background: rgba(255, 255, 255, 0.82);
           backdrop-filter: blur(14px);
           -webkit-backdrop-filter: blur(14px);
@@ -2582,20 +2609,22 @@
       </div>
     </dialog>
 
-    <dialog id="settingsModal">
-      <div class="modal-head">
-        <strong>Settings</strong>
-        <button class="btn" id="closeSettingsBtn" type="button">Close</button>
-      </div>
-      <div class="modal-body settings-body">
-        <details class="settings-section" open>
-          <summary>Models &amp; Execution</summary>
-          <div class="settings-grid">
-            <div class="field">
-              <label for="endpointInput">Ollama Endpoint (optional)</label>
-              <input id="endpointInput" type="text" placeholder="Leave blank for auto • or use http://127.0.0.1:3030" />
-              <div class="template-row">
-                <span class="hint">If you entered the wrong IP and see “not found”, reset to auto.</span>
+	    <dialog id="settingsModal">
+	      <div class="modal-head">
+	        <strong>Settings</strong>
+	        <button class="btn" id="closeSettingsBtn" type="button">Close</button>
+	      </div>
+	      <div class="modal-body settings-body">
+	        <div class="settings-columns" aria-label="Settings layout">
+	          <div class="settings-left" aria-label="Settings sections">
+	            <details class="settings-section" open>
+	              <summary>Models &amp; Execution</summary>
+	              <div class="settings-grid">
+	            <div class="field">
+	              <label for="endpointInput">Ollama Endpoint (optional)</label>
+	              <input id="endpointInput" type="text" placeholder="Leave blank for auto • or use http://127.0.0.1:3030" />
+	              <div class="template-row">
+	                <span class="hint">If you entered the wrong IP and see “not found”, reset to auto.</span>
                 <button class="btn tiny secondary" id="resetEndpointBtn" type="button">Reset</button>
               </div>
             </div>
@@ -2681,20 +2710,20 @@
               </label>
               <div class="hint">If enabled, planned actions run immediately without asking.</div>
             </div>
-            <div class="field">
-              <label>&nbsp;</label>
-              <button class="btn secondary" id="refreshModelsBtn" type="button">Refresh Models</button>
-            </div>
-          </div>
-        </details>
+	            <div class="field">
+	              <label>&nbsp;</label>
+	              <button class="btn secondary" id="refreshModelsBtn" type="button">Refresh Models</button>
+	            </div>
+	              </div>
+	            </details>
 
-        <details class="settings-section" open>
-          <summary>Agents &amp; Voices</summary>
-          <div class="settings-grid">
-            <div class="field full">
-              <label>Language Voices</label>
-              <div class="hint">Playfully give each speaker a language “voice”.</div>
-              <div class="voices">
+	            <details class="settings-section" open>
+	              <summary>Agents &amp; Voices</summary>
+	              <div class="settings-grid">
+	            <div class="field full">
+	              <label>Language Voices</label>
+	              <div class="hint">Playfully give each speaker a language “voice”.</div>
+	              <div class="voices">
                 <div class="voice-card">
                   <img class="voice-avatar" src="agent101_bubble.svg" alt="Agent X" />
                   <div class="voice-meta">
@@ -2909,16 +2938,16 @@
 	              ></textarea>
 	              <div class="hint"><span id="tuningAgentCCount">0/800</span></div>
 	            </div>
-	          </div>
-	        </details>
+	              </div>
+	            </details>
 
-        <details class="settings-section" open>
-          <summary>Modes &amp; Behavior</summary>
-          <div class="settings-grid">
-            <div class="field">
-              <label for="onlineUrlInput">Online URL</label>
-              <input id="onlineUrlInput" type="text" placeholder="https://doi.org/10.5281/zenodo.18334441" />
-            </div>
+	            <details class="settings-section" open>
+	              <summary>Modes &amp; Behavior</summary>
+	              <div class="settings-grid">
+	            <div class="field">
+	              <label for="onlineUrlInput">Online URL</label>
+	              <input id="onlineUrlInput" type="text" placeholder="https://doi.org/10.5281/zenodo.18334441" />
+	            </div>
             <div class="field full">
               <label>Mode</label>
               <div class="hint">LOCAL runs fully on-device. ONLINE is an intent stamp for the next outputs.</div>
@@ -2972,17 +3001,17 @@
               </div>
               <input id="templateNameInput" type="text" placeholder="Template name" />
               <textarea id="templateBodyInput" placeholder="Template text…"></textarea>
-              <div class="hint">Use Templates in the composer to insert.</div>
-            </div>
-          </div>
-        </details>
+	              <div class="hint">Use Templates in the composer to insert.</div>
+	            </div>
+	              </div>
+	            </details>
 
-        <details class="settings-section">
-          <summary>Privacy &amp; Local Data</summary>
-          <div class="settings-grid">
-            <div class="field full">
-              <label>Teachings (saved corrections)</label>
-              <pre class="tools-pre" id="teachingsPre"></pre>
+	            <details class="settings-section">
+	              <summary>Privacy &amp; Local Data</summary>
+	              <div class="settings-grid">
+	            <div class="field full">
+	              <label>Teachings (saved corrections)</label>
+	              <pre class="tools-pre" id="teachingsPre"></pre>
               <div class="template-row">
                 <button class="btn danger" id="clearTeachingsBtn" type="button">Clear Teachings</button>
               </div>
@@ -3018,17 +3047,17 @@
               <div class="template-row">
                 <button class="btn danger" id="clearLocalDataBtn" type="button">Clear Local Data</button>
               </div>
-              <div class="hint">Clears history, profile, templates, and teachings from this device.</div>
-            </div>
-          </div>
-        </details>
+	              <div class="hint">Clears history, profile, templates, and teachings from this device.</div>
+	            </div>
+	              </div>
+	            </details>
 
-        <details class="settings-section">
-          <summary>Network / LAN (Advanced)</summary>
-          <div class="settings-grid">
-            <div class="field full" id="lanAccessField">
-              <label>LAN Party (iPhone Access)</label>
-              <div class="hint">Turn this on to open the UI on your iPhone on the same Wi‑Fi. Tools stay local‑only.</div>
+	            <details class="settings-section">
+	              <summary>Network / LAN (Advanced)</summary>
+	              <div class="settings-grid">
+	            <div class="field full" id="lanAccessField">
+	              <label>LAN Party (iPhone Access)</label>
+	              <div class="hint">Turn this on to open the UI on your iPhone on the same Wi‑Fi. Tools stay local‑only.</div>
               <div class="lan-card" role="group" aria-label="LAN access">
                 <div class="lan-avatars" aria-hidden="true">
                   <img class="voice-avatar" src="agent101_bubble.svg" alt="" />
@@ -3061,45 +3090,49 @@
                 <button class="btn secondary" id="repairAppPrefsBtn" type="button">Repair</button>
               </div>
               <div class="hint" id="appPrefsHint">
-                Repair sets: serverHost=localhost, serverPort=8000, ollamaUpstream=http://localhost:11434.
-              </div>
-            </div>
-          </div>
-        </details>
+	                Repair sets: serverHost=localhost, serverPort=8000, ollamaUpstream=http://localhost:11434.
+	              </div>
+	            </div>
+	              </div>
+	            </details>
+	          </div>
 
-	        <div class="settings-effective" aria-label="Effective configuration summary">
-	          <div class="settings-effective-title">Effective configuration</div>
-	          <div class="settings-effective-grid">
-            <div class="k">Account</div>
-            <div class="v"><code id="effectiveAccountCode"></code></div>
-            <div class="k">Balance</div>
-            <div class="v"><code id="effectiveBalanceCode"></code></div>
-            <div class="k">Endpoint</div>
-            <div class="v"><code id="effectiveEndpointCode"></code></div>
-            <div class="k">System model</div>
-            <div class="v"><code id="effectiveSystemModelCode"></code></div>
-            <div class="k">Agent X</div>
-            <div class="v">
-              <code id="effectiveAgentXModelCode"></code>
-              <span class="hint" id="effectiveAgentXModelNote"></span>
-            </div>
-            <div class="k">Agent C</div>
-            <div class="v">
-              <code id="effectiveAgentCModelCode"></code>
-              <span class="hint" id="effectiveAgentCModelNote"></span>
-            </div>
-            <div class="k">Mode</div>
-            <div class="v"><code id="effectiveIOModeCode"></code></div>
-	            <div class="k">Tools</div>
-	            <div class="v"><code id="effectiveToolsCode"></code></div>
-	            <div class="k">Tuning</div>
-	            <div class="v"><code id="effectiveTuningCode"></code></div>
+	          <div class="settings-right" aria-label="Effective configuration summary">
+	            <div class="settings-effective">
+	              <div class="settings-effective-title">Effective configuration</div>
+	              <div class="settings-effective-grid">
+	                <div class="k">Account</div>
+	                <div class="v"><code id="effectiveAccountCode"></code></div>
+	                <div class="k">Balance</div>
+	                <div class="v"><code id="effectiveBalanceCode"></code></div>
+	                <div class="k">Endpoint</div>
+	                <div class="v"><code id="effectiveEndpointCode"></code></div>
+	                <div class="k">System model</div>
+	                <div class="v"><code id="effectiveSystemModelCode"></code></div>
+	                <div class="k">Agent X</div>
+	                <div class="v">
+	                  <code id="effectiveAgentXModelCode"></code>
+	                  <span class="hint" id="effectiveAgentXModelNote"></span>
+	                </div>
+	                <div class="k">Agent C</div>
+	                <div class="v">
+	                  <code id="effectiveAgentCModelCode"></code>
+	                  <span class="hint" id="effectiveAgentCModelNote"></span>
+	                </div>
+	                <div class="k">Mode</div>
+	                <div class="v"><code id="effectiveIOModeCode"></code></div>
+	                <div class="k">Tools</div>
+	                <div class="v"><code id="effectiveToolsCode"></code></div>
+	                <div class="k">Tuning</div>
+	                <div class="v"><code id="effectiveTuningCode"></code></div>
+	              </div>
+	            </div>
 	          </div>
 	        </div>
-      </div>
-      <div class="modal-foot">
-        <button class="btn secondary" id="testBtn" type="button">Test Connection</button>
-        <button class="btn primary" id="saveBtn" type="button">Save</button>
+	      </div>
+	      <div class="modal-foot">
+	        <button class="btn secondary" id="testBtn" type="button">Test Connection</button>
+	        <button class="btn primary" id="saveBtn" type="button">Save</button>
       </div>
     </dialog>
 
