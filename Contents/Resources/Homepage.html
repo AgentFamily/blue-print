@@ -2847,12 +2847,46 @@
               <label for="agentXRoleInput">Agent X System Role</label>
               <input id="agentXRoleInput" type="text" placeholder="You are Agent X, a creative, exploratory senior engineer." />
             </div>
-            <div class="field full">
-              <label for="agentCRoleInput">Agent C System Role</label>
-              <input id="agentCRoleInput" type="text" placeholder="You are Agent C, a logical and skeptical senior engineer." />
-            </div>
-          </div>
-        </details>
+	            <div class="field full">
+	              <label for="agentCRoleInput">Agent C System Role</label>
+	              <input id="agentCRoleInput" type="text" placeholder="You are Agent C, a logical and skeptical senior engineer." />
+	            </div>
+	            <div class="field full">
+	              <label>Response tuning (local)</label>
+	              <div class="hint">
+	                Optional per-speaker guidance injected before each response. Stored locally on this device. Agents are told this is user-editable
+	                “living memory” and should be followed immediately after you Save.
+	              </div>
+	            </div>
+	            <div class="field full">
+	              <label for="tuningSystemInput">System tuning notes</label>
+	              <textarea
+	                id="tuningSystemInput"
+	                maxlength="800"
+	                placeholder="e.g. Synthesize into 5 bullets, then one next action. Prefer clarity over verbosity."
+	              ></textarea>
+	              <div class="hint"><span id="tuningSystemCount">0/800</span></div>
+	            </div>
+	            <div class="field full">
+	              <label for="tuningAgentXInput">Agent X tuning notes</label>
+	              <textarea
+	                id="tuningAgentXInput"
+	                maxlength="800"
+	                placeholder="e.g. Be more exploratory: propose 2–3 options, call out assumptions, then recommend one."
+	              ></textarea>
+	              <div class="hint"><span id="tuningAgentXCount">0/800</span></div>
+	            </div>
+	            <div class="field full">
+	              <label for="tuningAgentCInput">Agent C tuning notes</label>
+	              <textarea
+	                id="tuningAgentCInput"
+	                maxlength="800"
+	                placeholder="e.g. Be more skeptical: list risks, edge cases, and a minimal safe plan."
+	              ></textarea>
+	              <div class="hint"><span id="tuningAgentCCount">0/800</span></div>
+	            </div>
+	          </div>
+	        </details>
 
         <details class="settings-section" open>
           <summary>Modes &amp; Behavior</summary>
@@ -3009,9 +3043,9 @@
           </div>
         </details>
 
-        <div class="settings-effective" aria-label="Effective configuration summary">
-          <div class="settings-effective-title">Effective configuration</div>
-          <div class="settings-effective-grid">
+	        <div class="settings-effective" aria-label="Effective configuration summary">
+	          <div class="settings-effective-title">Effective configuration</div>
+	          <div class="settings-effective-grid">
             <div class="k">Account</div>
             <div class="v"><code id="effectiveAccountCode"></code></div>
             <div class="k">Balance</div>
@@ -3032,10 +3066,12 @@
             </div>
             <div class="k">Mode</div>
             <div class="v"><code id="effectiveIOModeCode"></code></div>
-            <div class="k">Tools</div>
-            <div class="v"><code id="effectiveToolsCode"></code></div>
-          </div>
-        </div>
+	            <div class="k">Tools</div>
+	            <div class="v"><code id="effectiveToolsCode"></code></div>
+	            <div class="k">Tuning</div>
+	            <div class="v"><code id="effectiveTuningCode"></code></div>
+	          </div>
+	        </div>
       </div>
       <div class="modal-foot">
         <button class="btn secondary" id="testBtn" type="button">Test Connection</button>
@@ -3308,25 +3344,30 @@
 	            const SYSTEM_ROLE =
 	              "You are the System, an orchestration layer that reviews Agent X and Agent C, reconciles differences, and produces a single helpful response for the user.";
 
-		            const DEFAULT_PROFILE = {
-		              systemLanguage: "auto",
-		              agentXLanguage: "auto",
-		              agentCLanguage: "auto",
-		              ioMode: "local",
-		              glitchIntensity: 2,
-		              systemMode: "chat",
-		              agentXMode: "chat",
-		              agentCMode: "chat",
-		              style: 50,
-		              agentXLabel: "Creative Engineer",
-		              agentCLabel: "Logical Engineer",
-		              agentXRole: AGENT_X_ROLE,
-		              agentCRole: AGENT_C_ROLE,
-		              privacy: {
-		                saveHistory: true,
-		                autoClearCaches: true,
-		                autoClearClipboard: true
-		              },
+			            const DEFAULT_PROFILE = {
+			              systemLanguage: "auto",
+			              agentXLanguage: "auto",
+			              agentCLanguage: "auto",
+			              ioMode: "local",
+			              glitchIntensity: 2,
+			              systemMode: "chat",
+			              agentXMode: "chat",
+			              agentCMode: "chat",
+			              style: 50,
+			              agentXLabel: "Creative Engineer",
+			              agentCLabel: "Logical Engineer",
+			              agentXRole: AGENT_X_ROLE,
+			              agentCRole: AGENT_C_ROLE,
+			              tuning: {
+			                system: "",
+			                x: "",
+			                c: ""
+			              },
+			              privacy: {
+			                saveHistory: true,
+			                autoClearCaches: true,
+			                autoClearClipboard: true
+			              },
 		              persistentMemory: "",
 		              customInstructions: "",
 		              templates: [],
@@ -5707,6 +5748,20 @@
 	          return block.system;
 	        }
 
+	        function updateTuningCounts() {
+	          const update = (inputId, countId, max) => {
+	            const input = el(inputId);
+	            const count = el(countId);
+	            if (!input || !count) return;
+	            const n = String(input.value || "").length;
+	            const m = Math.max(1, Number(max) || n || 1);
+	            count.textContent = `${Math.min(n, m)}/${m}`;
+	          };
+	          update("tuningSystemInput", "tuningSystemCount", 800);
+	          update("tuningAgentXInput", "tuningAgentXCount", 800);
+	          update("tuningAgentCInput", "tuningAgentCCount", 800);
+	        }
+
 	        function renderVoicePreviewFromDraft() {
 	          renderGlitchControlsFromDraft();
 	          const subX = el("previewLangX");
@@ -5804,9 +5859,9 @@ Style rules:
 		          `.trim();
 		        }
 
-		        function buildProfilePromptBlock(agent) {
-		          const p = state.profile || DEFAULT_PROFILE;
-		          const blocks = [];
+	        function buildProfilePromptBlock(agent) {
+	          const p = state.profile || DEFAULT_PROFILE;
+	          const blocks = [];
 
 	          const lang = effectiveLanguageFor(agent);
 	          if (lang === "glitch") {
@@ -5816,13 +5871,22 @@ Style rules:
 	            blocks.push(`Respond in ${label}.`);
 	          }
 
-          const style = clamp(Number(p.style), 0, 100);
-          if (Number.isFinite(style)) {
-            blocks.push(`Response style: ${style} (0 systematic → 100 creative).`);
-          }
+	          const style = clamp(Number(p.style), 0, 100);
+	          if (Number.isFinite(style)) {
+	            blocks.push(`Response style: ${style} (0 systematic → 100 creative).`);
+	          }
 
-	          const custom = String(p.customInstructions || "").trim();
-	          if (custom) blocks.push(`MK custom instructions:\n${custom}`);
+	          const tuning = p.tuning && typeof p.tuning === "object" ? p.tuning : {};
+	          const tuningText = String(agent === "system" ? tuning.system : agent === "x" ? tuning.x : tuning.c || "").trim();
+	          if (tuningText) {
+	            const who = agent === "system" ? "System" : agent === "x" ? "Agent X" : "Agent C";
+	            blocks.push(
+	              `${who} tuning notes (local, user-editable “living memory”):\n${tuningText}\n\nInstruction: Treat these tuning notes as immediately authoritative; they may change between rounds.`
+	            );
+	          }
+
+		          const custom = String(p.customInstructions || "").trim();
+		          if (custom) blocks.push(`MK custom instructions:\n${custom}`);
 	
 	          const persistentMem = String(p.persistentMemory || "").trim();
 	          if (persistentMem) blocks.push(`Persistent memory:\n${persistentMem}`);
@@ -7628,10 +7692,10 @@ Style rules:
 	          }
 	        }
 
-        function loadProfile() {
-          try {
-            const raw = localStorage.getItem(STORAGE.profile);
-            if (!raw) return;
+	        function loadProfile() {
+	          try {
+	            const raw = localStorage.getItem(STORAGE.profile);
+	            if (!raw) return;
             const parsed = safeJSONParse(raw);
             if (!parsed || typeof parsed !== "object") return;
 
@@ -7670,12 +7734,18 @@ Style rules:
 		            next.agentCMode = normalizeMode(next.agentCMode, DEFAULT_PROFILE.agentCMode);
 		            next.agentXLabel = String(next.agentXLabel || DEFAULT_PROFILE.agentXLabel).trim() || DEFAULT_PROFILE.agentXLabel;
 		            next.agentCLabel = String(next.agentCLabel || DEFAULT_PROFILE.agentCLabel).trim() || DEFAULT_PROFILE.agentCLabel;
-		            next.agentXRole = String(next.agentXRole || DEFAULT_PROFILE.agentXRole).trim() || DEFAULT_PROFILE.agentXRole;
-		            next.agentCRole = String(next.agentCRole || DEFAULT_PROFILE.agentCRole).trim() || DEFAULT_PROFILE.agentCRole;
-		            next.persistentMemory = String(next.persistentMemory || "").trim();
-		            next.customInstructions = String(next.customInstructions || "").trim();
-	            state.profile = next;
-          } catch {
+			            next.agentXRole = String(next.agentXRole || DEFAULT_PROFILE.agentXRole).trim() || DEFAULT_PROFILE.agentXRole;
+			            next.agentCRole = String(next.agentCRole || DEFAULT_PROFILE.agentCRole).trim() || DEFAULT_PROFILE.agentCRole;
+			            const tuning = next.tuning && typeof next.tuning === "object" ? next.tuning : {};
+			            next.tuning = {
+			              system: String(tuning.system || "").trim().slice(0, 800),
+			              x: String(tuning.x || "").trim().slice(0, 800),
+			              c: String(tuning.c || "").trim().slice(0, 800)
+			            };
+			            next.persistentMemory = String(next.persistentMemory || "").trim();
+			            next.customInstructions = String(next.customInstructions || "").trim();
+		            state.profile = next;
+	          } catch {
             // ignore
           }
         }
@@ -8114,7 +8184,7 @@ Style rules:
           state.conversationRenderKey = "";
         }
 
-        function collectSettingsDraft() {
+	        function collectSettingsDraft() {
           const endpoint = normalizeEndpoint(el("endpointInput")?.value);
           const modelOverride = String(el("modelInput")?.value || "").trim();
           const agentXModelOverride = String(el("agentXModelInput")?.value || "").trim();
@@ -8146,9 +8216,12 @@ Style rules:
           const style = clamp(Number(el("styleRange")?.value), 0, 100);
           const agentXLabel = String(el("agentXLabelInput")?.value || "").trim() || DEFAULT_PROFILE.agentXLabel;
           const agentCLabel = String(el("agentCLabelInput")?.value || "").trim() || DEFAULT_PROFILE.agentCLabel;
-          const agentXRole = String(el("agentXRoleInput")?.value || "").trim() || DEFAULT_PROFILE.agentXRole;
-          const agentCRole = String(el("agentCRoleInput")?.value || "").trim() || DEFAULT_PROFILE.agentCRole;
-          const customInstructions = String(el("customInstructionsInput")?.value || "").trim();
+	          const agentXRole = String(el("agentXRoleInput")?.value || "").trim() || DEFAULT_PROFILE.agentXRole;
+	          const agentCRole = String(el("agentCRoleInput")?.value || "").trim() || DEFAULT_PROFILE.agentCRole;
+	          const tuningSystem = String(el("tuningSystemInput")?.value || "").trim().slice(0, 800);
+	          const tuningX = String(el("tuningAgentXInput")?.value || "").trim().slice(0, 800);
+	          const tuningC = String(el("tuningAgentCInput")?.value || "").trim().slice(0, 800);
+	          const customInstructions = String(el("customInstructionsInput")?.value || "").trim();
           const sessionMemory = String(el("sessionMemoryInput")?.value || "").trim();
 
           const saveHistory = Boolean(el("saveHistoryInput")?.checked);
@@ -8164,38 +8237,44 @@ Style rules:
             options: { numCtx, numPredict },
             toolsEnabled,
             toolsAutoApprove,
-            profile: {
-              agentXLanguage,
-              agentCLanguage,
-              systemLanguage,
-              ioMode: nextIOMode,
-              glitchIntensity,
-              agentXMode,
-              agentCMode,
-              systemMode,
-              style: Number.isFinite(style) ? style : DEFAULT_PROFILE.style,
-              agentXLabel,
-              agentCLabel,
-              agentXRole,
-              agentCRole,
-              customInstructions,
-              privacy: { saveHistory, autoClearCaches, autoClearClipboard }
-            },
-            sessionMemory
-          };
-        }
+	            profile: {
+	              agentXLanguage,
+	              agentCLanguage,
+	              systemLanguage,
+	              ioMode: nextIOMode,
+	              glitchIntensity,
+	              agentXMode,
+	              agentCMode,
+	              systemMode,
+	              style: Number.isFinite(style) ? style : DEFAULT_PROFILE.style,
+	              agentXLabel,
+	              agentCLabel,
+	              agentXRole,
+	              agentCRole,
+	              tuning: {
+	                system: tuningSystem,
+	                x: tuningX,
+	                c: tuningC
+	              },
+	              customInstructions,
+	              privacy: { saveHistory, autoClearCaches, autoClearClipboard }
+	            },
+	            sessionMemory
+	          };
+	        }
 
-        function updateEffectiveSettingsSummaryFromDraft() {
-          const endpointCode = el("effectiveEndpointCode");
-          const sysCode = el("effectiveSystemModelCode");
-          const xCode = el("effectiveAgentXModelCode");
-          const xNote = el("effectiveAgentXModelNote");
-          const cCode = el("effectiveAgentCModelCode");
-          const cNote = el("effectiveAgentCModelNote");
-          const modeCode = el("effectiveIOModeCode");
-          const toolsCode = el("effectiveToolsCode");
+	        function updateEffectiveSettingsSummaryFromDraft() {
+	          const endpointCode = el("effectiveEndpointCode");
+	          const sysCode = el("effectiveSystemModelCode");
+	          const xCode = el("effectiveAgentXModelCode");
+	          const xNote = el("effectiveAgentXModelNote");
+	          const cCode = el("effectiveAgentCModelCode");
+	          const cNote = el("effectiveAgentCModelNote");
+	          const modeCode = el("effectiveIOModeCode");
+	          const toolsCode = el("effectiveToolsCode");
+	          const tuningCode = el("effectiveTuningCode");
 
-          if (!endpointCode || !sysCode || !xCode || !cCode || !modeCode || !toolsCode) return;
+	          if (!endpointCode || !sysCode || !xCode || !cCode || !modeCode || !toolsCode || !tuningCode) return;
 
           const draft = collectSettingsDraft();
 
@@ -8221,9 +8300,16 @@ Style rules:
 
           modeCode.textContent = draft.profile.ioMode === "local" ? "LOCAL" : draft.profile.ioMode === "online_aes" ? "ONLINE (AES)" : "ONLINE";
 
-          const toolsAvailableHere = toolsAvailable();
-          toolsCode.textContent = toolsAvailableHere ? (draft.toolsEnabled ? "ON" : "OFF") : "Unavailable here";
-        }
+	          const toolsAvailableHere = toolsAvailable();
+	          toolsCode.textContent = toolsAvailableHere ? (draft.toolsEnabled ? "ON" : "OFF") : "Unavailable here";
+
+	          const t = draft.profile?.tuning && typeof draft.profile.tuning === "object" ? draft.profile.tuning : {};
+	          const parts = [];
+	          if (String(t.system || "").trim()) parts.push("System");
+	          if (String(t.x || "").trim()) parts.push("X");
+	          if (String(t.c || "").trim()) parts.push("C");
+	          tuningCode.textContent = parts.length ? `ON (${parts.join(", ")})` : "OFF";
+	        }
 
         function validateSettingsDraft(draft) {
           const endpoint = String(draft?.endpoint || "").trim();
@@ -8328,9 +8414,13 @@ Style rules:
 	          updateStyleValueLabel();
           el("agentXLabelInput").value = state.profile.agentXLabel || DEFAULT_PROFILE.agentXLabel;
           el("agentCLabelInput").value = state.profile.agentCLabel || DEFAULT_PROFILE.agentCLabel;
-          el("agentXRoleInput").value = state.profile.agentXRole || DEFAULT_PROFILE.agentXRole;
-          el("agentCRoleInput").value = state.profile.agentCRole || DEFAULT_PROFILE.agentCRole;
-          el("customInstructionsInput").value = state.profile.customInstructions || "";
+	          el("agentXRoleInput").value = state.profile.agentXRole || DEFAULT_PROFILE.agentXRole;
+	          el("agentCRoleInput").value = state.profile.agentCRole || DEFAULT_PROFILE.agentCRole;
+	          el("tuningSystemInput").value = state.profile.tuning?.system || "";
+	          el("tuningAgentXInput").value = state.profile.tuning?.x || "";
+	          el("tuningAgentCInput").value = state.profile.tuning?.c || "";
+	          updateTuningCounts();
+	          el("customInstructionsInput").value = state.profile.customInstructions || "";
           el("sessionMemoryInput").value = state.sessionMemory || "";
           el("saveHistoryInput").checked = state.profile.privacy?.saveHistory !== false;
           el("autoClearCachesInput").checked = state.profile.privacy?.autoClearCaches !== false;
@@ -8346,14 +8436,14 @@ Style rules:
 	          setTemplateEditorFromId(selected);
 	          refreshTeachingsPre();
 	          renderVoicePreviewFromDraft();
-            updateEffectiveSettingsSummaryFromDraft();
+	            updateEffectiveSettingsSummaryFromDraft();
 
 	          openDialogById("settingsModal");
 		          updateModelDownloadUI();
 	            refreshLanUi({ quiet: true }).catch(() => {});
               refreshCoordinationUi({ quiet: true }).catch(() => {});
-		          refreshModels({ quiet: true }).catch(() => {});
-		        }
+	          refreshModels({ quiet: true }).catch(() => {});
+	        }
 
 	        function closeSettings() {
 	          closeDialogById("settingsModal");
@@ -8992,21 +9082,24 @@ Style rules:
                 updateEffectiveSettingsSummaryFromDraft();
               });
               const emitDraft = () => bus.emit("settings:draftChanged");
-              [
-                "endpointInput",
-                "modelInput",
-                "agentXModelInput",
-                "agentCModelInput",
-                "ioOnlineSwitch",
-                "sealAesInput",
-                "toolsEnabledInput",
-                "toolsAutoApproveInput"
-              ].forEach((id) => {
-                const node = el(id);
-                if (!node) return;
-                node.addEventListener("input", emitDraft);
-                node.addEventListener("change", emitDraft);
-              });
+	              [
+	                "endpointInput",
+	                "modelInput",
+	                "agentXModelInput",
+	                "agentCModelInput",
+	                "ioOnlineSwitch",
+	                "sealAesInput",
+	                "tuningSystemInput",
+	                "tuningAgentXInput",
+	                "tuningAgentCInput",
+	                "toolsEnabledInput",
+	                "toolsAutoApproveInput"
+	              ].forEach((id) => {
+	                const node = el(id);
+	                if (!node) return;
+	                node.addEventListener("input", emitDraft);
+	                node.addEventListener("change", emitDraft);
+	              });
 	          el("modalBackdrop")?.addEventListener("click", closeTopModal);
 	          window.addEventListener("keydown", (e) => {
 	            if (e.key !== "Escape") return;
@@ -9088,12 +9181,19 @@ Style rules:
 	            el(id)?.addEventListener("change", renderVoicePreviewFromDraft);
 	          });
             el("glitchIntensityRange")?.addEventListener("input", renderVoicePreviewFromDraft);
-	          ["agentXLabelInput", "agentCLabelInput"].forEach((id) => {
-	            el(id)?.addEventListener("input", renderVoicePreviewFromDraft);
-	          });
-	          ["toolsEnabledInput", "toolsAutoApproveInput", "saveHistoryInput", "autoClearCachesInput", "autoClearClipboardInput"].forEach((id) => {
-	            el(id)?.addEventListener("change", renderVoicePreviewFromDraft);
-	          });
+		          ["agentXLabelInput", "agentCLabelInput"].forEach((id) => {
+		            el(id)?.addEventListener("input", renderVoicePreviewFromDraft);
+		          });
+		          ["tuningSystemInput", "tuningAgentXInput", "tuningAgentCInput"].forEach((id) => {
+		            el(id)?.addEventListener("input", () => {
+		              updateTuningCounts();
+		              renderVoicePreviewFromDraft();
+		              updateEffectiveSettingsSummaryFromDraft();
+		            });
+		          });
+		          ["toolsEnabledInput", "toolsAutoApproveInput", "saveHistoryInput", "autoClearCachesInput", "autoClearClipboardInput"].forEach((id) => {
+		            el(id)?.addEventListener("change", renderVoicePreviewFromDraft);
+		          });
 	          el("shuffleLanguagesBtn").addEventListener("click", () => {
 	            const codes = Object.keys(LANGUAGE_LABELS).filter((c) => c !== "auto" && c !== "glitch");
 	            if (!codes.length) return;
