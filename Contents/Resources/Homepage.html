@@ -2220,10 +2220,24 @@
         }
       }
 
-      /* Runtime Glitch Mode (presentation-only disturbance layer) */
-      html.glitch-mode:not(.native-wrapper) .app-root {
-        animation: glitch-jitter 860ms steps(2, end) infinite;
-      }
+	      /* Runtime Glitch Mode (presentation-only disturbance layer) */
+	      html.glitch-mode {
+	        --sf-font: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+	      }
+
+	      html.glitch-mode body {
+	        font-variant-ligatures: none;
+	        font-variant-numeric: tabular-nums;
+	        text-shadow: 0.6px 0 rgba(2, 6, 23, 0.12), -0.6px 0 rgba(2, 6, 23, 0.06);
+	      }
+
+	      html.glitch-writing .app-root {
+	        cursor: cell;
+	      }
+
+	      html.glitch-mode:not(.native-wrapper) .app-root {
+	        animation: glitch-jitter 860ms steps(2, end) infinite;
+	      }
 
       html.glitch-bump .app-root {
         transform: translate3d(0.9px, -0.6px, 0);
@@ -3553,17 +3567,21 @@
           return { on, emit };
         }
 
-        const bus = createBus();
+	        const bus = createBus();
 
-        // Runtime Glitch Mode: presentation-only, event-driven disturbance layer.
-        const runtimeGlitch = (() => {
-          const timersById = new Map(); // id -> Set(timeoutId)
-          const decisions = new Map(); // id -> { on, severity, prob, seed }
-          let bumpTimer = 0;
+	        // Runtime Glitch Mode: presentation-only, event-driven disturbance layer.
+	        const runtimeGlitch = (() => {
+	          const timersById = new Map(); // id -> Set(timeoutId)
+	          const decisions = new Map(); // id -> { on, severity, prob, seed }
+	          let bumpTimer = 0;
+	          let writeRaf = 0;
+	          let writeToken = 0;
+	          let writeHasRun = false;
+	          let writeItems = [];
 
-          const randSeed32 = () => {
-            try {
-              const a = new Uint32Array(1);
+	          const randSeed32 = () => {
+	            try {
+	              const a = new Uint32Array(1);
               (window.crypto || window.msCrypto).getRandomValues(a);
               return a[0] >>> 0;
             } catch {
@@ -3638,11 +3656,32 @@
             timersById.set(id, set);
           };
 
-          const clearAll = () => {
-            for (const id of Array.from(timersById.keys())) clearTimers(id);
-            decisions.clear();
-            if (bumpTimer) {
-              try {
+	          const clearAll = () => {
+	            try {
+	              if (writeRaf) window.cancelAnimationFrame(writeRaf);
+	            } catch {
+	              // ignore
+	            }
+	            writeRaf = 0;
+	            try {
+	              document.documentElement.classList.remove("glitch-writing");
+	            } catch {
+	              // ignore
+	            }
+	            try {
+	              for (const item of writeItems) {
+	                if (!item || !item.node) continue;
+	                item.node.nodeValue = item.original;
+	              }
+	            } catch {
+	              // ignore
+	            }
+	            writeItems = [];
+
+	            for (const id of Array.from(timersById.keys())) clearTimers(id);
+	            decisions.clear();
+	            if (bumpTimer) {
+	              try {
                 window.clearInterval(bumpTimer);
               } catch {
                 // ignore
@@ -3835,31 +3874,193 @@
             }
           };
 
-          const shouldGlitchMessage = (id, seed) => {
-            if (decisions.has(id)) return decisions.get(id);
-            const r = mulberry32(seed >>> 0);
+	          const shouldGlitchMessage = (id, seed) => {
+	            if (decisions.has(id)) return decisions.get(id);
+	            const r = mulberry32(seed >>> 0);
             const prob = 0.2 + r() * 0.2;
             const severity = 1 + Math.floor(r() * 10);
             const on = r() < prob;
             const d = { on, severity, prob, seed };
             decisions.set(id, d);
             return d;
-          };
+	          };
 
-          const sync = () => {
-            const enabled = Boolean(state.runtimeGlitchEnabled);
-            document.documentElement.classList.toggle("glitch-mode", enabled);
-            if (!enabled) {
-              clearAll();
-              return;
-            }
+	          const collectWriteNodes = () => {
+	            const root = el("appRoot");
+	            if (!root) return [];
+	            const nodes = [];
+	            const maxNodes = 240;
+	            const maxChars = 9_000;
+	            let chars = 0;
+	            const skipClosest = (node, selector) => {
+	              try {
+	                return Boolean(node?.parentElement?.closest(selector));
+	              } catch {
+	                return false;
+	              }
+	            };
+	            const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+	            let current = walker.nextNode();
+	            while (current) {
+	              const text = String(current.nodeValue || "");
+	              if (text.trim()) {
+	                const parent = current.parentElement;
+	                const tag = String(parent?.tagName || "").toUpperCase();
+	                const isSkippableTag =
+	                  tag === "SCRIPT" ||
+	                  tag === "STYLE" ||
+	                  tag === "NOSCRIPT" ||
+	                  tag === "TEXTAREA" ||
+	                  tag === "INPUT" ||
+	                  tag === "SELECT" ||
+	                  tag === "OPTION";
+	                const skip =
+	                  isSkippableTag ||
+	                  skipClosest(current, "#conversation") ||
+	                  skipClosest(current, "dialog") ||
+	                  skipClosest(current, "pre") ||
+	                  skipClosest(current, ".mk-magic-panel");
+	                if (!skip) {
+	                  const len = text.length;
+	                  if (nodes.length < maxNodes && chars + len <= maxChars) {
+	                    nodes.push({ node: current, original: text });
+	                    chars += len;
+	                  }
+	                }
+	              }
+	              current = walker.nextNode();
+	            }
+	            return nodes;
+	          };
 
-            if (!state.runtimeGlitchSessionSeed) state.runtimeGlitchSessionSeed = randSeed32();
-            const seedBase = state.runtimeGlitchSessionSeed >>> 0;
+	          const scrambleChar = (ch, r, severity) => {
+	            if (/\s/.test(ch)) return ch;
+	            if (/[0-9]/.test(ch) && r() < 0.55) {
+	              const d = Number(ch);
+	              if (Number.isFinite(d) && d >= 0 && d <= 9) return String.fromCharCode(0xff10 + d); // full-width digit
+	            }
+	            const glyphs = ["█", "▒", "░", "╳", "╱", "╲", "│", "╎", "┆", "┊", "·", "•", ":", "…", "_", "+", "=", "≋"];
+	            const hard = severity >= 7 ? ["▓", "▛", "▜", "▙", "▟", "⟠", "⟡", "⟐"] : [];
+	            const pool = hard.length ? glyphs.concat(hard) : glyphs;
+	            return choose(r, pool);
+	          };
 
-            // Micro-stutters: occasional single-frame bumps (presentation-only).
-            if (!bumpTimer) {
-              bumpTimer = window.setInterval(() => {
+	          const scrambleText = (orig, progress, seed, severity) => {
+	            const s = String(orig || "");
+	            if (!s) return s;
+	            const r = mulberry32(seed >>> 0);
+	            const len = s.length;
+	            const reveal = Math.max(0, Math.min(len, Math.floor(progress * len)));
+	            let out = "";
+	            for (let i = 0; i < len; i++) {
+	              const ch = s[i];
+	              if (i < reveal) out += ch;
+	              else out += scrambleChar(ch, r, severity);
+	            }
+	            if (progress < 0.98 && len >= 2 && !PREFERS_REDUCED_MOTION) {
+	              const caretAt = Math.max(0, Math.min(len - 1, reveal));
+	              const caret = r() < 0.6 ? "▍" : r() < 0.85 ? "█" : "▒";
+	              out = out.slice(0, caretAt) + caret + out.slice(caretAt + 1);
+	            }
+	            return out;
+	          };
+
+	          const startGlitchWrite = () => {
+	            if (PREFERS_REDUCED_MOTION) return;
+	            if (!document.documentElement.classList.contains("entry-accepted")) return;
+	            try {
+	              if (writeRaf) window.cancelAnimationFrame(writeRaf);
+	            } catch {
+	              // ignore
+	            }
+	            writeRaf = 0;
+
+	            const seedBase = (state.runtimeGlitchSessionSeed || randSeed32()) >>> 0;
+	            const r0 = mulberry32((seedBase ^ 0x6f6c636b ^ (writeToken * 2654435761)) >>> 0);
+	            const items = collectWriteNodes();
+	            if (!items.length) return;
+
+	            try {
+	              document.documentElement.classList.add("glitch-writing");
+	            } catch {
+	              // ignore
+	            }
+
+	            // Precompute per-node pacing so the page "writes" unevenly (alive, controlled).
+	            writeItems = items.map((it, idx) => {
+	              const localSeed = ((seedBase ^ (idx + 1) * 2246822519) >>> 0) ^ 0x9e3779b9;
+	              const delayMs = 40 + Math.floor(r0() * 520);
+	              const baseDur = 520 + Math.min(1200, Math.floor(String(it.original || "").length * (6 + r0() * 5)));
+	              const durMs = Math.floor(baseDur * (0.68 + r0() * 0.76));
+	              const severity = 4 + Math.floor(r0() * 6);
+	              return { ...it, idx, localSeed, delayMs, durMs, severity };
+	            });
+
+	            const startedAt = performance.now();
+	            const frame = () => {
+	              if (!state.runtimeGlitchEnabled) {
+	                clearAll();
+	                return;
+	              }
+	              const t = performance.now() - startedAt;
+	              let done = 0;
+	              for (const it of writeItems) {
+	                if (!it || !it.node) continue;
+	                const p0 = (t - it.delayMs) / Math.max(1, it.durMs);
+	                const p = Math.max(0, Math.min(1, p0));
+	                const wobble = mulberry32((it.localSeed ^ ((Math.floor(t / 32) + 1) * 2654435761)) >>> 0)();
+	                const seed = (it.localSeed ^ Math.floor(wobble * 0xffffffff)) >>> 0;
+	                try {
+	                  it.node.nodeValue = scrambleText(it.original, p, seed, it.severity);
+	                } catch {
+	                  // ignore
+	                }
+	                if (p >= 1) done++;
+	              }
+	              if (done >= writeItems.length) {
+	                try {
+	                  for (const it of writeItems) {
+	                    if (!it || !it.node) continue;
+	                    it.node.nodeValue = it.original;
+	                  }
+	                } catch {
+	                  // ignore
+	                }
+	                writeRaf = 0;
+	                try {
+	                  document.documentElement.classList.remove("glitch-writing");
+	                } catch {
+	                  // ignore
+	                }
+	                return;
+	              }
+	              writeRaf = window.requestAnimationFrame(frame);
+	            };
+	            writeRaf = window.requestAnimationFrame(frame);
+	          };
+
+	          const sync = () => {
+	            const enabled = Boolean(state.runtimeGlitchEnabled);
+	            const accepted = document.documentElement.classList.contains("entry-accepted");
+	            const active = enabled && accepted;
+	            document.documentElement.classList.toggle("glitch-mode", active);
+	            if (!active) {
+	              clearAll();
+	              writeHasRun = false;
+	              return;
+	            }
+
+	            if (!state.runtimeGlitchSessionSeed) state.runtimeGlitchSessionSeed = randSeed32();
+	            const seedBase = state.runtimeGlitchSessionSeed >>> 0;
+
+	            if (!writeHasRun) {
+	              writeHasRun = true;
+	              startGlitchWrite();
+	            }
+
+	            // Micro-stutters: occasional single-frame bumps (presentation-only).
+	            if (!bumpTimer) {
+	              bumpTimer = window.setInterval(() => {
                 try {
                   if (PREFERS_REDUCED_MOTION) return;
                   if (!state.runtimeGlitchEnabled) return;
@@ -3932,22 +4133,25 @@
             });
           };
 
-          const setEnabled = (next) => {
-            const on = Boolean(next);
-            state.runtimeGlitchEnabled = on;
-            try {
-              localStorage.setItem(STORAGE.runtimeGlitch, on ? "true" : "false");
-            } catch {
-              // ignore
-            }
-            if (on) {
-              state.runtimeGlitchSessionSeed = randSeed32();
-              decisions.clear();
-            } else {
-              clearAll();
-              state.runtimeGlitchSessionSeed = 0;
-            }
-          };
+	          const setEnabled = (next) => {
+	            const on = Boolean(next);
+	            state.runtimeGlitchEnabled = on;
+	            try {
+	              localStorage.setItem(STORAGE.runtimeGlitch, on ? "true" : "false");
+	            } catch {
+	              // ignore
+	            }
+	            if (on) {
+	              writeToken = (writeToken + 1) >>> 0;
+	              writeHasRun = false;
+	              state.runtimeGlitchSessionSeed = randSeed32();
+	              decisions.clear();
+	            } else {
+	              clearAll();
+	              writeHasRun = false;
+	              state.runtimeGlitchSessionSeed = 0;
+	            }
+	          };
 
           return { sync, setEnabled, clearAll };
         })();
