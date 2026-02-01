@@ -6045,8 +6045,8 @@
 
 		        const MK_CLAIM_KEY = "mkMkClaimedV1";
 		        const MK_ADMIN_KEY = "mkMkAdminV1";
-		        const FREE_PROMPTS_KEY = "mkFreePromptsRemainingV1";
-		        const FREE_PROMPTS_DEFAULT = 1;
+			        const FREE_PROMPTS_KEY = "mkFreePromptsRemainingV1";
+			        const FREE_PROMPTS_DEFAULT = 3;
 
 		        function hasMkClaim() {
 		          try {
@@ -9448,22 +9448,26 @@ Style rules:
 	            return;
 			          }
 
-		          // Global 1-free-prompt gating (admin and Magic-signed-in bypass).
-		          const snap = getMagicAuthSnapshot();
-		          if (!snap.signedIn && !hasMkAdmin()) {
-		            const before = getFreePromptsRemaining();
-		            const ok = consumeFreePrompt();
-		            if (!ok) {
-		              setNotice("Sign in via Auth + Wallet (Magic Link) to continue.");
-		              openMagicAuthPanel();
-		              setStatusRight("");
-		              render();
-		              return;
-		            }
-		            if (before <= 1) {
-		              setNotice('Free prompt used. Sign in via Auth + Wallet to keep chatting.');
-		            }
-		          }
+			          // Online free-trial gating (admin and Magic-signed-in bypass).
+			          const ioMode = effectiveIOMode();
+			          const snap = getMagicAuthSnapshot();
+			          if (ioMode !== "local" && !snap.signedIn && !hasMkAdmin()) {
+			            const before = getFreePromptsRemaining();
+			            const ok = consumeFreePrompt();
+			            if (!ok) {
+			              setNotice("Free trial exhausted. Sign in via Auth + Wallet (Magic Link) to continue.");
+			              openMagicAuthPanel();
+			              setStatusRight("");
+			              render();
+			              return;
+			            }
+			            const after = Math.max(0, before - 1);
+			            setNotice(
+			              after > 0
+			                ? `Free trial: ${after} prompt${after === 1 ? "" : "s"} left. Sign in via Auth + Wallet to keep chatting after the trial.`
+			                : "Free trial used up. Sign in via Auth + Wallet to keep chatting."
+			            );
+			          }
 					          if (isExternalProfileIntent(topic)) {
 						            setNotice(EXTERNAL_BROWSE_BLOCKED_QUESTION);
 						            setStatusRight("");

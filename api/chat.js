@@ -16,8 +16,9 @@ const readJsonBody = async (req) => {
 };
 
 const { getMagicJwtFromRequest, magicUserEmailFromJwt, getMagicUserIdFromRequest } = require("./_lib/magic_user");
-const { kvSet } = require("./_lib/upstash_kv");
+const { kvGetInt, kvIncrBy, kvSet, kvSetNX } = require("./_lib/upstash_kv");
 const { creditTokens, spendTokens, tokenKey } = require("./_lib/token");
+const crypto = require("crypto");
 
 const firstEnv = (...names) => {
   for (const name of names) {
@@ -53,11 +54,58 @@ const getLastUserContent = (messages) => {
 
 const ADMIN_COOKIE = "mk_admin";
 const emailKey = (email) => `agentc:email_to_user:${String(email || "").trim().toLowerCase()}`;
+const TRIAL_ID_COOKIE = "agentc_trial_id";
+const TRIAL_USED_COOKIE = "agentc_trial_used";
+const trialKey = (trialId) => `agentc:trial:${String(trialId || "").trim()}`;
 
 const truthyEnv = (value) => {
   const v = String(value || "").trim().toLowerCase();
   if (!v) return false;
   return v === "1" || v === "true" || v === "yes" || v === "y" || v === "on";
+};
+
+const isSecureRequest = (req) => {
+  try {
+    const proto = String(req?.headers?.["x-forwarded-proto"] || "").toLowerCase();
+    if (proto) return proto.includes("https");
+  } catch {
+    // ignore
+  }
+  return false;
+};
+
+const appendSetCookie = (res, cookie) => {
+  const value = String(cookie || "").trim();
+  if (!value) return;
+  try {
+    const prev = typeof res.getHeader === "function" ? res.getHeader("Set-Cookie") : null;
+    if (!prev) {
+      res.setHeader("Set-Cookie", value);
+      return;
+    }
+    if (Array.isArray(prev)) {
+      res.setHeader("Set-Cookie", [...prev, value]);
+      return;
+    }
+    res.setHeader("Set-Cookie", [prev, value]);
+  } catch {
+    res.setHeader("Set-Cookie", value);
+  }
+};
+
+const makeCookie = (name, value, { maxAgeSeconds, httpOnly = true, sameSite = "Lax", secure = false } = {}) => {
+  const parts = [`${name}=${encodeURIComponent(String(value ?? ""))}`, "Path=/"];
+  const age = parseInt(String(maxAgeSeconds ?? ""), 10);
+  if (Number.isFinite(age) && age > 0) parts.push(`Max-Age=${age}`);
+  if (httpOnly) parts.push("HttpOnly");
+  if (sameSite) parts.push(`SameSite=${sameSite}`);
+  if (secure) parts.push("Secure");
+  return parts.join("; ");
+};
+
+const parseIntSafe = (value, fallback = 0) => {
+  const n = parseInt(String(value ?? ""), 10);
+  return Number.isFinite(n) ? n : fallback;
 };
 
 const looksLikeOpenAIKey = (apiKey) => {
@@ -217,8 +265,54 @@ module.exports = async (req, res) => {
       ]
     : messages;
 
-  // Token gating: charge 1 AgentC-oin per /api/chat call for Magic-signed-in users.
   const magicUserId = !isAdminCookie ? getMagicUserIdFromRequest(req) : "";
+
+  // Free trial gating to protect server-provided OpenAI keys.
+  // Applies only to non-admin and not Magic-signed-in requests.
+  const trialLimit = (() => {
+    const raw = firstEnv("AGENTC_FREE_TRIAL_LIMIT", "MK_FREE_TRIAL_LIMIT") || "3";
+    const n = parseInt(raw, 10);
+    return Number.isFinite(n) && n >= 0 ? n : 3;
+  })();
+
+  if (!isAdminCookie && !magicUserId && trialLimit > 0 && (openKey || gatewayKey)) {
+    const secure = isSecureRequest(req);
+    const ttlSeconds = 60 * 60 * 24 * 14;
+    const trialId = String(cookies[TRIAL_ID_COOKIE] || "").trim();
+
+    const deny = () => {
+      res.statusCode = 402;
+      res.setHeader("Content-Type", "application/json");
+      res.setHeader("Cache-Control", "no-store");
+      res.end(JSON.stringify({ error: `Free trial exhausted (${trialLimit} prompts). Sign in to continue.` }));
+    };
+
+    try {
+      let id = trialId;
+      if (!id) {
+        id = crypto.randomBytes(16).toString("hex");
+        appendSetCookie(res, makeCookie(TRIAL_ID_COOKIE, id, { maxAgeSeconds: ttlSeconds, secure }));
+      }
+      const key = trialKey(id);
+      await kvSetNX(key, "0", { exSeconds: ttlSeconds }).catch(() => false);
+      const used = await kvGetInt(key, 0);
+      if (used >= trialLimit) {
+        deny();
+        return;
+      }
+      await kvIncrBy(key, 1);
+    } catch {
+      // Fallback (no KV): enforce via an HttpOnly counter cookie (best-effort).
+      const used = parseIntSafe(cookies[TRIAL_USED_COOKIE], 0);
+      if (used >= trialLimit) {
+        deny();
+        return;
+      }
+      appendSetCookie(res, makeCookie(TRIAL_USED_COOKIE, String(used + 1), { maxAgeSeconds: ttlSeconds, secure }));
+    }
+  }
+
+  // Token gating: charge 1 AgentC-oin per /api/chat call for Magic-signed-in users.
   let tokenCharged = false;
   let tokens = null;
   if (magicUserId) {
