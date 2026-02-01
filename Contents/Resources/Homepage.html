@@ -1847,15 +1847,22 @@
         border-bottom: 1px solid rgba(15, 23, 42, 0.08);
       }
 
-      #settingsModal .settings-nav .chip-btn {
-        padding: 8px 12px;
-        border-radius: 999px;
-        border: 1px solid rgba(15, 23, 42, 0.10);
-        background: rgba(255, 255, 255, 0.78);
-        color: rgba(2, 6, 23, 0.82);
-        font-size: var(--fs-ui-small);
-        transition: transform 120ms ease, box-shadow 220ms ease, background 220ms ease, border-color 220ms ease;
-      }
+	      #settingsModal .settings-nav .chip-btn {
+	        padding: 8px 12px;
+	        border-radius: 999px;
+	        border: 1px solid rgba(15, 23, 42, 0.10);
+	        background: rgba(255, 255, 255, 0.78);
+	        color: rgba(2, 6, 23, 0.82);
+	        font-size: var(--fs-ui-small);
+	        transition: transform 120ms ease, box-shadow 220ms ease, background 220ms ease, border-color 220ms ease;
+	      }
+	
+	      #settingsModal .settings-nav .chip-btn[aria-current="page"] {
+	        background: rgba(79, 70, 229, 0.10);
+	        border-color: rgba(79, 70, 229, 0.28);
+	        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+	        color: rgba(2, 6, 23, 0.88);
+	      }
 
       #settingsModal .settings-nav .chip-btn:hover {
         background: rgba(255, 255, 255, 0.92);
@@ -1867,14 +1874,20 @@
         transform: translateY(1px);
       }
 
-      #settingsModal details.settings-section {
-        border: 1px solid rgba(15, 23, 42, 0.10);
-        border-radius: var(--radius-md);
-        background: rgba(255, 255, 255, 0.70);
-        overflow: hidden;
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
-        scroll-margin-top: 72px;
-      }
+	      #settingsModal details.settings-section {
+	        border: 1px solid rgba(15, 23, 42, 0.10);
+	        border-radius: var(--radius-md);
+	        background: rgba(255, 255, 255, 0.70);
+	        overflow: hidden;
+	        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+	        scroll-margin-top: 72px;
+	        transition: border-color 220ms ease, box-shadow 220ms ease;
+	      }
+	
+	      #settingsModal details.settings-section.settings-jump-flash {
+	        border-color: rgba(79, 70, 229, 0.22);
+	        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.60);
+	      }
 
       #settingsModal details.settings-section summary {
         list-style: none;
@@ -9316,23 +9329,82 @@ Style rules:
 		              }
 		            }
 		          });
-		          el("settingsNav")?.addEventListener("click", (e) => {
-		            const btn = e.target?.closest?.("[data-settings-jump]");
-		            const target = String(btn?.getAttribute?.("data-settings-jump") || "").trim();
-		            if (!target) return;
-		            const section = el(target);
-		            if (!section) return;
-		            try {
-		              if (section.tagName === "DETAILS") section.open = true;
-		            } catch {
-		              // ignore
-		            }
-		            try {
-		              section.scrollIntoView({ behavior: "smooth", block: "start" });
-		            } catch {
-		              section.scrollIntoView();
-		            }
-		          });
+			          el("settingsNav")?.addEventListener("click", (e) => {
+			            const findBtn = () => {
+			              try {
+			                const path = typeof e.composedPath === "function" ? e.composedPath() : [];
+			                for (const node of path) {
+			                  if (!node || node.nodeType !== 1) continue;
+			                  if (node.matches?.("[data-settings-jump]")) return node;
+			                }
+			              } catch {
+			                // ignore
+			              }
+			              const raw = e.target;
+			              const targetEl = raw && raw.nodeType === 1 ? raw : raw?.parentElement;
+			              return targetEl?.closest?.("[data-settings-jump]") || null;
+			            };
+			            const btn = findBtn();
+			            const target = String(btn?.getAttribute?.("data-settings-jump") || "").trim();
+			            if (!target) return;
+			            const section = el(target);
+			            if (!section) return;
+			
+			            try {
+			              const nav = el("settingsNav");
+			              nav?.querySelectorAll?.(".chip-btn[data-settings-jump]")?.forEach?.((b) => {
+			                const isActive = String(b.getAttribute?.("data-settings-jump") || "") === target;
+			                if (isActive) b.setAttribute?.("aria-current", "page");
+			                else b.removeAttribute?.("aria-current");
+			              });
+			            } catch {
+			              // ignore
+			            }
+			
+			            try {
+			              if (section.tagName === "DETAILS") section.open = true;
+			            } catch {
+			              // ignore
+			            }
+			
+			            const scrollToSection = () => {
+			              const dialog = el("settingsModal");
+			              const body = dialog?.querySelector?.(".modal-body.settings-body");
+			              const nav = el("settingsNav");
+			              const navH = Math.max(0, Number(nav?.getBoundingClientRect?.().height || 0));
+			              const pad = 10;
+			
+			              if (body?.scrollTo && body?.getBoundingClientRect) {
+			                const bodyRect = body.getBoundingClientRect();
+			                const secRect = section.getBoundingClientRect();
+			                const nextTop = body.scrollTop + (secRect.top - bodyRect.top) - navH - pad;
+			                body.scrollTo({ top: Math.max(0, nextTop), behavior: "smooth" });
+			              } else {
+			                try {
+			                  section.scrollIntoView({ behavior: "smooth", block: "start" });
+			                } catch {
+			                  try {
+			                    section.scrollIntoView();
+			                  } catch {
+			                    // ignore
+			                  }
+			                }
+			              }
+			
+			              try {
+			                section.classList.add("settings-jump-flash");
+			                setTimeout(() => section.classList.remove("settings-jump-flash"), 520);
+			              } catch {
+			                // ignore
+			              }
+			            };
+			
+			            try {
+			              requestAnimationFrame(scrollToSection);
+			            } catch {
+			              scrollToSection();
+			            }
+			          });
 		          wireDialogLifecycle("privacyModal", { onClose: () => setStatusRight("") });
 		          wireDialogLifecycle("memoryModal", { onClose: () => setStatusRight("") });
 		          wireDialogLifecycle("teachModal", { onClose: () => (state.pendingTeachContext = null) });
