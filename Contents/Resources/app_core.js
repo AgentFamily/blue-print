@@ -945,7 +945,7 @@
 	      });
 	    }
 
-	    async function fetchMagicConfig() {
+		    async function fetchMagicConfig() {
 	      try {
 	        const res = await fetch("/api/magic/config", { cache: "no-store" });
 	        const json = await res.json().catch(() => null);
@@ -965,12 +965,29 @@
 	      } catch {
 	        return null;
 	      }
-	    }
+		    }
 
-		    async function ensureMagicSdk() {
-		      if (magic) return magic;
-		      let publishableKey = getPublishableKey();
-		      if (!publishableKey) {
+		    function resolveOAuthExtensionCtor() {
+		      const candidates = [
+		        global.OAuthExtension,
+		        global.OAuthExtension?.OAuthExtension,
+		        global.MagicOAuthExtension,
+		        global.MagicOAuthExtension?.OAuthExtension,
+		        global.OAuth2Extension,
+		        global.OAuth2Extension?.OAuth2Extension,
+		        global.MagicOAuth2Extension,
+		        global.MagicOAuth2Extension?.OAuth2Extension
+		      ];
+		      for (const ctor of candidates) {
+		        if (typeof ctor === "function") return ctor;
+		      }
+		      return null;
+		    }
+
+			    async function ensureMagicSdk() {
+			      if (magic) return magic;
+			      let publishableKey = getPublishableKey();
+			      if (!publishableKey) {
 		        await fetchMagicConfig();
 		        publishableKey = getPublishableKey();
 		      }
@@ -997,26 +1014,36 @@
 		      }
 		      if (!global.Magic) return null;
 
-		      // Optional OAuth2 extension (Google login) — best-effort load for static HTML builds.
-		      try {
-		        if (!global.OAuthExtension) {
-		          try {
-		            await loadScript("https://cdn.jsdelivr.net/npm/@magic-ext/oauth2/dist/extension.js");
-		          } catch {
-		            await loadScript("https://unpkg.com/@magic-ext/oauth2/dist/extension.js");
-		          }
-		        }
-		      } catch {
-		        // ignore
-		      }
+			      // Optional OAuth2 extension (Google login) — best-effort load for static HTML builds.
+			      try {
+			        if (!resolveOAuthExtensionCtor()) {
+			          const sources = [
+			            "https://cdn.jsdelivr.net/npm/@magic-ext/oauth2/dist/extension.js",
+			            "https://unpkg.com/@magic-ext/oauth2/dist/extension.js",
+			            // Some builds export OAuth via @magic-ext/oauth instead of oauth2.
+			            "https://cdn.jsdelivr.net/npm/@magic-ext/oauth/dist/extension.js",
+			            "https://unpkg.com/@magic-ext/oauth/dist/extension.js"
+			          ];
+			          for (const src of sources) {
+			            try {
+			              await loadScript(src);
+			              if (resolveOAuthExtensionCtor()) break;
+			            } catch {
+			              // try next
+			            }
+			          }
+			        }
+			      } catch {
+			        // ignore
+			      }
 
-		      const magicOptions = { useStorageCache: true };
-		      try {
-		        const OAuthExt = global.OAuthExtension || global.OAuthExtension?.OAuthExtension;
-		        if (typeof OAuthExt === "function") {
-		          magicOptions.extensions = [new OAuthExt()];
-		        }
-		      } catch {
+			      const magicOptions = { useStorageCache: true };
+			      try {
+			        const OAuthExt = resolveOAuthExtensionCtor();
+			        if (typeof OAuthExt === "function") {
+			          magicOptions.extensions = [new OAuthExt()];
+			        }
+			      } catch {
 		        // ignore
 		      }
 
@@ -1224,35 +1251,47 @@
       }, Math.max(200, Number(durationMs) || 2000));
     }
 
-	    async function loginWithOAuth({ flow }) {
-	      ensureDom();
-	      setError("");
-	      state.loading = true;
-	      render();
-	      try {
-	        const sdk = await ensureMagicSdk();
-	        if (!sdk) throw new Error("Missing MAGIC_PUBLISHABLE_KEY (or Magic SDK failed to load).");
-	        const oauth = sdk?.oauth2 || sdk?.oauth;
-	        if (!oauth) throw new Error("Magic OAuth not available in this SDK build.");
-	        const provider = "google";
-	        const redirectURI = (() => {
-	          try {
-	            return new URL("/oauth/callback", window.location.origin).toString();
-	          } catch {
-	            return String(window.location.href);
-	          }
-	        })();
-	        if (flow === "redirect") {
-	          if (!oauth.loginWithRedirect) throw new Error("loginWithRedirect not available.");
-	          await oauth.loginWithRedirect({ provider, redirectURI, scope: ["user:email"] });
-	          return;
-	        }
-	        if (oauth.loginWithPopup) {
-	          await oauth.loginWithPopup({ provider, scope: ["user:email"] });
-	        } else if (oauth.loginWithRedirect) {
-	          await oauth.loginWithRedirect({ provider, redirectURI, scope: ["user:email"] });
-	          return;
-	        } else {
+		    async function loginWithOAuth({ flow }) {
+		      ensureDom();
+		      setError("");
+		      state.loading = true;
+		      render();
+		      try {
+		        const sdk = await ensureMagicSdk();
+		        if (!sdk) throw new Error("Missing MAGIC_PUBLISHABLE_KEY (or Magic SDK failed to load).");
+		        const oauth = sdk?.oauth2 || sdk?.oauth;
+		        if (!oauth) throw new Error("Magic OAuth not available in this SDK build.");
+		        const provider = "google";
+		        const proto = String(window?.location?.protocol || "");
+		        if (proto && proto !== "http:" && proto !== "https:") {
+		          throw new Error("OAuth requires the page to be served over http(s).");
+		        }
+		        const redirectURI = (() => {
+		          try {
+		            return new URL("/oauth/callback", window.location.origin).toString();
+		          } catch {
+		            return String(window.location.href);
+		          }
+		        })();
+		        if (flow === "redirect") {
+		          if (!oauth.loginWithRedirect) throw new Error("loginWithRedirect not available.");
+		          await oauth.loginWithRedirect({ provider, redirectURI, scope: ["user:email"] });
+		          return;
+		        }
+		        if (oauth.loginWithPopup) {
+		          try {
+		            await oauth.loginWithPopup({ provider, redirectURI, scope: ["user:email"] });
+		          } catch (popupErr) {
+		            if (oauth.loginWithRedirect) {
+		              await oauth.loginWithRedirect({ provider, redirectURI, scope: ["user:email"] });
+		              return;
+		            }
+		            throw popupErr;
+		          }
+		        } else if (oauth.loginWithRedirect) {
+		          await oauth.loginWithRedirect({ provider, redirectURI, scope: ["user:email"] });
+		          return;
+		        } else {
 	          throw new Error("OAuth login is unavailable in this SDK build.");
 	        }
 	        await refreshFromMagic();
@@ -1265,31 +1304,43 @@
 	      }
 	    }
 
-	    async function loginWithTelegram() {
-	      ensureDom();
-	      setError("");
-	      state.loading = true;
-	      render();
-	      try {
-	        const sdk = await ensureMagicSdk();
-	        if (!sdk) throw new Error("Missing MAGIC_PUBLISHABLE_KEY (or Magic SDK failed to load).");
-	        const oauth = sdk?.oauth2 || sdk?.oauth;
-	        if (!oauth) throw new Error("Magic OAuth not available in this SDK build.");
+		    async function loginWithTelegram() {
+		      ensureDom();
+		      setError("");
+		      state.loading = true;
+		      render();
+		      try {
+		        const sdk = await ensureMagicSdk();
+		        if (!sdk) throw new Error("Missing MAGIC_PUBLISHABLE_KEY (or Magic SDK failed to load).");
+		        const oauth = sdk?.oauth2 || sdk?.oauth;
+		        if (!oauth) throw new Error("Magic OAuth not available in this SDK build.");
+		        const proto = String(window?.location?.protocol || "");
+		        if (proto && proto !== "http:" && proto !== "https:") {
+		          throw new Error("OAuth requires the page to be served over http(s).");
+		        }
 
-	        const redirectURI = (() => {
-	          try {
-	            return new URL("/oauth/callback", window.location.origin).toString();
-	          } catch {
-	            return String(window.location.href);
-	          }
-	        })();
+		        const redirectURI = (() => {
+		          try {
+		            return new URL("/oauth/callback", window.location.origin).toString();
+		          } catch {
+		            return String(window.location.href);
+		          }
+		        })();
 
-	        if (oauth.loginWithPopup) {
-	          await oauth.loginWithPopup({ provider: "telegram" });
-	        } else if (oauth.loginWithRedirect) {
-	          await oauth.loginWithRedirect({ provider: "telegram", redirectURI });
-	          return;
-	        } else {
+		        if (oauth.loginWithPopup) {
+		          try {
+		            await oauth.loginWithPopup({ provider: "telegram", redirectURI });
+		          } catch (popupErr) {
+		            if (oauth.loginWithRedirect) {
+		              await oauth.loginWithRedirect({ provider: "telegram", redirectURI });
+		              return;
+		            }
+		            throw popupErr;
+		          }
+		        } else if (oauth.loginWithRedirect) {
+		          await oauth.loginWithRedirect({ provider: "telegram", redirectURI });
+		          return;
+		        } else {
 	          throw new Error("Telegram login is unavailable in this SDK build.");
 	        }
 

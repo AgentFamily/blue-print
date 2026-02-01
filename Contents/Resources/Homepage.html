@@ -2491,12 +2491,126 @@
         100% { opacity: 1; }
       }
 
-      @keyframes glitch-banner {
-        0% { filter: none; transform: translateY(0); }
-        50% { filter: blur(0.4px) contrast(1.1); transform: translateY(-0.5px); }
-        100% { filter: none; transform: translateY(0); }
-      }
-    </style>
+	      @keyframes glitch-banner {
+	        0% { filter: none; transform: translateY(0); }
+	        50% { filter: blur(0.4px) contrast(1.1); transform: translateY(-0.5px); }
+	        100% { filter: none; transform: translateY(0); }
+	      }
+
+	      .coins-store-meta {
+	        display: flex;
+	        flex-wrap: wrap;
+	        gap: 10px 14px;
+	        align-items: center;
+	        justify-content: space-between;
+	        padding: 10px 12px;
+	        border: 1px solid rgba(15, 23, 42, 0.10);
+	        border-radius: var(--radius-md);
+	        background: rgba(255, 255, 255, 0.72);
+	        box-shadow: var(--shadow-soft);
+	        margin-bottom: 12px;
+	      }
+
+	      .coins-store-meta code {
+	        font-size: 12px;
+	        font-family: var(--sf-font-glitch);
+	        background: rgba(2, 6, 23, 0.06);
+	        border: 1px solid rgba(2, 6, 23, 0.10);
+	        border-radius: 10px;
+	        padding: 3px 8px;
+	      }
+
+	      .coins-disclaimer {
+	        border: 1px solid rgba(239, 68, 68, 0.22);
+	        border-radius: var(--radius-md);
+	        padding: 10px 12px;
+	        background: rgba(254, 226, 226, 0.55);
+	        margin: 10px 0 14px;
+	      }
+
+	      .coins-disclaimer-row {
+	        display: flex;
+	        gap: 10px;
+	        align-items: flex-start;
+	        color: rgba(127, 29, 29, 0.95);
+	        font-weight: var(--sf-light);
+	        font-size: 13px;
+	        line-height: 1.35;
+	      }
+
+	      .coins-disclaimer-row input {
+	        margin-top: 2px;
+	        transform: translateY(1px);
+	      }
+
+	      .coins-store-grid {
+	        display: grid;
+	        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+	        gap: 12px;
+	      }
+
+	      .coins-pack {
+	        border: 1px solid rgba(15, 23, 42, 0.12);
+	        border-radius: var(--radius-md);
+	        background: rgba(255, 255, 255, 0.76);
+	        box-shadow: var(--shadow-soft);
+	        padding: 12px 12px 10px;
+	        display: flex;
+	        flex-direction: column;
+	        gap: 8px;
+	      }
+
+	      .coins-pack h3 {
+	        margin: 0;
+	        font-size: 14px;
+	        font-weight: var(--sf-light);
+	        letter-spacing: -0.01em;
+	      }
+
+	      .coins-pack .sub {
+	        font-size: 12.5px;
+	        color: var(--muted);
+	        line-height: 1.4;
+	      }
+
+	      .coins-pack .price {
+	        display: inline-flex;
+	        gap: 8px;
+	        align-items: center;
+	        font-size: 12px;
+	        color: rgba(2, 6, 23, 0.78);
+	      }
+
+	      .coins-pack .badge {
+	        display: inline-flex;
+	        align-items: center;
+	        gap: 6px;
+	        padding: 3px 8px;
+	        border-radius: 999px;
+	        border: 1px solid rgba(2, 6, 23, 0.10);
+	        background: rgba(2, 6, 23, 0.03);
+	        font-size: 11px;
+	        color: rgba(2, 6, 23, 0.72);
+	      }
+
+	      .coins-pack .actions {
+	        display: flex;
+	        gap: 8px;
+	        flex-wrap: wrap;
+	        margin-top: auto;
+	      }
+
+	      .coins-pack .actions .btn {
+	        flex: 1;
+	        min-width: 120px;
+	      }
+
+	      @media (max-width: 520px) {
+	        .coins-pack .actions .btn {
+	          min-width: 100%;
+	        }
+	      }
+	    </style>
     <script>
       (function () {
         try {
@@ -2727,11 +2841,11 @@
 
     <div id="modalBackdrop" aria-hidden="true"></div>
 
-    <dialog id="confirmModal" aria-label="Confirm action">
-      <div class="modal-head">
-        <strong id="confirmHeading">Confirm</strong>
-        <button class="btn" id="closeConfirmBtn" type="button">Close</button>
-      </div>
+	    <dialog id="confirmModal" aria-label="Confirm action">
+	      <div class="modal-head">
+	        <strong id="confirmHeading">Confirm</strong>
+	        <button class="btn" id="closeConfirmBtn" type="button">Close</button>
+	      </div>
       <div class="modal-body">
         <div class="confirm-title" id="confirmTitle"></div>
         <div class="confirm-message" id="confirmMessage"></div>
@@ -3359,6 +3473,42 @@
 	      </div>
 	      <div class="modal-foot">
 	        <button class="btn primary" id="saveMemoryBtn" type="button">Save Memory</button>
+	      </div>
+	    </dialog>
+
+	    <dialog id="coinsStoreModal" aria-label="C-oin Store">
+	      <div class="modal-head">
+	        <strong>C-oin Store</strong>
+	        <button class="btn" id="closeCoinsStoreBtn" type="button">Close</button>
+	      </div>
+	      <div class="modal-body">
+	        <div class="coins-store-meta">
+	          <div>
+	            Account <code id="coinsStoreAccount">—</code>
+	          </div>
+	          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+	            Balance <code id="coinsStoreBalance">—</code>
+	            <button class="btn tiny secondary" id="refreshCoinsStoreBalanceBtn" type="button">Refresh</button>
+	          </div>
+	        </div>
+
+	        <div class="coins-disclaimer">
+	          <label class="coins-disclaimer-row" for="coinsNoRefundAck">
+	            <input id="coinsNoRefundAck" type="checkbox" />
+	            <span>Digital product. No refunds.</span>
+	          </label>
+	          <div class="hint">You must acknowledge this before purchasing.</div>
+	        </div>
+
+	        <div class="coins-store-grid" id="coinsStoreGrid" aria-label="C-oin packs"></div>
+	        <div class="hint" style="margin-top:10px">
+	          Magic.link note: Magic doesn’t auto-sync Stripe products, so the “Copy metadata” buttons below generate the pack config you can paste into
+	          Magic Dashboard → Wallet UI / Payments. Optional: enable Fiat On-Ramp there; example mapping: 1 USDC = 10 C-oins.
+	        </div>
+	      </div>
+	      <div class="modal-foot">
+	        <button class="btn secondary" id="coinsStoreOpenAgentFamilyBtn" type="button">Open git.com/the-agent-family</button>
+	        <button class="btn primary" id="coinsStoreSignInBtn" type="button">Sign in</button>
 	      </div>
 	    </dialog>
 
@@ -5589,7 +5739,76 @@
 	          }
 	        }
 
-	        const STRIPE_BUY_AGENTC_OINS_URL = "https://buy.stripe.com/6oUeVc3Ijc1X8Zx4a1grS00";
+		        const COINS_NO_REFUND_ACK_KEY = "mkCoinsNoRefundAckV1";
+		        const STRIPE_BUY_AGENTC_OINS_URL = "https://buy.stripe.com/6oUeVc3Ijc1X8Zx4a1grS00";
+
+		        const COIN_PRODUCT_PACKS = [
+		          {
+		            internal_name: "starter_10",
+		            name: "C-oin Starter Pack (10 tokens)",
+		            description: "A starter pack of 10 C-oin tokens. Each C-oin equals one prompt. Digital product. No refunds.",
+		            pricing: "£1 equivalent (via Magic onramp/crypto if used)",
+		            stripe_url: "",
+		            metadata: {
+		              credits_granted: 10,
+		              credit_type: "one_time",
+		              non_redeemable: true,
+		              internal_name: "starter_10"
+		            }
+		          },
+		          {
+		            internal_name: "pack_50",
+		            name: "C-oin Pack (50 tokens)",
+		            description: "A pack of 50 C-oin tokens. Each C-oin equals one prompt. Digital product. No refunds.",
+		            pricing: "TBD",
+		            stripe_url: "",
+		            metadata: {
+		              credits_granted: 50,
+		              credit_type: "one_time",
+		              non_redeemable: true,
+		              internal_name: "pack_50"
+		            }
+		          },
+		          {
+		            internal_name: "pack_100",
+		            name: "C-oin Pack (100 tokens)",
+		            description: "A pack of 100 C-oin tokens. Each C-oin equals one prompt. Digital product. No refunds.",
+		            pricing: "TBD",
+		            stripe_url: "",
+		            metadata: {
+		              credits_granted: 100,
+		              credit_type: "one_time",
+		              non_redeemable: true,
+		              internal_name: "pack_100"
+		            }
+		          },
+		          {
+		            internal_name: "membership",
+		            name: "C-oin Membership",
+		            description: "A membership plan that grants recurring C-oin credits. Digital product. No refunds.",
+		            pricing: "TBD",
+		            stripe_url: "",
+		            metadata: {
+		              credits_granted: 0,
+		              credit_type: "membership",
+		              non_redeemable: true,
+		              internal_name: "membership"
+		            }
+		          },
+		          {
+		            internal_name: "stripe_topup_200",
+		            name: "Stripe Top-up (200 tokens)",
+		            description: "Legacy Stripe top-up (server-configured default: 200 C-oins). Digital product. No refunds.",
+		            pricing: "Stripe Payment Link",
+		            stripe_url: STRIPE_BUY_AGENTC_OINS_URL,
+		            metadata: {
+		              credits_granted: 200,
+		              credit_type: "one_time",
+		              non_redeemable: true,
+		              internal_name: "stripe_topup_200"
+		            }
+		          }
+		        ];
 
 	        function decodeJwtPayload(jwt) {
 	          const raw = String(jwt || "").trim();
@@ -5611,10 +5830,10 @@
 	          return sub || "";
 	        }
 
-	        function buildStripeBuyUrlForCurrentUser() {
-	          const snap = getMagicAuthSnapshot();
-	          const base = STRIPE_BUY_AGENTC_OINS_URL;
-	          if (!snap?.signedIn) return base;
+		        function buildStripeBuyUrlForCurrentUser(baseUrl) {
+		          const snap = getMagicAuthSnapshot();
+		          const base = String(baseUrl || STRIPE_BUY_AGENTC_OINS_URL).trim() || STRIPE_BUY_AGENTC_OINS_URL;
+		          if (!snap?.signedIn) return base;
 
 	          const userId = magicUserIdFromJwt(snap.jwt);
 	          if (!userId) return base;
@@ -5629,8 +5848,135 @@
 	          const url = new URL(base);
 	          url.searchParams.set("client_reference_id", userId);
 	          if (email) url.searchParams.set("prefilled_email", email);
-	          return url.toString();
-	        }
+		          return url.toString();
+		        }
+
+		        function coinsNoRefundAcked() {
+		          try {
+		            return String(localStorage.getItem(COINS_NO_REFUND_ACK_KEY) || "") === "true";
+		          } catch {
+		            return false;
+		          }
+		        }
+
+		        function setCoinsNoRefundAcked(value) {
+		          try {
+		            localStorage.setItem(COINS_NO_REFUND_ACK_KEY, value ? "true" : "false");
+		          } catch {
+		            // ignore
+		          }
+		        }
+
+		        function coinsStoreMagicPackConfig(pack) {
+		          const p = pack && typeof pack === "object" ? pack : {};
+		          return {
+		            name: String(p.name || "").trim(),
+		            description: String(p.description || "").trim(),
+		            pricing: String(p.pricing || "").trim(),
+		            metadata: { ...(p.metadata || {}) }
+		          };
+		        }
+
+		        function renderCoinsStore() {
+		          const grid = el("coinsStoreGrid");
+		          if (!grid) return;
+
+		          const snap = getMagicAuthSnapshot();
+		          const signedIn = Boolean(snap && snap.signedIn);
+		          const addr = String(snap?.embeddedAddress || "").trim();
+		          const acct = el("coinsStoreAccount");
+		          if (acct) acct.textContent = addr ? `${addr.slice(0, 6)}…${addr.slice(-4)}` : signedIn ? "Signed in" : "Not signed in";
+		          const bal = el("coinsStoreBalance");
+		          const tokens = state.coins == null ? null : Math.max(0, Number(state.coins) || 0);
+		          if (bal) bal.textContent = signedIn ? (state.coinsLoading ? "Loading…" : tokens == null ? "Unavailable" : `${tokens}`) : "—";
+
+		          const signInBtn = el("coinsStoreSignInBtn");
+		          if (signInBtn) {
+		            signInBtn.textContent = signedIn ? "Signed in" : "Sign in";
+		            signInBtn.disabled = signedIn;
+		          }
+
+		          const ack = el("coinsNoRefundAck");
+		          const acknowledged = ack ? Boolean(ack.checked) : coinsNoRefundAcked();
+
+		          grid.innerHTML = "";
+		          for (const pack of COIN_PRODUCT_PACKS) {
+		            const card = document.createElement("div");
+		            card.className = "coins-pack";
+
+		            const title = document.createElement("h3");
+		            title.textContent = String(pack.name || pack.internal_name || "Pack");
+		            card.appendChild(title);
+
+		            const sub = document.createElement("div");
+		            sub.className = "sub";
+		            sub.textContent = String(pack.description || "");
+		            card.appendChild(sub);
+
+		            const row = document.createElement("div");
+		            row.className = "price";
+		            const badge = document.createElement("span");
+		            badge.className = "badge";
+		            badge.textContent = `${pack?.metadata?.credits_granted ?? "?"} credits`;
+		            row.appendChild(badge);
+		            const priceText = document.createElement("span");
+		            priceText.textContent = String(pack.pricing || "");
+		            row.appendChild(priceText);
+		            card.appendChild(row);
+
+		            const actions = document.createElement("div");
+		            actions.className = "actions";
+
+		            const buy = document.createElement("button");
+		            buy.className = "btn primary";
+		            buy.type = "button";
+		            buy.textContent = "Buy (Stripe)";
+		            const hasUrl = Boolean(String(pack.stripe_url || "").trim());
+		            buy.disabled = !hasUrl || !signedIn || !acknowledged || Boolean(state.loading);
+		            buy.title = !signedIn
+		              ? "Sign in to associate your purchase with your account."
+		              : !acknowledged
+		              ? "Acknowledge the no-refund policy to continue."
+		              : hasUrl
+		              ? "Opens Stripe checkout in a new window."
+		              : "Stripe link not configured for this pack.";
+		            buy.addEventListener("click", () => {
+		              if (!signedIn) {
+		                setStatusRight("Sign in via Auth + Wallet (Magic Link) to purchase.", true);
+		                openMagicAuthPanel();
+		                return;
+		              }
+		              const ackNode = el("coinsNoRefundAck");
+		              const ok = ackNode ? Boolean(ackNode.checked) : coinsNoRefundAcked();
+		              if (!ok) {
+		                setStatusRight("Please acknowledge: Digital product. No refunds.", true);
+		                return;
+		              }
+		              const url = buildStripeBuyUrlForCurrentUser(pack.stripe_url);
+		              try {
+		                window.open(url, "_blank", "noopener,noreferrer");
+		              } catch {
+		                window.location.href = url;
+		              }
+		            });
+		            actions.appendChild(buy);
+
+		            const copy = document.createElement("button");
+		            copy.className = "btn secondary";
+		            copy.type = "button";
+		            copy.textContent = "Copy metadata";
+		            copy.title = "Copy Magic.link product fields + metadata JSON.";
+		            copy.addEventListener("click", async () => {
+		              const ok = await copyText(JSON.stringify(coinsStoreMagicPackConfig(pack), null, 2));
+		              armClipboardClear(30_000);
+		              setStatusRight(ok ? "Copied pack config." : "Copy failed.", !ok);
+		            });
+		            actions.appendChild(copy);
+
+		            card.appendChild(actions);
+		            grid.appendChild(card);
+		          }
+		        }
 
         async function refreshCoinsBalance({ quiet = false } = {}) {
 	          const snap = getMagicAuthSnapshot();
@@ -5685,22 +6031,17 @@
 	          if (state.coinsUserId !== userId || state.coins == null) refreshCoinsBalance({ quiet: true });
 	        }
 
-	        function openCoinsPurchase() {
-	          const snap = getMagicAuthSnapshot();
-	          if (!snap?.signedIn) {
-	            setNotice("Sign in via Auth + Wallet (Magic Link) to buy AgentC-oins.");
-	            openTheAgentFamily();
-	            render();
-	            return;
-	          }
-
-	          const url = buildStripeBuyUrlForCurrentUser();
-	          try {
-	            window.open(url, "_blank", "noopener,noreferrer");
-	          } catch {
-	            window.location.href = url;
-	          }
-	        }
+			        function openCoinsPurchase() {
+			          const snap = getMagicAuthSnapshot();
+			          const signedIn = Boolean(snap && snap.signedIn);
+			          if (signedIn) {
+			            refreshCoinsBalance({ quiet: true });
+			          }
+			          const ack = el("coinsNoRefundAck");
+			          if (ack) ack.checked = coinsNoRefundAcked();
+			          openDialogById("coinsStoreModal");
+			          renderCoinsStore();
+			        }
 
 		        const MK_CLAIM_KEY = "mkMkClaimedV1";
 		        const MK_ADMIN_KEY = "mkMkAdminV1";
@@ -5805,21 +6146,30 @@
 	          }
 	        }
 
-          function openTheAgentFamily() {
-            const url = "https://theagentfamily.com/";
-            try {
-              const w = window.open(url, "_blank", "noopener,noreferrer");
-              if (w) return true;
-            } catch {
-              // ignore
-            }
-            try {
-              window.location.href = url;
-              return true;
-            } catch {
-              return false;
-            }
-          }
+	          function openExternalUrl(url) {
+	            const u = String(url || "").trim();
+	            if (!u) return false;
+	            try {
+	              const w = window.open(u, "_blank", "noopener,noreferrer");
+	              if (w) return true;
+	            } catch {
+	              // ignore
+	            }
+	            try {
+	              window.location.href = u;
+	              return true;
+	            } catch {
+	              return false;
+	            }
+	          }
+
+	          function openTheAgentFamily() {
+	            return openExternalUrl("https://theagentfamily.com/");
+	          }
+
+	          function openTheAgentFamilyGit() {
+	            return openExternalUrl("https://git.com/the-agent-family");
+	          }
 
 		        function magicAuthContextForLLM(prompt) {
 		          const snap = getMagicAuthSnapshot();
@@ -6304,11 +6654,16 @@ Style rules:
               msg =
                 "Endpoint returned 404 (not found). Your Ollama Endpoint/IP is likely wrong. Open Settings and clear “Ollama Endpoint” to use auto.";
             }
-            if (res.status === 402) {
-              state.coins = 0;
-              setNotice("No AgentC-oins remaining. Buy more to continue.");
-              render();
-            }
+	            if (res.status === 402) {
+	              state.coins = 0;
+	              setNotice("No AgentC-oins remaining. Buy more to continue.");
+	              render();
+	              try {
+	                openCoinsPurchase();
+	              } catch {
+	                // ignore
+	              }
+	            }
             if (maybeRecoverFromToolTokenError(msg)) throw new Error("Tool token expired.");
             throw new Error(msg);
           }
@@ -7213,17 +7568,17 @@ Style rules:
             const snap = getMagicAuthSnapshot();
             const signedIn = Boolean(snap && snap.signedIn);
 
-	            const onlineBtn = el("onlineBtn");
-	            const onlineLabel = el("onlineLabel");
-	            const onlineStatusImg = el("onlineStatusImg");
-	            if (onlineBtn && onlineLabel) {
-	              onlineBtn.disabled = Boolean(state.loading);
-	              onlineBtn.setAttribute("aria-pressed", signedIn ? "true" : "false");
-	              onlineBtn.title = signedIn ? "Online (signed in — click to sign out)" : "Online (opens TheAgentFamily.com)";
-	              onlineLabel.textContent = "Online";
-	              if (onlineStatusImg) {
-	              const LOGGED_OUT_PNG = "Logged OUT.png";
-	              const LOGGED_IN_PNG = "Logged IN.png";
+		            const onlineBtn = el("onlineBtn");
+		            const onlineLabel = el("onlineLabel");
+		            const onlineStatusImg = el("onlineStatusImg");
+		            if (onlineBtn && onlineLabel) {
+		              onlineBtn.disabled = Boolean(state.loading);
+		              onlineBtn.setAttribute("aria-pressed", signedIn ? "true" : "false");
+		              onlineBtn.title = signedIn ? "Online (signed in — click to sign out)" : "Online (sign in via Magic Link)";
+		              onlineLabel.textContent = "Online";
+		              if (onlineStatusImg) {
+		              const LOGGED_OUT_PNG = "Logged OUT.png";
+		              const LOGGED_IN_PNG = "Logged IN.png";
 	              // Root fix: avoid legacy SVG→PNG localStorage caches (they can keep showing oversized icons).
 	              onlineStatusImg.src = signedIn ? LOGGED_IN_PNG : LOGGED_OUT_PNG;
 	              onlineStatusImg.alt = signedIn ? "Online on" : "Online off";
@@ -7238,18 +7593,18 @@ Style rules:
               glitchBtn.title = on ? "Glitch Mode (runtime disturbance layer) — ON" : "Glitch Mode (runtime disturbance layer) — OFF";
             }
 
-	            const coinsBtn = el("coinsBtn");
-	            const coinsLabel = el("coinsLabel");
-            const coinsAccount = el("coinsAccount");
-	            if (coinsBtn && coinsLabel) {
-	              if (!signedIn) {
-	                coinsBtn.disabled = Boolean(state.loading);
-	                coinsBtn.setAttribute("aria-pressed", "false");
-	                coinsBtn.title = "Sign in to view your account + balance";
-	                coinsLabel.textContent = "C-oins";
-                  if (coinsAccount) coinsAccount.textContent = "";
-	                state.coins = null;
-	                state.coinsLoading = false;
+		            const coinsBtn = el("coinsBtn");
+		            const coinsLabel = el("coinsLabel");
+	            const coinsAccount = el("coinsAccount");
+		            if (coinsBtn && coinsLabel) {
+			              if (!signedIn) {
+			                coinsBtn.disabled = Boolean(state.loading);
+			                coinsBtn.setAttribute("aria-pressed", "false");
+			                coinsBtn.title = "C-oin Store (sign in recommended)";
+			                coinsLabel.textContent = "C-oins";
+	                  if (coinsAccount) coinsAccount.textContent = "";
+		                state.coins = null;
+		                state.coinsLoading = false;
 	                state.coinsUserId = "";
                   state.coinsError = "";
 	              } else {
@@ -7265,11 +7620,20 @@ Style rules:
                   ]
                     .filter(Boolean)
                     .join(" • ");
-	                coinsLabel.textContent = state.coinsLoading ? "Balance…" : tokens == null ? "Balance —" : `Balance ${tokens}`;
-	                maybeRefreshCoinsBalance();
-	              }
-	            }
-          })();
+		                coinsLabel.textContent = state.coinsLoading ? "Balance…" : tokens == null ? "Balance —" : `Balance ${tokens}`;
+		                maybeRefreshCoinsBalance();
+		              }
+		            }
+
+		            // Keep store modal in sync if it's open.
+		            try {
+		              const modal = el("coinsStoreModal");
+		              const isOpen = Boolean(modal && (modal.open || modal.hasAttribute("open")));
+		              if (isOpen) renderCoinsStore();
+		            } catch {
+		              // ignore
+		            }
+	          })();
 
           el("nextRoundBtn").disabled = state.loading || state.rounds.length === 0;
           el("refineBtn").disabled = state.loading || state.rounds.length === 0;
@@ -8974,11 +9338,11 @@ Style rules:
           render();
         }
 
-			        async function toggleAuth() {
-			          const snap = getMagicAuthSnapshot();
-			          const signedIn = Boolean(snap && snap.signedIn);
-			          if (signedIn) {
-			            setStatusRight("Signing out…");
+				        async function toggleAuth() {
+				          const snap = getMagicAuthSnapshot();
+				          const signedIn = Boolean(snap && snap.signedIn);
+				          if (signedIn) {
+				            setStatusRight("Signing out…");
 			            try {
 			              if (window.MKMagicAuth?.logout) await window.MKMagicAuth.logout();
 			              else if (window.MKCore?.magicAuth?.logout) await window.MKCore.magicAuth.logout();
@@ -8988,10 +9352,10 @@ Style rules:
 			              setStatusRight("");
 			              render();
 			            }
-			            return;
-			          }
-			          openTheAgentFamily();
-			        }
+				            return;
+				          }
+				          if (!openMagicAuthPanel()) openTheAgentFamily();
+				        }
 
 		        function openDownload() {
 		          const url = "https://doi.org/10.5281/zenodo.18334441";
@@ -9503,20 +9867,32 @@ Style rules:
 				              activateSettingsPanel(panelId, { focusFirst: false });
 				            }
 				          });
-		          wireDialogLifecycle("privacyModal", { onClose: () => setStatusRight("") });
-		          wireDialogLifecycle("memoryModal", { onClose: () => setStatusRight("") });
-		          wireDialogLifecycle("teachModal", { onClose: () => (state.pendingTeachContext = null) });
-		          wireDialogLifecycle("toolsModal", { onClose: () => resolveToolApproval(false) });
-              wireDialogLifecycle("confirmModal", { onClose: () => resolveConfirm(false) });
+			          wireDialogLifecycle("privacyModal", { onClose: () => setStatusRight("") });
+			          wireDialogLifecycle("memoryModal", { onClose: () => setStatusRight("") });
+			          wireDialogLifecycle("teachModal", { onClose: () => (state.pendingTeachContext = null) });
+			          wireDialogLifecycle("toolsModal", { onClose: () => resolveToolApproval(false) });
+	              wireDialogLifecycle("coinsStoreModal", { onClose: () => setStatusRight("") });
+	              wireDialogLifecycle("confirmModal", { onClose: () => resolveConfirm(false) });
               el("closeConfirmBtn")?.addEventListener("click", () => closeDialogById("confirmModal"));
               el("confirmCancelBtn")?.addEventListener("click", () => {
                 resolveConfirm(false);
                 closeDialogById("confirmModal");
               });
-              el("confirmOkBtn")?.addEventListener("click", () => {
-                resolveConfirm(true);
-                closeDialogById("confirmModal");
-              });
+	              el("confirmOkBtn")?.addEventListener("click", () => {
+	                resolveConfirm(true);
+	                closeDialogById("confirmModal");
+	              });
+
+	              el("closeCoinsStoreBtn")?.addEventListener("click", () => closeDialogById("coinsStoreModal"));
+	              el("refreshCoinsStoreBalanceBtn")?.addEventListener("click", () => refreshCoinsBalance({ quiet: false }));
+	              el("coinsStoreOpenAgentFamilyBtn")?.addEventListener("click", () => openTheAgentFamilyGit());
+	              el("coinsStoreSignInBtn")?.addEventListener("click", () => {
+	                if (!openMagicAuthPanel()) openTheAgentFamily();
+	              });
+	              el("coinsNoRefundAck")?.addEventListener("change", (e) => {
+	                setCoinsNoRefundAcked(Boolean(e?.target?.checked));
+	                renderCoinsStore();
+	              });
               bus.on("settings:draftChanged", () => {
                 updateEffectiveSettingsSummaryFromDraft();
               });
