@@ -1832,12 +1832,48 @@
         overscroll-behavior: contain;
       }
 
+      #settingsModal .settings-nav {
+        position: sticky;
+        top: 0;
+        z-index: 3;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        padding: 10px 8px;
+        margin: -6px -8px 0;
+        background: rgba(255, 255, 255, 0.88);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+      }
+
+      #settingsModal .settings-nav .chip-btn {
+        padding: 8px 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(15, 23, 42, 0.10);
+        background: rgba(255, 255, 255, 0.78);
+        color: rgba(2, 6, 23, 0.82);
+        font-size: var(--fs-ui-small);
+        transition: transform 120ms ease, box-shadow 220ms ease, background 220ms ease, border-color 220ms ease;
+      }
+
+      #settingsModal .settings-nav .chip-btn:hover {
+        background: rgba(255, 255, 255, 0.92);
+        box-shadow: var(--shadow-soft);
+        border-color: rgba(79, 70, 229, 0.18);
+      }
+
+      #settingsModal .settings-nav .chip-btn:active {
+        transform: translateY(1px);
+      }
+
       #settingsModal details.settings-section {
         border: 1px solid rgba(15, 23, 42, 0.10);
         border-radius: var(--radius-md);
         background: rgba(255, 255, 255, 0.70);
         overflow: hidden;
         box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+        scroll-margin-top: 72px;
       }
 
       #settingsModal details.settings-section summary {
@@ -1862,6 +1898,7 @@
         flex: 0 0 auto;
         min-width: 0;
         text-align: right;
+        margin-left: auto;
       }
 
       #settingsModal details.settings-section summary::-webkit-details-marker {
@@ -2672,15 +2709,23 @@
       </div>
     </dialog>
 
-		    <dialog id="settingsModal">
-		      <div class="modal-head">
-		        <strong>Settings</strong>
-		        <button class="btn" id="closeSettingsBtn" type="button">Close</button>
-		      </div>
-		      <div class="modal-body settings-body">
-		        <details class="settings-section" open>
-		          <summary><span class="settings-summary-label">Models &amp; Execution</span></summary>
-		          <div class="settings-grid">
+			    <dialog id="settingsModal">
+			      <div class="modal-head">
+			        <strong>Settings</strong>
+			        <button class="btn" id="closeSettingsBtn" type="button">Close</button>
+			      </div>
+			      <div class="modal-body settings-body">
+			        <div class="settings-nav" id="settingsNav" role="navigation" aria-label="Settings sections">
+			          <button class="chip-btn" type="button" data-settings-jump="settingsModels">Models</button>
+			          <button class="chip-btn" type="button" data-settings-jump="settingsAgents">Agents</button>
+			          <button class="chip-btn" type="button" data-settings-jump="settingsModes">Modes</button>
+			          <button class="chip-btn" type="button" data-settings-jump="settingsPrivacy">Privacy</button>
+			          <button class="chip-btn" type="button" data-settings-jump="settingsNetwork">Network</button>
+			        </div>
+
+			        <details class="settings-section" id="settingsModels" open>
+			          <summary><span class="settings-summary-label">Models &amp; Execution</span></summary>
+			          <div class="settings-grid">
 		            <div class="field">
 		              <label for="endpointInput">Ollama Endpoint (optional)</label>
 		              <input id="endpointInput" type="text" placeholder="Leave blank for auto • or use http://127.0.0.1:3030" />
@@ -2778,7 +2823,7 @@
 	          </div>
 	        </details>
 
-	        <details class="settings-section" open>
+	        <details class="settings-section" id="settingsAgents" open>
 	          <summary><span class="settings-summary-label">Agents &amp; Voices</span></summary>
 	          <div class="settings-grid">
 	            <div class="field full">
@@ -3002,7 +3047,7 @@
 	          </div>
 	        </details>
 
-	        <details class="settings-section" open>
+	        <details class="settings-section" id="settingsModes" open>
 	          <summary><span class="settings-summary-label">Modes &amp; Behavior</span></summary>
 	          <div class="settings-grid">
 	            <div class="field">
@@ -3067,7 +3112,7 @@
 	          </div>
 	        </details>
 
-	        <details class="settings-section">
+	        <details class="settings-section" id="settingsPrivacy">
 	          <summary><span class="settings-summary-label">Privacy &amp; Local Data</span></summary>
 	          <div class="settings-grid">
 	            <div class="field full">
@@ -3113,7 +3158,7 @@
 	          </div>
 	        </details>
 
-	        <details class="settings-section">
+	        <details class="settings-section" id="settingsNetwork">
 	          <summary><span class="settings-summary-label">Network / LAN (Advanced)</span></summary>
 	          <div class="settings-grid">
 	            <div class="field full" id="lanAccessField">
@@ -9257,6 +9302,23 @@ Style rules:
 		              } catch {
 		                // ignore
 		              }
+		            }
+		          });
+		          el("settingsNav")?.addEventListener("click", (e) => {
+		            const btn = e.target?.closest?.("[data-settings-jump]");
+		            const target = String(btn?.getAttribute?.("data-settings-jump") || "").trim();
+		            if (!target) return;
+		            const section = el(target);
+		            if (!section) return;
+		            try {
+		              if (section.tagName === "DETAILS") section.open = true;
+		            } catch {
+		              // ignore
+		            }
+		            try {
+		              section.scrollIntoView({ behavior: "smooth", block: "start" });
+		            } catch {
+		              section.scrollIntoView();
 		            }
 		          });
 		          wireDialogLifecycle("privacyModal", { onClose: () => setStatusRight("") });
