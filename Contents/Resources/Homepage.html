@@ -1827,6 +1827,7 @@
         overflow: auto;
         -webkit-overflow-scrolling: touch;
         min-height: 0; /* allow full settings scroll */
+        overscroll-behavior: contain;
       }
 
       #settingsModal details.settings-section {
@@ -3685,6 +3686,7 @@
 	          const timersById = new Map(); // id -> Set(timeoutId)
 	          const decisions = new Map(); // id -> { on, severity, prob, seed }
 	          let bumpTimer = 0;
+	          let introTimer = 0;
 	          let writeRaf = 0;
 	          let writeToken = 0;
 	          let writeHasRun = false;
@@ -3768,6 +3770,14 @@
           };
 
 	          const clearAll = () => {
+	            if (introTimer) {
+	              try {
+	                window.clearTimeout(introTimer);
+	              } catch {
+	                // ignore
+	              }
+	              introTimer = 0;
+	            }
 	            try {
 	              if (writeRaf) window.cancelAnimationFrame(writeRaf);
 	            } catch {
@@ -4109,7 +4119,8 @@
 
 	            const startedAt = performance.now();
 	            const frame = () => {
-	              if (!state.runtimeGlitchEnabled) {
+	              const introActive = Date.now() < Number(state.runtimeGlitchIntroUntil || 0);
+	              if (!state.runtimeGlitchEnabled && !introActive) {
 	                clearAll();
 	                return;
 	              }
@@ -4150,10 +4161,33 @@
 	            writeRaf = window.requestAnimationFrame(frame);
 	          };
 
+	          const startIntro = (durationMs = 13_000) => {
+	            if (!document.documentElement.classList.contains("entry-accepted")) return;
+	            const ms = Math.max(0, Math.min(60_000, Number(durationMs) || 0));
+	            if (!ms) return;
+	            state.runtimeGlitchIntroUntil = Date.now() + ms;
+	            writeHasRun = false;
+	            try {
+	              if (introTimer) window.clearTimeout(introTimer);
+	            } catch {
+	              // ignore
+	            }
+	            introTimer = window.setTimeout(() => {
+	              try {
+	                state.runtimeGlitchIntroUntil = 0;
+	                sync();
+	              } catch {
+	                // ignore
+	              }
+	            }, ms + 30);
+	            sync();
+	          };
+
 	          const sync = () => {
 	            const enabled = Boolean(state.runtimeGlitchEnabled);
 	            const accepted = document.documentElement.classList.contains("entry-accepted");
-	            const active = enabled && accepted;
+	            const introActive = Date.now() < Number(state.runtimeGlitchIntroUntil || 0);
+	            const active = accepted && (enabled || introActive);
 	            document.documentElement.classList.toggle("glitch-mode", active);
 	            if (!active) {
 	              clearAll();
@@ -4172,13 +4206,14 @@
 	            // Micro-stutters: occasional single-frame bumps (presentation-only).
 	            if (!bumpTimer) {
 	              bumpTimer = window.setInterval(() => {
-                try {
-                  if (PREFERS_REDUCED_MOTION) return;
-                  if (!state.runtimeGlitchEnabled) return;
-                  if (Math.random() > 0.25) return;
-                  document.documentElement.classList.add("glitch-bump");
-                  window.setTimeout(() => document.documentElement.classList.remove("glitch-bump"), 70);
-                } catch {
+	                try {
+	                  if (PREFERS_REDUCED_MOTION) return;
+	                  const introActive = Date.now() < Number(state.runtimeGlitchIntroUntil || 0);
+	                  if (!state.runtimeGlitchEnabled && !introActive) return;
+	                  if (Math.random() > 0.25) return;
+	                  document.documentElement.classList.add("glitch-bump");
+	                  window.setTimeout(() => document.documentElement.classList.remove("glitch-bump"), 70);
+	                } catch {
                   // ignore
                 }
               }, 900);
@@ -4264,8 +4299,8 @@
 	            }
 	          };
 
-          return { sync, setEnabled, clearAll };
-        })();
+	          return { sync, setEnabled, startIntro, clearAll };
+	        })();
 
         const FORCE_DIALOG_FALLBACK = true;
 
@@ -4582,52 +4617,58 @@
 		            savedSessions: [],
 		            templateEditorId: null,
 		            pendingTeachContext: null,
-		            runUtc: "",
-		          topic: "",
-		          notice: null,
-		          modelSetupMessage: null,
-	          isPullingModel: false,
-	          pullProgress: 0,
-	          pullLog: "",
-	          rounds: [],
-            roundsRev: 0,
-	          loading: false,
-	          coins: null,
-	          coinsLoading: false,
-	          coinsUserId: "",
-            coinsError: "",
-	          error: null,
-	          lastRenderedCount: 0,
-            conversationRenderKey: "",
-	          visibleStart: 0,
-	          historyExpanded: false,
-	          stickToBottom: true,
-	          unseenRounds: 0,
-	          initialScrollDone: false,
-	          forceScrollToBottomOnce: false,
-	          suppressAutoScrollOnce: false,
-            runtimeGlitchEnabled: localStorage.getItem(STORAGE.runtimeGlitch) === "true",
-            runtimeGlitchSessionSeed: 0
-	        };
+			              runUtc: "",
+			          topic: "",
+			          notice: null,
+			          modelSetupMessage: null,
+		          isPullingModel: false,
+		          pullProgress: 0,
+		          pullLog: "",
+		          rounds: [],
+	            roundsRev: 0,
+		          loading: false,
+		          coins: null,
+		          coinsLoading: false,
+		          coinsUserId: "",
+	            coinsError: "",
+		          error: null,
+		          lastRenderedCount: 0,
+	            conversationRenderKey: "",
+		          visibleStart: 0,
+		          historyExpanded: false,
+		          stickToBottom: true,
+		          unseenRounds: 0,
+		          initialScrollDone: false,
+		          forceScrollToBottomOnce: false,
+		          suppressAutoScrollOnce: false,
+	            runtimeGlitchEnabled: localStorage.getItem(STORAGE.runtimeGlitch) === "true",
+	            runtimeGlitchIntroUntil: 0,
+	            runtimeGlitchSessionSeed: 0
+		        };
 
         function displayEndpoint() {
           return state.endpoint || window.location.origin;
         }
 
-        function waitForEntryAcceptance() {
-          if (document.documentElement.classList.contains("entry-accepted")) {
-            try {
-              const screen = document.getElementById("entryScreen");
-              if (screen) {
-                screen.hidden = true;
-                screen.setAttribute("aria-hidden", "true");
-              }
-            } catch {
-              // ignore
-            }
-            return Promise.resolve(true);
-          }
-          return new Promise((resolve) => {
+	        function waitForEntryAcceptance() {
+	          if (document.documentElement.classList.contains("entry-accepted")) {
+	            try {
+	              const screen = document.getElementById("entryScreen");
+	              if (screen) {
+	                screen.hidden = true;
+	                screen.setAttribute("aria-hidden", "true");
+	              }
+	            } catch {
+	              // ignore
+	            }
+	            try {
+	              runtimeGlitch.startIntro(13_000);
+	            } catch {
+	              // ignore
+	            }
+	            return Promise.resolve(true);
+	          }
+	          return new Promise((resolve) => {
             const screen = document.getElementById("entryScreen");
             const input = document.getElementById("workspaceLabelInput");
             const count = document.getElementById("workspaceLabelCount");
@@ -4682,18 +4723,23 @@
               window.setTimeout(() => setFooter(BASELINE_FOOTER), 1800);
             };
 
-            const accept = () => {
-              saveLabel();
-              try {
-                localStorage.setItem(STORAGE.entryAccepted, "1");
-              } catch {
-                // ignore
-              }
-              document.documentElement.classList.add("entry-accepted");
-              window.setTimeout(() => {
-                try {
-                  screen.hidden = true;
-                  screen.setAttribute("aria-hidden", "true");
+	            const accept = () => {
+	              saveLabel();
+	              try {
+	                localStorage.setItem(STORAGE.entryAccepted, "1");
+	              } catch {
+	                // ignore
+	              }
+	              document.documentElement.classList.add("entry-accepted");
+	              try {
+	                runtimeGlitch.startIntro(13_000);
+	              } catch {
+	                // ignore
+	              }
+	              window.setTimeout(() => {
+	                try {
+	                  screen.hidden = true;
+	                  screen.setAttribute("aria-hidden", "true");
                 } catch {
                   // ignore
                 }
