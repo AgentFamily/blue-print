@@ -1857,7 +1857,7 @@
 	        transition: transform 120ms ease, box-shadow 220ms ease, background 220ms ease, border-color 220ms ease;
 	      }
 	
-	      #settingsModal .settings-nav .chip-btn[aria-current="page"] {
+	      #settingsModal .settings-nav .chip-btn[aria-selected="true"] {
 	        background: rgba(79, 70, 229, 0.10);
 	        border-color: rgba(79, 70, 229, 0.28);
 	        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
@@ -1882,6 +1882,10 @@
 	        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
 	        scroll-margin-top: 72px;
 	        transition: border-color 220ms ease, box-shadow 220ms ease;
+	      }
+	
+	      #settingsModal details.settings-section[hidden] {
+	        display: none;
 	      }
 	
 	      #settingsModal details.settings-section.settings-jump-flash {
@@ -2733,16 +2737,16 @@
 			        <strong>Settings</strong>
 			        <button class="btn" id="closeSettingsBtn" type="button">Close</button>
 			      </div>
-			      <div class="modal-body settings-body">
-			        <div class="settings-nav" id="settingsNav" role="navigation" aria-label="Settings sections">
-			          <button class="chip-btn" type="button" data-settings-jump="settingsModels">Models</button>
-			          <button class="chip-btn" type="button" data-settings-jump="settingsAgents">Agents</button>
-			          <button class="chip-btn" type="button" data-settings-jump="settingsModes">Modes</button>
-			          <button class="chip-btn" type="button" data-settings-jump="settingsPrivacy">Privacy</button>
-			          <button class="chip-btn" type="button" data-settings-jump="settingsNetwork">Network</button>
-			        </div>
+				      <div class="modal-body settings-body">
+				        <div class="settings-nav" id="settingsNav" role="tablist" aria-label="Settings sections">
+				          <button class="chip-btn" id="settingsTabModels" type="button" role="tab" aria-controls="settingsModels" aria-selected="true" tabindex="0" data-settings-panel="settingsModels">Models</button>
+				          <button class="chip-btn" id="settingsTabAgents" type="button" role="tab" aria-controls="settingsAgents" aria-selected="false" tabindex="-1" data-settings-panel="settingsAgents">Agents</button>
+				          <button class="chip-btn" id="settingsTabModes" type="button" role="tab" aria-controls="settingsModes" aria-selected="false" tabindex="-1" data-settings-panel="settingsModes">Modes</button>
+				          <button class="chip-btn" id="settingsTabPrivacy" type="button" role="tab" aria-controls="settingsPrivacy" aria-selected="false" tabindex="-1" data-settings-panel="settingsPrivacy">Privacy</button>
+				          <button class="chip-btn" id="settingsTabNetwork" type="button" role="tab" aria-controls="settingsNetwork" aria-selected="false" tabindex="-1" data-settings-panel="settingsNetwork">Network</button>
+				        </div>
 
-			        <details class="settings-section" id="settingsModels" open>
+				        <details class="settings-section" id="settingsModels" role="tabpanel" aria-labelledby="settingsTabModels" open>
 			          <summary><span class="settings-summary-label">Models &amp; Execution</span></summary>
 			          <div class="settings-grid">
 		            <div class="field">
@@ -2842,7 +2846,7 @@
 	          </div>
 	        </details>
 
-	        <details class="settings-section" id="settingsAgents" open>
+		        <details class="settings-section" id="settingsAgents" role="tabpanel" aria-labelledby="settingsTabAgents" open hidden>
 	          <summary><span class="settings-summary-label">Agents &amp; Voices</span></summary>
 	          <div class="settings-grid">
 	            <div class="field full">
@@ -3066,7 +3070,7 @@
 	          </div>
 	        </details>
 
-	        <details class="settings-section" id="settingsModes" open>
+	        <details class="settings-section" id="settingsModes" role="tabpanel" aria-labelledby="settingsTabModes" open hidden>
 	          <summary><span class="settings-summary-label">Modes &amp; Behavior</span></summary>
 	          <div class="settings-grid">
 	            <div class="field">
@@ -3131,7 +3135,7 @@
 	          </div>
 	        </details>
 
-	        <details class="settings-section" id="settingsPrivacy">
+	        <details class="settings-section" id="settingsPrivacy" role="tabpanel" aria-labelledby="settingsTabPrivacy" hidden>
 	          <summary><span class="settings-summary-label">Privacy &amp; Local Data</span></summary>
 	          <div class="settings-grid">
 	            <div class="field full">
@@ -3177,7 +3181,7 @@
 	          </div>
 	        </details>
 
-	        <details class="settings-section" id="settingsNetwork">
+		        <details class="settings-section" id="settingsNetwork" role="tabpanel" aria-labelledby="settingsTabNetwork" hidden>
 	          <summary><span class="settings-summary-label">Network / LAN (Advanced)</span></summary>
 	          <div class="settings-grid">
 	            <div class="field full" id="lanAccessField">
@@ -8677,22 +8681,39 @@ Style rules:
             : firstTemplate;
           if (templatesSelect) templatesSelect.value = selected;
 	          setTemplateEditorFromId(selected);
-	          refreshTeachingsPre();
-	          renderVoicePreviewFromDraft();
-	            updateEffectiveSettingsSummaryFromDraft();
+		          refreshTeachingsPre();
+		          renderVoicePreviewFromDraft();
+		            updateEffectiveSettingsSummaryFromDraft();
+		
+		          try {
+		            // Restore last Settings category (“window”) on open.
+		            activateSettingsPanel(getActiveSettingsPanel(), { focusFirst: false });
+		          } catch {
+		            // ignore
+		          }
 
-	          openDialogById("settingsModal");
-	          window.setTimeout(() => {
-	            try {
-	              el("endpointInput")?.focus?.({ preventScroll: true });
-	            } catch {
-	              try {
-	                el("endpointInput")?.focus?.();
-	              } catch {
-	                // ignore
-	              }
-	            }
-	          }, 20);
+		          openDialogById("settingsModal");
+		          window.setTimeout(() => {
+		            try {
+		              const activePanel = getActiveSettingsPanel();
+		              if (activePanel === "settingsModels") {
+		                el("endpointInput")?.focus?.({ preventScroll: true });
+		              } else {
+		                activateSettingsPanel(activePanel, { focusFirst: true });
+		              }
+		            } catch {
+		              try {
+		                const activePanel = getActiveSettingsPanel();
+		                if (activePanel === "settingsModels") {
+		                  el("endpointInput")?.focus?.();
+		                } else {
+		                  activateSettingsPanel(activePanel, { focusFirst: true });
+		                }
+		              } catch {
+		                // ignore
+		              }
+		            }
+		          }, 20);
 			          updateModelDownloadUI();
 		            refreshLanUi({ quiet: true }).catch(() => {});
 	              refreshCoordinationUi({ quiet: true }).catch(() => {});
@@ -9329,82 +9350,146 @@ Style rules:
 		              }
 		            }
 		          });
-			          el("settingsNav")?.addEventListener("click", (e) => {
-			            const findBtn = () => {
-			              try {
-			                const path = typeof e.composedPath === "function" ? e.composedPath() : [];
-			                for (const node of path) {
-			                  if (!node || node.nodeType !== 1) continue;
-			                  if (node.matches?.("[data-settings-jump]")) return node;
-			                }
-			              } catch {
-			                // ignore
-			              }
-			              const raw = e.target;
-			              const targetEl = raw && raw.nodeType === 1 ? raw : raw?.parentElement;
-			              return targetEl?.closest?.("[data-settings-jump]") || null;
-			            };
-			            const btn = findBtn();
-			            const target = String(btn?.getAttribute?.("data-settings-jump") || "").trim();
-			            if (!target) return;
-			            const section = el(target);
-			            if (!section) return;
-			
-			            try {
-			              const nav = el("settingsNav");
-			              nav?.querySelectorAll?.(".chip-btn[data-settings-jump]")?.forEach?.((b) => {
-			                const isActive = String(b.getAttribute?.("data-settings-jump") || "") === target;
-			                if (isActive) b.setAttribute?.("aria-current", "page");
-			                else b.removeAttribute?.("aria-current");
-			              });
-			            } catch {
-			              // ignore
-			            }
-			
-			            try {
-			              if (section.tagName === "DETAILS") section.open = true;
-			            } catch {
-			              // ignore
-			            }
-			
-			            const scrollToSection = () => {
-			              const dialog = el("settingsModal");
-			              const body = dialog?.querySelector?.(".modal-body.settings-body");
-			              const nav = el("settingsNav");
-			              const navH = Math.max(0, Number(nav?.getBoundingClientRect?.().height || 0));
-			              const pad = 10;
-			
-			              if (body?.scrollTo && body?.getBoundingClientRect) {
-			                const bodyRect = body.getBoundingClientRect();
-			                const secRect = section.getBoundingClientRect();
-			                const nextTop = body.scrollTop + (secRect.top - bodyRect.top) - navH - pad;
-			                body.scrollTo({ top: Math.max(0, nextTop), behavior: "smooth" });
-			              } else {
-			                try {
-			                  section.scrollIntoView({ behavior: "smooth", block: "start" });
-			                } catch {
-			                  try {
-			                    section.scrollIntoView();
-			                  } catch {
-			                    // ignore
-			                  }
-			                }
-			              }
-			
-			              try {
-			                section.classList.add("settings-jump-flash");
-			                setTimeout(() => section.classList.remove("settings-jump-flash"), 520);
-			              } catch {
-			                // ignore
-			              }
-			            };
-			
-			            try {
-			              requestAnimationFrame(scrollToSection);
-			            } catch {
-			              scrollToSection();
-			            }
-			          });
+				          const SETTINGS_ACTIVE_PANEL_KEY = "mkSettingsActivePanelV1";
+				          const SETTINGS_PANEL_IDS = ["settingsModels", "settingsAgents", "settingsModes", "settingsPrivacy", "settingsNetwork"];
+				
+				          const getActiveSettingsPanel = () => {
+				            try {
+				              const stored = String(localStorage.getItem(SETTINGS_ACTIVE_PANEL_KEY) || "").trim();
+				              if (SETTINGS_PANEL_IDS.includes(stored)) return stored;
+				            } catch {
+				              // ignore
+				            }
+				            return "settingsModels";
+				          };
+				
+				          const setActiveSettingsPanel = (id) => {
+				            try {
+				              localStorage.setItem(SETTINGS_ACTIVE_PANEL_KEY, String(id || ""));
+				            } catch {
+				              // ignore
+				            }
+				          };
+				
+				          const activateSettingsPanel = (panelId, { focusFirst = false } = {}) => {
+				            const target = SETTINGS_PANEL_IDS.includes(panelId) ? panelId : "settingsModels";
+				            const nav = el("settingsNav");
+				            const dialog = el("settingsModal");
+				            const body = dialog?.querySelector?.(".modal-body.settings-body");
+				
+				            try {
+				              nav?.querySelectorAll?.('[role="tab"][data-settings-panel]')?.forEach?.((b) => {
+				                const id = String(b.getAttribute?.("data-settings-panel") || "");
+				                const isActive = id === target;
+				                b.setAttribute?.("aria-selected", isActive ? "true" : "false");
+				                b.tabIndex = isActive ? 0 : -1;
+				              });
+				            } catch {
+				              // ignore
+				            }
+				
+				            try {
+				              dialog?.querySelectorAll?.("details.settings-section")?.forEach?.((sec) => {
+				                const isActive = sec?.id === target;
+				                if (isActive) {
+				                  sec.removeAttribute("hidden");
+				                  try {
+				                    sec.open = true;
+				                  } catch {
+				                    // ignore
+				                  }
+				                } else {
+				                  sec.setAttribute("hidden", "");
+				                }
+				              });
+				            } catch {
+				              // ignore
+				            }
+				
+				            try {
+				              if (body) body.scrollTop = 0;
+				            } catch {
+				              // ignore
+				            }
+				
+				            setActiveSettingsPanel(target);
+				
+				            if (!focusFirst) return;
+				            try {
+				              const activePanel = el(target);
+				              const focusable =
+				                activePanel?.querySelector?.(
+				                  'input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+				                ) || null;
+				              focusable?.focus?.({ preventScroll: true });
+				            } catch {
+				              // ignore
+				            }
+				          };
+				
+				          const findSettingsTab = (e) => {
+				            try {
+				              const path = typeof e.composedPath === "function" ? e.composedPath() : [];
+				              for (const node of path) {
+				                if (!node || node.nodeType !== 1) continue;
+				                if (node.matches?.('[role="tab"][data-settings-panel]')) return node;
+				              }
+				            } catch {
+				              // ignore
+				            }
+				            const raw = e.target;
+				            const targetEl = raw && raw.nodeType === 1 ? raw : raw?.parentElement;
+				            return targetEl?.closest?.('[role="tab"][data-settings-panel]') || null;
+				          };
+				
+				          el("settingsNav")?.addEventListener("click", (e) => {
+				            const tab = findSettingsTab(e);
+				            const panelId = String(tab?.getAttribute?.("data-settings-panel") || "").trim();
+				            if (!panelId) return;
+				            activateSettingsPanel(panelId, { focusFirst: false });
+				          });
+				
+				          el("settingsNav")?.addEventListener("keydown", (e) => {
+				            const nav = el("settingsNav");
+				            if (!nav) return;
+				            const tabs = Array.from(nav.querySelectorAll?.('[role="tab"][data-settings-panel]') || []);
+				            if (!tabs.length) return;
+				            const currentIdx = Math.max(
+				              0,
+				              tabs.findIndex((t) => String(t.getAttribute?.("aria-selected") || "") === "true")
+				            );
+				            const move = (idx) => {
+				              const next = tabs[(idx + tabs.length) % tabs.length];
+				              const panelId = String(next?.getAttribute?.("data-settings-panel") || "").trim();
+				              if (!panelId) return;
+				              activateSettingsPanel(panelId, { focusFirst: false });
+				              try {
+				                next.focus?.();
+				              } catch {
+				                // ignore
+				              }
+				            };
+				            if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+				              e.preventDefault();
+				              move(currentIdx + 1);
+				            } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+				              e.preventDefault();
+				              move(currentIdx - 1);
+				            } else if (e.key === "Home") {
+				              e.preventDefault();
+				              move(0);
+				            } else if (e.key === "End") {
+				              e.preventDefault();
+				              move(tabs.length - 1);
+				            } else if (e.key === "Enter" || e.key === " ") {
+				              // allow click semantics; but prevent page scroll on Space
+				              e.preventDefault();
+				              const tab = findSettingsTab(e);
+				              const panelId = String(tab?.getAttribute?.("data-settings-panel") || "").trim();
+				              if (!panelId) return;
+				              activateSettingsPanel(panelId, { focusFirst: false });
+				            }
+				          });
 		          wireDialogLifecycle("privacyModal", { onClose: () => setStatusRight("") });
 		          wireDialogLifecycle("memoryModal", { onClose: () => setStatusRight("") });
 		          wireDialogLifecycle("teachModal", { onClose: () => (state.pendingTeachContext = null) });
