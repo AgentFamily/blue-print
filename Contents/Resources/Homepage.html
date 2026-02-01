@@ -1822,23 +1822,33 @@
         white-space: pre-wrap;
       }
 
-      #settingsModal .modal-body.settings-body {
-        display: flex;
-        flex-direction: column;
-        gap: 14px;
-        overflow: auto;
-        -webkit-overflow-scrolling: touch;
-        min-height: 0; /* allow full settings scroll */
-        overscroll-behavior: contain;
-      }
+	      #settingsModal .modal-body.settings-body {
+	        display: flex;
+	        flex-direction: column;
+	        gap: 14px;
+	        overflow: hidden;
+	        min-height: 0; /* allow full settings scroll */
+	      }
+	
+	      #settingsModal .settings-viewport {
+	        flex: 1 1 auto;
+	        min-height: 0;
+	        overflow: auto;
+	        -webkit-overflow-scrolling: touch;
+	        overscroll-behavior: contain;
+	        touch-action: pan-y;
+	        display: flex;
+	        flex-direction: column;
+	        gap: 14px;
+	        padding-bottom: 12px;
+	      }
 
-      #settingsModal .settings-nav {
-        position: sticky;
-        top: 0;
-        z-index: 3;
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
+	      #settingsModal .settings-nav {
+	        position: relative;
+	        z-index: 3;
+	        display: flex;
+	        gap: 8px;
+	        flex-wrap: wrap;
         padding: 10px 8px;
         margin: -6px -8px 0;
         background: rgba(255, 255, 255, 0.88);
@@ -2745,10 +2755,12 @@
 				          <button class="chip-btn" id="settingsTabPrivacy" type="button" role="tab" aria-controls="settingsPrivacy" aria-selected="false" tabindex="-1" data-settings-panel="settingsPrivacy">Privacy</button>
 				          <button class="chip-btn" id="settingsTabNetwork" type="button" role="tab" aria-controls="settingsNetwork" aria-selected="false" tabindex="-1" data-settings-panel="settingsNetwork">Network</button>
 				        </div>
+			
+				        <div class="settings-viewport" id="settingsViewport" role="presentation">
 
 				        <details class="settings-section" id="settingsModels" role="tabpanel" aria-labelledby="settingsTabModels" open>
-			          <summary><span class="settings-summary-label">Models &amp; Execution</span></summary>
-			          <div class="settings-grid">
+				          <summary><span class="settings-summary-label">Models &amp; Execution</span></summary>
+				          <div class="settings-grid">
 		            <div class="field">
 		              <label for="endpointInput">Ollama Endpoint (optional)</label>
 		              <input id="endpointInput" type="text" placeholder="Leave blank for auto • or use http://127.0.0.1:3030" />
@@ -3225,9 +3237,9 @@
 	          </div>
 	        </details>
 
-	        <div class="settings-effective" aria-label="Effective configuration summary">
-	          <div class="settings-effective-title">Effective configuration</div>
-	          <div class="settings-effective-grid">
+		        <div class="settings-effective" aria-label="Effective configuration summary">
+		          <div class="settings-effective-title">Effective configuration</div>
+		          <div class="settings-effective-grid">
 	            <div class="k">Account</div>
 	            <div class="v"><code id="effectiveAccountCode"></code></div>
 	            <div class="k">Balance</div>
@@ -3252,13 +3264,14 @@
 	            <div class="v"><code id="effectiveToolsCode"></code></div>
 	            <div class="k">Tuning</div>
 	            <div class="v"><code id="effectiveTuningCode"></code></div>
-	          </div>
-	        </div>
-	      </div>
-	      <div class="modal-foot">
-	        <button class="btn secondary" id="testBtn" type="button">Test Connection</button>
-	        <button class="btn primary" id="saveBtn" type="button">Save</button>
-	      </div>
+		          </div>
+		        </div>
+		      </div>
+		      </div>
+		      <div class="modal-foot">
+		        <button class="btn secondary" id="testBtn" type="button">Test Connection</button>
+		        <button class="btn primary" id="saveBtn" type="button">Save</button>
+		      </div>
 	    </dialog>
 
     <dialog id="privacyModal">
@@ -8624,13 +8637,13 @@ Style rules:
 	            state.settingsRestoreFocusEl = null;
 	          }
 
-	          try {
-	            const dialog = el("settingsModal");
-	            const body = dialog?.querySelector?.(".modal-body.settings-body");
-	            if (body) body.scrollTop = 0;
-	          } catch {
-	            // ignore
-	          }
+		          try {
+		            const dialog = el("settingsModal");
+		            const viewport = dialog?.querySelector?.("#settingsViewport");
+		            if (viewport) viewport.scrollTop = 0;
+		          } catch {
+		            // ignore
+		          }
 
 	          el("endpointInput").value = state.endpointMode === "auto" ? "" : state.endpoint;
 	          el("modelInput").value = state.modelOverride;
@@ -9375,7 +9388,7 @@ Style rules:
 				            const target = SETTINGS_PANEL_IDS.includes(panelId) ? panelId : "settingsModels";
 				            const nav = el("settingsNav");
 				            const dialog = el("settingsModal");
-				            const body = dialog?.querySelector?.(".modal-body.settings-body");
+				            const viewport = dialog?.querySelector?.("#settingsViewport");
 				
 				            try {
 				              nav?.querySelectorAll?.('[role="tab"][data-settings-panel]')?.forEach?.((b) => {
@@ -9407,7 +9420,7 @@ Style rules:
 				            }
 				
 				            try {
-				              if (body) body.scrollTop = 0;
+				              if (viewport) viewport.scrollTop = 0;
 				            } catch {
 				              // ignore
 				            }
