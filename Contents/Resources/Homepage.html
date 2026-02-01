@@ -11,11 +11,13 @@
 	    <meta name="theme-color" content="#eef2ff" />
     <title>Homepage</title>
     <style>
-	      :root {
-	        --sf-font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, "Segoe UI", sans-serif;
-	        --sf-ultrathin: 100;
-	        --sf-thin: 200;
-	        --sf-light: 300;
+		      :root {
+		        --sf-font-base: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, "Segoe UI", sans-serif;
+		        --sf-font-glitch: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+		        --sf-font: var(--sf-font-base);
+		        --sf-ultrathin: 100;
+		        --sf-thin: 200;
+		        --sf-light: 300;
 
         --bg0: #eef2ff;
         --bg1: #ffffff;
@@ -1856,6 +1858,12 @@
         overflow: hidden;
       }
 
+      #settingsModal .settings-summary-label {
+        flex: 1 1 auto;
+        min-width: 0;
+        text-align: left;
+      }
+
       #settingsModal details.settings-section summary::-webkit-details-marker {
         display: none;
       }
@@ -2293,13 +2301,21 @@
 
 	      /* Runtime Glitch Mode (presentation-only disturbance layer) */
 	      html.glitch-mode {
-	        --sf-font: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+	        --sf-font: var(--sf-font-glitch);
 	      }
 
 	      html.glitch-mode body {
 	        font-variant-ligatures: none;
 	        font-variant-numeric: tabular-nums;
 	        text-shadow: 0.6px 0 rgba(2, 6, 23, 0.12), -0.6px 0 rgba(2, 6, 23, 0.06);
+	      }
+
+	      /* Keep dialogs calm and readable even when Glitch Mode is active */
+	      html.glitch-mode dialog {
+	        --sf-font: var(--sf-font-base);
+	        font-variant-ligatures: normal;
+	        font-variant-numeric: normal;
+	        text-shadow: none;
 	      }
 
 	      html.glitch-writing .app-root {
@@ -2636,7 +2652,7 @@
 		      </div>
 		      <div class="modal-body settings-body">
 		        <details class="settings-section" open>
-		          <summary>Models &amp; Execution</summary>
+		          <summary><span class="settings-summary-label">Models &amp; Execution</span></summary>
 		          <div class="settings-grid">
 		            <div class="field">
 		              <label for="endpointInput">Ollama Endpoint (optional)</label>
@@ -2736,7 +2752,7 @@
 	        </details>
 
 	        <details class="settings-section" open>
-	          <summary>Agents &amp; Voices</summary>
+	          <summary><span class="settings-summary-label">Agents &amp; Voices</span></summary>
 	          <div class="settings-grid">
 	            <div class="field full">
 	              <label>Language Voices</label>
@@ -2960,7 +2976,7 @@
 	        </details>
 
 	        <details class="settings-section" open>
-	          <summary>Modes &amp; Behavior</summary>
+	          <summary><span class="settings-summary-label">Modes &amp; Behavior</span></summary>
 	          <div class="settings-grid">
 	            <div class="field">
 	              <label for="onlineUrlInput">Online URL</label>
@@ -3025,7 +3041,7 @@
 	        </details>
 
 	        <details class="settings-section">
-	          <summary>Privacy &amp; Local Data</summary>
+	          <summary><span class="settings-summary-label">Privacy &amp; Local Data</span></summary>
 	          <div class="settings-grid">
 	            <div class="field full">
 	              <label>Teachings (saved corrections)</label>
@@ -3071,7 +3087,7 @@
 	        </details>
 
 	        <details class="settings-section">
-	          <summary>Network / LAN (Advanced)</summary>
+	          <summary><span class="settings-summary-label">Network / LAN (Advanced)</span></summary>
 	          <div class="settings-grid">
 	            <div class="field full" id="lanAccessField">
 	              <label>LAN Party (iPhone Access)</label>
