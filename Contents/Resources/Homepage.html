@@ -1888,6 +1888,11 @@
         opacity: 0.35;
       }
 
+      #settingsModal details.settings-section summary:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12);
+      }
+
       #settingsModal .settings-grid {
         padding: 14px 16px 16px;
         display: grid;
@@ -8450,6 +8455,20 @@ Style rules:
         }
 
 	        function openSettings() {
+	          try {
+	            state.settingsRestoreFocusEl = document.activeElement;
+	          } catch {
+	            state.settingsRestoreFocusEl = null;
+	          }
+
+	          try {
+	            const dialog = el("settingsModal");
+	            const body = dialog?.querySelector?.(".modal-body.settings-body");
+	            if (body) body.scrollTop = 0;
+	          } catch {
+	            // ignore
+	          }
+
 	          el("endpointInput").value = state.endpointMode === "auto" ? "" : state.endpoint;
 	          el("modelInput").value = state.modelOverride;
 	          el("agentXModelInput").value = state.agentXModelOverride;
@@ -8504,10 +8523,21 @@ Style rules:
 	            updateEffectiveSettingsSummaryFromDraft();
 
 	          openDialogById("settingsModal");
-		          updateModelDownloadUI();
-	            refreshLanUi({ quiet: true }).catch(() => {});
-              refreshCoordinationUi({ quiet: true }).catch(() => {});
-	          refreshModels({ quiet: true }).catch(() => {});
+	          window.setTimeout(() => {
+	            try {
+	              el("endpointInput")?.focus?.({ preventScroll: true });
+	            } catch {
+	              try {
+	                el("endpointInput")?.focus?.();
+	              } catch {
+	                // ignore
+	              }
+	            }
+	          }, 20);
+			          updateModelDownloadUI();
+		            refreshLanUi({ quiet: true }).catch(() => {});
+	              refreshCoordinationUi({ quiet: true }).catch(() => {});
+			          refreshModels({ quiet: true }).catch(() => {});
 	        }
 
 	        function closeSettings() {
@@ -9128,7 +9158,18 @@ Style rules:
           })();
           render();
 
-		          wireDialogLifecycle("settingsModal", { onClose: () => setStatusRight("") });
+		          wireDialogLifecycle("settingsModal", {
+		            onClose: () => {
+		              setStatusRight("");
+		              try {
+		                const restore = state.settingsRestoreFocusEl;
+		                state.settingsRestoreFocusEl = null;
+		                restore?.focus?.();
+		              } catch {
+		                // ignore
+		              }
+		            }
+		          });
 		          wireDialogLifecycle("privacyModal", { onClose: () => setStatusRight("") });
 		          wireDialogLifecycle("memoryModal", { onClose: () => setStatusRight("") });
 		          wireDialogLifecycle("teachModal", { onClose: () => (state.pendingTeachContext = null) });
