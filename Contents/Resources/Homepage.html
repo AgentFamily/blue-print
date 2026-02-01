@@ -1946,6 +1946,15 @@
         gap: 14px;
       }
 
+      /* Make Settings predictable across device widths */
+      #settingsModal .voices {
+        grid-template-columns: 1fr;
+      }
+
+      #settingsModal .preview-grid {
+        grid-template-columns: 1fr;
+      }
+
       #settingsModal .settings-effective {
         border: 1px solid rgba(15, 23, 42, 0.10);
         border-radius: var(--radius-md);
@@ -2314,9 +2323,6 @@
           backdrop-filter: blur(14px);
           -webkit-backdrop-filter: blur(14px);
         }
-        #settingsModal .settings-grid {
-          grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-        }
       }
 
 	      @media (prefers-reduced-motion: reduce) {
@@ -2340,11 +2346,11 @@
 	      }
 
 	      /* Runtime Glitch Mode (presentation-only disturbance layer) */
-	      html.glitch-mode {
+	      html.glitch-mode:not(.glitch-inhibit) {
 	        --sf-font: var(--sf-font-glitch);
 	      }
 
-	      html.glitch-mode body {
+	      html.glitch-mode:not(.glitch-inhibit) body {
 	        font-variant-ligatures: none;
 	        font-variant-numeric: tabular-nums;
 	        text-shadow: 0.6px 0 rgba(2, 6, 23, 0.12), -0.6px 0 rgba(2, 6, 23, 0.06);
@@ -2382,25 +2388,25 @@
 	        font-family: var(--sf-font-glitch);
 	      }
 
-	      html.glitch-writing .app-root {
+	      html.glitch-writing:not(.glitch-inhibit) .app-root {
 	        cursor: cell;
 	      }
 
-	      html.glitch-mode:not(.native-wrapper) .app-root {
+	      html.glitch-mode:not(.glitch-inhibit):not(.native-wrapper) .app-root {
 	        animation: glitch-jitter 860ms steps(2, end) infinite;
 	      }
 
-      html.glitch-bump .app-root {
-        transform: translate3d(0.9px, -0.6px, 0);
-      }
+	      html.glitch-bump:not(.glitch-inhibit) .app-root {
+	        transform: translate3d(0.9px, -0.6px, 0);
+	      }
 
-      html.glitch-mode .composer-inner {
-        animation: glitch-flicker 1400ms steps(3, end) infinite;
-      }
+	      html.glitch-mode:not(.glitch-inhibit) .composer-inner {
+	        animation: glitch-flicker 1400ms steps(3, end) infinite;
+	      }
 
-      html.glitch-mode .answer pre {
-        position: relative;
-      }
+	      html.glitch-mode:not(.glitch-inhibit) .answer pre {
+	        position: relative;
+	      }
 
       .rt-interrupt {
         display: inline;
@@ -4438,6 +4444,12 @@
 	          const anyOpen = anyDialogOpen();
 	          const useFallback = Boolean(DIALOG_FALLBACK);
 	          document.body.classList.toggle("modal-open", useFallback && anyOpen);
+	          // Glitch is a runtime disturbance layer; never run it over modals/settings.
+	          try {
+	            document.documentElement.classList.toggle("glitch-inhibit", anyOpen);
+	          } catch {
+	            // ignore
+	          }
 	          const backdrop = el("modalBackdrop");
 	          if (backdrop) backdrop.hidden = !(useFallback && anyOpen);
 
