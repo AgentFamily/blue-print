@@ -378,10 +378,15 @@
 		        flex: 0 0 auto;
 		      }
 
-		      .dot.download {
-		        background: linear-gradient(135deg, rgba(16, 185, 129, 0.95), rgba(59, 130, 246, 0.95));
-		        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.14);
-		      }
+	      .dot.download {
+	        background: linear-gradient(135deg, rgba(16, 185, 129, 0.95), rgba(59, 130, 246, 0.95));
+	        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.14);
+	      }
+
+	      .dot.changelog {
+	        background: linear-gradient(135deg, rgba(34, 197, 94, 0.95), rgba(124, 58, 237, 0.92));
+	        box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.12);
+	      }
 
 		      .dot.tools {
 		        background: rgba(15, 23, 42, 0.82);
@@ -1815,12 +1820,81 @@
         color: rgba(2, 6, 23, 0.88);
       }
 
-      #confirmModal .confirm-message {
-        font-size: 13px;
-        line-height: 1.5;
-        color: rgba(2, 6, 23, 0.78);
-        white-space: pre-wrap;
-      }
+	      #confirmModal .confirm-message {
+	        font-size: 13px;
+	        line-height: 1.5;
+	        color: rgba(2, 6, 23, 0.78);
+	        white-space: pre-wrap;
+	      }
+
+	      #changelogModal .modal-body {
+	        display: flex;
+	        flex-direction: column;
+	        gap: 14px;
+	      }
+
+	      .changelog-entry {
+	        border: 1px solid rgba(15, 23, 42, 0.10);
+	        border-radius: var(--radius-md);
+	        background: rgba(255, 255, 255, 0.72);
+	        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+	        padding: 12px 12px 10px;
+	      }
+
+	      .changelog-meta {
+	        display: flex;
+	        flex-wrap: wrap;
+	        gap: 8px 10px;
+	        align-items: baseline;
+	        margin-bottom: 10px;
+	      }
+
+	      .changelog-date {
+	        font-size: 12px;
+	        color: rgba(100, 116, 139, 0.95);
+	        font-family: var(--sf-font-glitch);
+	      }
+
+	      .changelog-title {
+	        font-size: 14px;
+	        color: rgba(2, 6, 23, 0.92);
+	        letter-spacing: -0.01em;
+	        font-weight: var(--sf-light);
+	      }
+
+	      .changelog-tag {
+	        font-size: 11px;
+	        padding: 2px 8px;
+	        border-radius: 999px;
+	        border: 1px solid rgba(15, 23, 42, 0.10);
+	        background: rgba(2, 6, 23, 0.03);
+	        color: rgba(2, 6, 23, 0.70);
+	      }
+
+	      .changelog-section h3 {
+	        margin: 10px 0 6px;
+	        font-size: 13px;
+	        font-weight: var(--sf-light);
+	        color: rgba(2, 6, 23, 0.88);
+	      }
+
+	      .changelog-section ul {
+	        margin: 0 0 8px;
+	        padding-left: 18px;
+	        color: rgba(2, 6, 23, 0.78);
+	        font-size: 13px;
+	        line-height: 1.5;
+	      }
+
+	      .changelog-footer {
+	        margin-top: 10px;
+	        display: flex;
+	        flex-wrap: wrap;
+	        gap: 8px 10px;
+	        align-items: center;
+	        color: rgba(100, 116, 139, 0.95);
+	        font-size: 12px;
+	      }
 
 	      #settingsModal .modal-body.settings-body {
 	        display: flex;
@@ -2712,11 +2786,15 @@
 		            <span id="coinsLabel">C-oins</span>
                 <span id="coinsAccount" style="margin-left:6px; font-size:11px; color:rgba(100,116,139,0.92)"></span>
 		          </button>
-	          <button class="pill pill-btn" id="downloadBtn" type="button" title="Download paper">
-	            <span class="dot download" aria-hidden="true"></span>
-	            <span>Download</span>
-	          </button>
-	        </div>
+		          <button class="pill pill-btn" id="downloadBtn" type="button" title="Download paper">
+		            <span class="dot download" aria-hidden="true"></span>
+		            <span>Download</span>
+		          </button>
+		          <button class="pill pill-btn" id="changelogBtn" type="button" title="Changelog">
+		            <span class="dot changelog" aria-hidden="true"></span>
+		            <span>Changelog</span>
+		          </button>
+		        </div>
 
 		        <div class="header-actions right">
 		          <button class="btn" id="reloadBtn" type="button" title="Reload UI">Reload</button>
@@ -3473,6 +3551,80 @@
 	      </div>
 	      <div class="modal-foot">
 	        <button class="btn primary" id="saveMemoryBtn" type="button">Save Memory</button>
+	      </div>
+	    </dialog>
+
+	    <dialog id="changelogModal" aria-label="Changelog">
+	      <div class="modal-head">
+	        <strong>Changelog</strong>
+	        <button class="btn" id="closeChangelogBtn" type="button">Close</button>
+	      </div>
+	      <div class="modal-body">
+	        <div class="changelog-entry" aria-label="May 6, 2025 changelog entry">
+	          <div class="changelog-meta">
+	            <span class="changelog-date">May 6, 2025</span>
+	            <span class="changelog-title">Fuse — Multi-Agent Layer (Beta)</span>
+	            <span class="changelog-tag">Green Fern</span>
+	          </div>
+	          <div class="changelog-section">
+	            <div class="hint">We’re rolling out Fuse, our new architecture for orchestrating multiple specialized agents in a single workflow.</div>
+
+	            <h3>Fuse (Beta)</h3>
+	            <ul>
+	              <li>Chain agents with task-specific prompts</li>
+	              <li>Enable parallel agent execution with shared memory</li>
+	              <li>Call external tools from within agent trees</li>
+	              <li>Support for function calling and shared context across agents</li>
+	              <li>Available for Pro and Enterprise plans</li>
+	            </ul>
+
+	            <h3>New: GPU Auto-Scaling (Inference APIs)</h3>
+	            <ul>
+	              <li>Automatic GPU scaling based on real-time traffic</li>
+	              <li>Support added for NVIDIA A100, H100</li>
+	              <li>Billing adjusts dynamically based on load</li>
+	              <li>Requires no configuration — just deploy your model</li>
+	            </ul>
+
+	            <h3>Improved: Model Updates</h3>
+	            <ul>
+	              <li>Upgraded default CodeGen-7B endpoint to v2.1 (better accuracy, fewer hallucinations)</li>
+	              <li>DocQA model now supports 150k token contexts</li>
+	              <li>Improved multi-language support in Chat endpoint (Korean, Dutch, Polish)</li>
+	            </ul>
+
+	            <h3>API Changes</h3>
+	            <ul>
+	              <li>New <code>/v1/agents/run</code> endpoint for orchestrated multi-agent flows</li>
+	              <li>Deprecated <code>/v1/tasks/create</code> — use <code>/v1/agents/launch</code> instead</li>
+	              <li>API keys can now be scoped per model, feature, or environment (dev/staging/prod)</li>
+	            </ul>
+
+	            <h3>Labs</h3>
+	            <ul>
+	              <li>Internal tests for speech-to-code pipeline (Whisper + CodeT5)</li>
+	              <li>Early access to fine-tuned vision transformer (ViT-x3) for document parsing</li>
+	              <li>Testing memory-aware agents with local context retention beyond sessions</li>
+	            </ul>
+
+	            <h3>Fixes</h3>
+	            <ul>
+	              <li>Fixed a memory leak in real-time embeddings endpoint</li>
+	              <li>Resolved an auth issue causing 401 errors on <code>PUT /models/train</code></li>
+	              <li>Improved latency for European region (Frankfurt): -35ms avg per call</li>
+	            </ul>
+
+	            <div class="changelog-footer">
+	              <span>Contact: <code>ping@company.ai</code></span>
+	              <span>Brand: <code>CompanyAI</code></span>
+	              <span>Source: <code>Fuse — Multi-Agent Layer (Beta)</code></span>
+	            </div>
+	          </div>
+	        </div>
+	      </div>
+	      <div class="modal-foot">
+	        <button class="btn secondary" id="changelogBackBtn" type="button">Back to changelog</button>
+	        <button class="btn primary" id="changelogSyncBtn" type="button">Sync with us</button>
 	      </div>
 	    </dialog>
 
@@ -9871,12 +10023,13 @@ Style rules:
 				              activateSettingsPanel(panelId, { focusFirst: false });
 				            }
 				          });
-			          wireDialogLifecycle("privacyModal", { onClose: () => setStatusRight("") });
-			          wireDialogLifecycle("memoryModal", { onClose: () => setStatusRight("") });
-			          wireDialogLifecycle("teachModal", { onClose: () => (state.pendingTeachContext = null) });
-			          wireDialogLifecycle("toolsModal", { onClose: () => resolveToolApproval(false) });
+		          wireDialogLifecycle("privacyModal", { onClose: () => setStatusRight("") });
+		          wireDialogLifecycle("memoryModal", { onClose: () => setStatusRight("") });
+		          wireDialogLifecycle("teachModal", { onClose: () => (state.pendingTeachContext = null) });
+		          wireDialogLifecycle("toolsModal", { onClose: () => resolveToolApproval(false) });
+		          wireDialogLifecycle("changelogModal", { onClose: () => setStatusRight("") });
 	              wireDialogLifecycle("coinsStoreModal", { onClose: () => setStatusRight("") });
-	              wireDialogLifecycle("confirmModal", { onClose: () => resolveConfirm(false) });
+		          wireDialogLifecycle("confirmModal", { onClose: () => resolveConfirm(false) });
               el("closeConfirmBtn")?.addEventListener("click", () => closeDialogById("confirmModal"));
               el("confirmCancelBtn")?.addEventListener("click", () => {
                 resolveConfirm(false);
@@ -9896,6 +10049,14 @@ Style rules:
 	              el("coinsNoRefundAck")?.addEventListener("change", (e) => {
 	                setCoinsNoRefundAcked(Boolean(e?.target?.checked));
 	                renderCoinsStore();
+	              });
+
+	              el("closeChangelogBtn")?.addEventListener("click", () => closeDialogById("changelogModal"));
+	              el("changelogBackBtn")?.addEventListener("click", () => closeDialogById("changelogModal"));
+	              el("changelogSyncBtn")?.addEventListener("click", () => {
+	                const subject = encodeURIComponent("Sync with CompanyAI");
+	                const body = encodeURIComponent("Hi CompanyAI —\n\nWe want to sync about Fuse / multi-agent workflows.\n\n— Sent from AgentC");
+	                openExternalUrl(`mailto:ping@company.ai?subject=${subject}&body=${body}`);
 	              });
               bus.on("settings:draftChanged", () => {
                 updateEffectiveSettingsSummaryFromDraft();
@@ -9935,9 +10096,10 @@ Style rules:
                 render();
                 runtimeGlitch.sync();
               });
-		          el("coinsBtn")?.addEventListener("click", () => openCoinsPurchase());
-		          el("downloadBtn")?.addEventListener("click", openDownload);
-		          el("memoryBtn")?.addEventListener("click", openMemoryModal);
+			          el("coinsBtn")?.addEventListener("click", () => openCoinsPurchase());
+			          el("downloadBtn")?.addEventListener("click", openDownload);
+			          el("changelogBtn")?.addEventListener("click", () => openDialogById("changelogModal"));
+			          el("memoryBtn")?.addEventListener("click", openMemoryModal);
 		          el("toolsBtn").addEventListener("click", () => {
 		            if (!toolsAvailable()) {
 		              setStatusRight("Tools unavailable. Run `python3 ./Contents/Resources/dev_server.py` and reload.", true);
