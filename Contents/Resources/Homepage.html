@@ -5873,13 +5873,20 @@
 	          return hasProfileHint;
 	        }
 
-	        function isMkIdentityPrompt(text) {
-	          const s = String(text || "")
-	            .trim()
-	            .toLowerCase()
-	            .replace(/[.]/g, "");
-	          return s === "i am mk" || s === "im mk" || s === "i'm mk";
-	        }
+		        function isMkIdentityPrompt(text) {
+		          const s = String(text || "")
+		            .trim()
+		            .toLowerCase()
+		            .replace(/[.]/g, "");
+		          return s === "i am mk" || s === "im mk" || s === "i'm mk";
+		        }
+
+		        function parseAdminCommand(text) {
+		          const s = String(text || "").trim();
+		          const m = s.match(/^\/admin(?:\s+(.+))?$/i);
+		          if (!m) return null;
+		          return String(m[1] || "").trim();
+		        }
 
 	        function getMagicAuthSnapshot() {
 	          try {
@@ -6258,19 +6265,57 @@
 		          return true;
 		        }
 
-		        async function mkAdminSignIn() {
-		          // This is a server-recognized code. It must not be forwarded to the model.
-		          const json = await fetchJSON("/api/chat", {
-		            method: "POST",
-		            headers: { "Content-Type": "application/json" },
-		            body: JSON.stringify({ messages: [{ role: "user", content: "I am MK" }] })
-		          });
-		          const ok = String(json?.message?.content || "").trim().toLowerCase() === "ok";
-		          if (!ok) throw new Error("MK code rejected");
-		          setMkClaim(true);
-		          setMkAdmin(true);
-		          return true;
-		        }
+			        async function mkAdminSignInWithCode(code) {
+			          const raw = String(code || "").trim();
+			          if (!raw) throw new Error("Missing admin code. Use /admin <code>.");
+
+			          const attemptViaAdminEndpoint = async () => {
+			            const useSameOrigin = String(window?.location?.protocol || "").startsWith("http");
+			            const url = useSameOrigin ? "/api/admin/login" : `${state.endpoint}/api/admin/login`;
+			            const res = await fetch(url, {
+			              method: "POST",
+			              cache: "no-store",
+			              headers: { "Content-Type": "application/json" },
+			              body: JSON.stringify({ code: raw })
+			            });
+			            const text = await res.text();
+			            let json = {};
+			            try {
+			              json = JSON.parse(String(text || "")) ?? {};
+			            } catch {
+			              json = {};
+			            }
+			            if (!res.ok || json?.ok !== true) {
+			              throw new Error(String(json?.error || text || "Admin code rejected"));
+			            }
+			            return true;
+			          };
+
+			          const attemptViaChatBypass = async () => {
+			            // This must not be forwarded to the model. Server short-circuits when header is present.
+			            const json = await fetchJSON("/api/chat", {
+			              method: "POST",
+			              headers: { "Content-Type": "application/json", "X-AgentC-Admin-Attempt": "1" },
+			              body: JSON.stringify({ messages: [{ role: "user", content: raw }] })
+			            });
+			            const ok = String(json?.message?.content || "").trim().toLowerCase() === "ok";
+			            if (!ok) throw new Error("Admin code rejected");
+			            return true;
+			          };
+
+			          try {
+			            await attemptViaAdminEndpoint();
+			          } catch {
+			            await attemptViaChatBypass();
+			          }
+			          setMkClaim(true);
+			          setMkAdmin(true);
+			          return true;
+			        }
+
+			        async function mkAdminSignIn() {
+			          return mkAdminSignInWithCode("I am MK");
+			        }
 
 	        function openMagicAuthPanel() {
 	          try {
@@ -6806,16 +6851,33 @@ Style rules:
               msg =
                 "Endpoint returned 404 (not found). Your Ollama Endpoint/IP is likely wrong. Open Settings and clear “Ollama Endpoint” to use auto.";
             }
-	            if (res.status === 402) {
-	              state.coins = 0;
-	              setNotice("No AgentC-oins remaining. Buy more to continue.");
-	              render();
-	              try {
-	                openCoinsPurchase();
-	              } catch {
-	                // ignore
-	              }
-	            }
+		            if (res.status === 402) {
+		              const code = String(json?.code || "").trim().toLowerCase();
+		              const lower = String(msg || "").trim().toLowerCase();
+		              const isTrial =
+		                code === "free_trial_exhausted" ||
+		                lower.includes("free trial exhausted") ||
+		                lower.includes("trial exhausted");
+
+		              if (isTrial) {
+		                setNotice("Free trial exhausted. Sign in via Auth + Wallet (Magic Link) to continue.");
+		                try {
+		                  if (!openMagicAuthPanel()) openTheAgentFamily();
+		                } catch {
+		                  // ignore
+		                }
+		                render();
+		              } else {
+		                state.coins = 0;
+		                setNotice("No AgentC-oins remaining. Buy more to continue.");
+		                render();
+		                try {
+		                  openCoinsPurchase();
+		                } catch {
+		                  // ignore
+		                }
+		              }
+		            }
             if (maybeRecoverFromToolTokenError(msg)) throw new Error("Tool token expired.");
             throw new Error(msg);
           }
@@ -9571,34 +9633,59 @@ Style rules:
           }
         }
 
-		        async function startDebateFromUI() {
-		          await ensureEndpoint();
-		          const topic = el("topicInput").value.trim();
-		          if (!topic) return;
-	          setComposerMoreOpen(false);
-		          setNotice(null);
-				          if (isMkIdentityPrompt(topic)) {
-				            if (hasMkAdmin()) {
-				              setNotice("MK admin is already enabled. Enter a message to continue.");
-				            } else {
-				              setNotice("Checking MK code…");
-				              render();
-				              try {
-				                await mkAdminSignIn();
-				                setNotice("MK admin enabled. Enter a message to continue.");
-				              } catch (err) {
-				                setNotice(String(err?.message || err) || "MK code rejected");
-				              }
-				            }
+			        async function startDebateFromUI() {
+			          await ensureEndpoint();
+			          const topic = el("topicInput").value.trim();
+			          if (!topic) return;
+		          setComposerMoreOpen(false);
+			          setNotice(null);
+			          const adminCmd = parseAdminCommand(topic);
+			          if (adminCmd != null) {
+			            if (hasMkAdmin()) {
+			              setNotice("MK admin is already enabled. Enter a message to continue.");
+			            } else if (!adminCmd) {
+			              setNotice("Admin sign-in: /admin <code>");
+			            } else {
+			              setNotice("Checking admin code…");
+			              render();
+			              try {
+			                await mkAdminSignInWithCode(adminCmd);
+			                setNotice("MK admin enabled. Enter a message to continue.");
+			              } catch (err) {
+			                setNotice(String(err?.message || err) || "Admin code rejected");
+			              }
+			            }
 			            try {
 			              el("topicInput").value = "";
 			            } catch {
-		              // ignore
-		            }
-	            setStatusRight("");
-	            render();
-	            return;
+			              // ignore
+			            }
+			            setStatusRight("");
+			            render();
+			            return;
 			          }
+					          if (isMkIdentityPrompt(topic)) {
+					            if (hasMkAdmin()) {
+					              setNotice("MK admin is already enabled. Enter a message to continue.");
+					            } else {
+					              setNotice("Checking MK code…");
+					              render();
+					              try {
+					                await mkAdminSignIn();
+					                setNotice("MK admin enabled. Enter a message to continue.");
+					              } catch (err) {
+					                setNotice("Admin code rejected. Use /admin <code>.");
+					              }
+					            }
+				            try {
+				              el("topicInput").value = "";
+				            } catch {
+			              // ignore
+			            }
+		            setStatusRight("");
+		            render();
+		            return;
+				          }
 
 			          // Online free-trial gating (admin and Magic-signed-in bypass).
 			          const ioMode = effectiveIOMode();

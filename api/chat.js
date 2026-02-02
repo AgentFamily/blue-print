@@ -198,25 +198,33 @@ module.exports = async (req, res) => {
   const body = await readJsonBody(req);
   const messages = Array.isArray(body?.messages) ? body.messages : null;
 
-  // Admin sign-in code: "I am MK" (must be the only user message) sets an admin cookie and never hits the model.
-  const adminCode = firstEnv("MK_ADMIN_CODE") || "I am MK";
+  // Admin sign-in code (must be the only user message) sets an admin cookie and never hits the model.
+  // Support common env var typo `MK_ADM1N_CODE` (1 instead of I).
+  const adminCode = firstEnv("MK_ADMIN_CODE", "MK_ADM1N_CODE") || "I am MK";
   const lastUser = String(getLastUserContent(messages) || "").trim();
+  const adminAttempt = String(req?.headers?.["x-agentc-admin-attempt"] || "").trim() === "1";
   if (
     Array.isArray(messages) &&
     messages.length === 1 &&
     messages[0]?.role === "user" &&
-    String(messages[0]?.content || "").trim() === adminCode &&
-    lastUser === adminCode
+    lastUser === String(messages[0]?.content || "").trim()
   ) {
-    res.statusCode = 200;
-    res.setHeader("Content-Type", "application/json");
-    res.setHeader("Cache-Control", "no-store");
-    res.setHeader(
-      "Set-Cookie",
-      `${ADMIN_COOKIE}=1; Path=/; Max-Age=${60 * 60 * 24 * 30}; HttpOnly; SameSite=Lax; Secure`
-    );
-    res.end(JSON.stringify({ message: { role: "assistant", content: "OK" } }));
-    return;
+    if (lastUser === adminCode) {
+      const secure = isSecureRequest(req);
+      res.statusCode = 200;
+      res.setHeader("Content-Type", "application/json");
+      res.setHeader("Cache-Control", "no-store");
+      appendSetCookie(res, makeCookie(ADMIN_COOKIE, "1", { maxAgeSeconds: 60 * 60 * 24 * 30, secure }));
+      res.end(JSON.stringify({ message: { role: "assistant", content: "OK" } }));
+      return;
+    }
+    if (adminAttempt) {
+      res.statusCode = 401;
+      res.setHeader("Content-Type", "application/json");
+      res.setHeader("Cache-Control", "no-store");
+      res.end(JSON.stringify({ error: "Admin code rejected", code: "admin_rejected" }));
+      return;
+    }
   }
 
   const openKey = firstEnv("open", "OPEN", "OPENAI_API_KEY", "OPEN_AI_API_KEY", "OPEN_API_KEY");
@@ -284,7 +292,13 @@ module.exports = async (req, res) => {
       res.statusCode = 402;
       res.setHeader("Content-Type", "application/json");
       res.setHeader("Cache-Control", "no-store");
-      res.end(JSON.stringify({ error: `Free trial exhausted (${trialLimit} prompts). Sign in to continue.` }));
+      res.end(
+        JSON.stringify({
+          error: "Free trial exhausted. Sign in via Auth + Wallet (Magic Link) to continue.",
+          code: "free_trial_exhausted",
+          trial_limit: trialLimit,
+        })
+      );
     };
 
     try {
@@ -337,6 +351,7 @@ module.exports = async (req, res) => {
       res.end(
         JSON.stringify({
           error: err?.message || "Token store error",
+          ...(err?.status === 402 ? { code: "insufficient_tokens" } : {}),
           ...(typeof err?.tokens !== "undefined" ? { tokens: err.tokens } : {}),
         })
       );
