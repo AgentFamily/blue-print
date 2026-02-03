@@ -5063,6 +5063,9 @@
 		          coinsLoading: false,
 		          coinsUserId: "",
 	            coinsError: "",
+	            coinsLastFetchAt: 0,
+	            coinsPollUntil: 0,
+	            coinsPollTimer: null,
 		          error: null,
 		          lastRenderedCount: 0,
 	            conversationRenderKey: "",
@@ -6117,6 +6120,8 @@
 		              } catch {
 		                window.location.href = url;
 		              }
+		              setStatusRight("Opened Stripe checkout — return here to sync your C-oins.");
+		              startCoinsPolling({ durationMs: 90_000 });
 		            });
 		            actions.appendChild(buy);
 
@@ -6147,6 +6152,7 @@
 	            state.coinsLoading = false;
 	            state.coinsUserId = "";
               state.coinsError = "";
+              state.coinsLastFetchAt = 0;
 	            if (!quiet) render();
 	            return;
 	          }
@@ -6177,6 +6183,7 @@
 	            state.coins = null;
               state.coinsError = "Balance unavailable.";
 	          } finally {
+              state.coinsLastFetchAt = Date.now();
 	            state.coinsLoading = false;
 	            if (!quiet) render();
 	          }
@@ -6187,13 +6194,59 @@
 	          const signedIn = Boolean(snap && snap.signedIn);
 	          const userId = signedIn ? magicUserIdFromJwt(snap.jwt) : "";
 	          if (!signedIn || !userId) return;
-	          if (state.coinsUserId !== userId || state.coins == null) refreshCoinsBalance({ quiet: true });
+            const stale = !state.coinsLastFetchAt || Date.now() - state.coinsLastFetchAt > 45_000;
+	          if (state.coinsUserId !== userId || state.coins == null || stale) refreshCoinsBalance({ quiet: true });
 	        }
 
-			        function openCoinsPurchase() {
-			          const snap = getMagicAuthSnapshot();
-			          const signedIn = Boolean(snap && snap.signedIn);
-			          if (signedIn) {
+	        function coinsStoreIsOpen() {
+	          try {
+	            const modal = el("coinsStoreModal");
+	            return Boolean(modal && (modal.open || modal.hasAttribute("open")));
+	          } catch {
+	            return false;
+	          }
+	        }
+
+	        function stopCoinsPolling() {
+	          if (!state.coinsPollTimer) return;
+	          try {
+	            window.clearInterval(state.coinsPollTimer);
+	          } catch {
+	            // ignore
+	          }
+	          state.coinsPollTimer = null;
+	          state.coinsPollUntil = 0;
+	        }
+
+	        function startCoinsPolling({ durationMs = 90_000 } = {}) {
+	          const snap = getMagicAuthSnapshot();
+	          if (!snap?.signedIn) return;
+	          state.coinsPollUntil = Date.now() + Math.max(10_000, Number(durationMs) || 90_000);
+	          if (state.coinsPollTimer) return;
+	          state.coinsPollTimer = window.setInterval(() => {
+	            if (!state.coinsPollUntil || Date.now() > state.coinsPollUntil) {
+	              stopCoinsPolling();
+	              return;
+	            }
+	            refreshCoinsBalance({ quiet: true });
+	            if (coinsStoreIsOpen()) renderCoinsStore();
+	            render();
+	          }, 3000);
+	        }
+
+	        function requestCoinsSync(reason) {
+	          const snap = getMagicAuthSnapshot();
+	          if (!snap?.signedIn) return;
+	          const label = String(reason || "").trim();
+	          if (label) setStatusRight(`Syncing C-oins… (${label})`);
+	          refreshCoinsBalance({ quiet: true });
+	          startCoinsPolling({ durationMs: 90_000 });
+	        }
+
+				        function openCoinsPurchase() {
+				          const snap = getMagicAuthSnapshot();
+				          const signedIn = Boolean(snap && snap.signedIn);
+				          if (signedIn) {
 			            refreshCoinsBalance({ quiet: true });
 			          }
 			          const ack = el("coinsNoRefundAck");
@@ -10136,6 +10189,17 @@ Style rules:
 	              el("coinsNoRefundAck")?.addEventListener("change", (e) => {
 	                setCoinsNoRefundAcked(Boolean(e?.target?.checked));
 	                renderCoinsStore();
+	              });
+
+	              window.addEventListener("focus", () => {
+	                // Safari: returning from Stripe often means switching back to this tab/window.
+	                if (coinsStoreIsOpen()) requestCoinsSync("return");
+	                else maybeRefreshCoinsBalance();
+	              });
+	              document.addEventListener("visibilitychange", () => {
+	                if (document.visibilityState !== "visible") return;
+	                if (coinsStoreIsOpen()) requestCoinsSync("return");
+	                else maybeRefreshCoinsBalance();
 	              });
 
 	              el("closeChangelogBtn")?.addEventListener("click", () => closeDialogById("changelogModal"));
