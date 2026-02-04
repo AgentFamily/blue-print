@@ -201,3 +201,24 @@ By continuing you accept all terms and conditions
 │ Purpose: reduce LAN visibility & residual data retention                    │
 └────────────────────────────────────────────────────────────────────────────┘
 
+---
+
+## Magic: register OIDC identity provider (server-side)
+
+Do **not** put `sk_…` keys in frontend code. Configure `MAGIC_SECRET_KEY` in your hosting environment, then call the server route:
+
+- Endpoint: `POST /api/magic/identity_provider` (admin-only via `mk_admin=1` cookie)
+- Env var: `MAGIC_SECRET_KEY=sk_…`
+
+Example (run locally from a secure terminal; replace placeholders):
+
+```bash
+curl -X POST 'https://YOUR_DOMAIN/api/magic/identity_provider' \
+  -H 'Content-Type: application/json' \
+  -H 'Cookie: mk_admin=1' \
+  -d '{
+    "issuer": "https://your-auth-provider.com",
+    "audience": "your-app-audience",
+    "jwks_uri": "https://your-auth-provider.com/.well-known/jwks.json"
+  }'
+```
