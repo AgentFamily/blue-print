@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Memory Vault: Local">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#56d3ff" stop-opacity="0.98" />
+      <stop offset="55%" stop-color="#2b6bff" stop-opacity="0.98" />
+      <stop offset="100%" stop-color="#a855f7" stop-opacity="0.98" />
+    </linearGradient>
+    <linearGradient id="rim" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#b7f0ff" stop-opacity="0.95" />
+      <stop offset="50%" stop-color="#7aa5ff" stop-opacity="0.55" />
+      <stop offset="100%" stop-color="#ffb7ff" stop-opacity="0.45" />
+    </linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.26" />
+      <stop offset="45%" stop-color="#ffffff" stop-opacity="0.10" />
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.02" />
+    </linearGradient>
+    <linearGradient id="glyph" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#e9fbff" />
+      <stop offset="55%" stop-color="#c7d2fe" />
+      <stop offset="100%" stop-color="#f5d0fe" />
+    </linearGradient>
+    <filter id="softGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#0b1a4a" flood-opacity="0.35" />
+      <feDropShadow dx="0" dy="0" stdDeviation="7" flood-color="#7dd3fc" flood-opacity="0.45" />
+      <feDropShadow dx="0" dy="0" stdDeviation="12" flood-color="#a855f7" flood-opacity="0.22" />
+    </filter>
+    <filter id="glyphGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#7dd3fc" flood-opacity="0.65" />
+      <feDropShadow dx="0" dy="0" stdDeviation="10" flood-color="#a855f7" flood-opacity="0.28" />
+    </filter>
+  </defs>
+
+  <!-- Glass tile -->
+  <g filter="url(#softGlow)">
+    <rect x="10" y="10" width="108" height="108" rx="28" fill="url(#bg)" />
+    <rect x="12.5" y="12.5" width="103" height="103" rx="26" fill="none" stroke="url(#rim)" stroke-width="3" opacity="0.9" />
+    <rect x="16" y="16" width="96" height="96" rx="23" fill="url(#glass)" opacity="0.9" />
+    <path
+      d="M22 28c10-10 38-14 58-10 14 3 22 8 28 16-10-6-20-9-34-10-20-2-40 3-52 14z"
+      fill="#ffffff"
+      opacity="0.16"
+    />
+    <circle cx="92" cy="40" r="10" fill="#ffffff" opacity="0.07" />
+  </g>
+
+  <!-- Local glyph: stacked vault blocks -->
+  <g filter="url(#glyphGlow)">
+    <path d="M40 54l24-12 24 12-24 12z" fill="url(#glyph)" opacity="0.92" />
+    <path d="M40 54v18l24 12V66z" fill="url(#glyph)" opacity="0.58" />
+    <path d="M88 54v18L64 84V66z" fill="url(#glyph)" opacity="0.44" />
+
+    <path d="M44 74l20-10 20 10-20 10z" fill="url(#glyph)" opacity="0.88" />
+    <path d="M44 74v14l20 10V84z" fill="url(#glyph)" opacity="0.54" />
+    <path d="M84 74v14L64 98V84z" fill="url(#glyph)" opacity="0.40" />
+
+    <circle cx="64" cy="44" r="7" fill="url(#glyph)" opacity="0.92" />
+    <circle cx="64" cy="44" r="3" fill="#0b1020" opacity="0.12" />
+    <path d="M64 50v6" stroke="#ffffff" stroke-opacity="0.55" stroke-width="2.5" stroke-linecap="round" />
+  </g>
+</svg>
+

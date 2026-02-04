@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 200" role="img" aria-label="GLITCH wordmark">
+  <defs>
+    <linearGradient id="fill" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7dd3fc" />
+      <stop offset="45%" stop-color="#60a5fa" />
+      <stop offset="100%" stop-color="#f0abfc" />
+    </linearGradient>
+    <linearGradient id="stroke" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.70" />
+      <stop offset="60%" stop-color="#ffffff" stop-opacity="0.18" />
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.35" />
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-60%" width="160%" height="240%">
+      <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#0b1a4a" flood-opacity="0.30" />
+      <feDropShadow dx="0" dy="0" stdDeviation="8" flood-color="#60a5fa" flood-opacity="0.38" />
+      <feDropShadow dx="0" dy="0" stdDeviation="12" flood-color="#f0abfc" flood-opacity="0.22" />
+    </filter>
+  </defs>
+
+  <!-- Transparent background by design -->
+  <g filter="url(#glow)">
+    <text
+      x="60"
+      y="132"
+      font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial"
+      font-size="110"
+      font-weight="850"
+      letter-spacing="18"
+      fill="url(#fill)"
+      stroke="url(#stroke)"
+      stroke-width="6"
+      paint-order="stroke fill"
+    >
+      GLITCH
+    </text>
+    <text
+      x="60"
+      y="132"
+      font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial"
+      font-size="110"
+      font-weight="850"
+      letter-spacing="18"
+      fill="#ffffff"
+      opacity="0.06"
+    >
+      GLITCH
+    </text>
+  </g>
+</svg>
+

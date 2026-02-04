@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Agent (Sad, Glitch)">
+  <defs>
+    <radialGradient id="gHead" cx="38%" cy="30%" r="78%">
+      <stop offset="0%" stop-color="#a5d8ff" />
+      <stop offset="62%" stop-color="#60a5fa" />
+      <stop offset="100%" stop-color="#1d4ed8" />
+    </radialGradient>
+    <linearGradient id="gShine" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.30" />
+      <stop offset="55%" stop-color="#ffffff" stop-opacity="0.10" />
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0" />
+    </linearGradient>
+    <linearGradient id="gVisor" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0b0b0c" stop-opacity="0.96" />
+      <stop offset="100%" stop-color="#111827" stop-opacity="0.92" />
+    </linearGradient>
+    <filter id="softGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="14" stdDeviation="14" flood-color="#020617" flood-opacity="0.28" />
+      <feDropShadow dx="0" dy="0" stdDeviation="10" flood-color="#60a5fa" flood-opacity="0.22" />
+      <feDropShadow dx="0" dy="0" stdDeviation="14" flood-color="#a855f7" flood-opacity="0.10" />
+    </filter>
+    <filter id="pixelGlow" x="-60%" y="-60%" width="220%" height="220%">
+      <feDropShadow dx="0" dy="0" stdDeviation="3" flood-color="#60a5fa" flood-opacity="0.45" />
+      <feDropShadow dx="0" dy="0" stdDeviation="5" flood-color="#f0abfc" flood-opacity="0.22" />
+      <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#fb7185" flood-opacity="0.12" />
+    </filter>
+  </defs>
+
+  <g filter="url(#softGlow)">
+    <!-- antenna -->
+    <path d="M128 18c18 0 26 10 26 24 0 17-11 28-26 28s-26-11-26-28c0-14 8-24 26-24z" fill="url(#gHead)" />
+    <path d="M114 38c4-12 20-16 30-10 5 3 8 8 9 12-7-7-18-8-26-5-8 3-12 9-13 16z" fill="url(#gShine)" />
+
+    <!-- head -->
+    <circle cx="128" cy="132" r="92" fill="url(#gHead)" />
+    <circle cx="128" cy="132" r="92" fill="none" stroke="rgba(2,6,23,.18)" stroke-width="6" />
+    <path d="M66 88c22-28 76-38 112-22 20 9 30 20 40 36-20-12-40-18-66-18-34 0-64 10-86 30z" fill="#ffffff" opacity="0.12" />
+
+    <!-- visor -->
+    <g transform="translate(0,8)">
+      <rect x="64" y="116" width="64" height="32" rx="16" fill="url(#gVisor)" />
+      <rect x="128" y="116" width="64" height="32" rx="16" fill="url(#gVisor)" />
+      <rect x="122" y="125" width="12" height="10" rx="5" fill="#0b0b0c" opacity="0.78" />
+      <path d="M64 126c16-14 48-14 64 0" fill="none" stroke="#0f0f11" stroke-width="6" stroke-linecap="round" opacity="0.55" />
+      <path d="M128 126c16-14 48-14 64 0" fill="none" stroke="#0f0f11" stroke-width="6" stroke-linecap="round" opacity="0.55" />
+    </g>
+
+    <!-- sad mouth -->
+    <path d="M98 186c18-14 42-14 60 0" fill="none" stroke="rgba(2,6,23,.22)" stroke-width="7" stroke-linecap="round" opacity="0.9" />
+
+    <!-- tears -->
+    <path d="M92 162c8 10 6 24-4 30-10-6-12-20-4-30 2-2 6-2 8 0z" fill="#60a5fa" opacity="0.35" />
+    <path d="M164 162c8 10 6 24-4 30-10-6-12-20-4-30 2-2 6-2 8 0z" fill="#60a5fa" opacity="0.35" />
+
+    <!-- suit collar -->
+    <path d="M92 216c14 22 26 32 36 32s22-10 36-32c-10-12-22-18-36-18s-26 6-36 18z" fill="#0b1020" opacity="0.92" />
+    <path d="M128 198l-18 18 18 32 18-32z" fill="#111827" opacity="0.86" />
+    <path d="M110 216l18 20 18-20" fill="none" stroke="#ffffff" stroke-opacity="0.08" stroke-width="6" stroke-linecap="round" />
+  </g>
+
+  <!-- Sad pixel drift + eye flicker -->
+  <g shape-rendering="crispEdges" filter="url(#pixelGlow)" opacity="0.95">
+    <!-- soft edge fragmentation -->
+    <rect x="56" y="94" width="6" height="6" fill="#60a5fa" opacity="0.40" />
+    <rect x="62" y="94" width="6" height="6" fill="#f0abfc" opacity="0.26" />
+    <rect x="198" y="96" width="6" height="6" fill="#60a5fa" opacity="0.32" />
+    <rect x="204" y="96" width="6" height="6" fill="#f0abfc" opacity="0.24" />
+
+    <!-- visor tearing (subtle) -->
+    <rect x="72" y="132" width="118" height="5" fill="#0b1020" opacity="0.18" />
+    <rect x="68" y="140" width="126" height="3" fill="#ffffff" opacity="0.07" />
+
+    <!-- droop sparks -->
+    <rect x="92" y="196" width="6" height="6" fill="#60a5fa" opacity="0.26" />
+    <rect x="98" y="196" width="6" height="6" fill="#f0abfc" opacity="0.18" />
+    <rect x="158" y="200" width="6" height="6" fill="#60a5fa" opacity="0.26" />
+  </g>
+</svg>
+
