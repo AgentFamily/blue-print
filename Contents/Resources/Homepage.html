@@ -3707,7 +3707,7 @@
 	        </div>
 	      </div>
 	      <div class="modal-foot">
-	        <button class="btn secondary" id="coinsStoreOpenAgentFamilyBtn" type="button">Open git.com/the-agent-family</button>
+	        <button class="btn secondary" id="coinsStoreOpenAgentFamilyBtn" type="button">Open GitHub: The Agent Family</button>
 	        <button class="btn primary" id="coinsStoreSignInBtn" type="button">Sign in</button>
 	      </div>
 	    </dialog>
@@ -5950,15 +5950,15 @@
 	        }
 
 		        const COINS_NO_REFUND_ACK_KEY = "mkCoinsNoRefundAckV1";
-		        const STRIPE_BUY_AGENTC_OINS_URL = "https://buy.stripe.com/6oUeVc3Ijc1X8Zx4a1grS00";
+		        const STRIPE_BUY_AGENTC_OINS_URL = "https://buy.stripe.com/bJecN42Ef4zv3FdaypgrS04";
 
 		        const COIN_PRODUCT_PACKS = [
 		          {
 		            internal_name: "starter_10",
 		            name: "C-oin Starter Pack (10 tokens)",
 		            description: "A starter pack of 10 C-oin tokens. Each C-oin equals one prompt. Digital product. No refunds.",
-		            pricing: "£1 equivalent (via Magic onramp/crypto if used)",
-		            stripe_url: "",
+		            pricing: "£1",
+		            stripe_url: "https://buy.stripe.com/bJe6oGa6Hfe96Rp5e5grS01",
 		            metadata: {
 		              credits_granted: 10,
 		              credit_type: "one_time",
@@ -5970,8 +5970,8 @@
 		            internal_name: "pack_50",
 		            name: "C-oin Pack (50 tokens)",
 		            description: "A pack of 50 C-oin tokens. Each C-oin equals one prompt. Digital product. No refunds.",
-		            pricing: "TBD",
-		            stripe_url: "",
+		            pricing: "£5",
+		            stripe_url: "https://buy.stripe.com/bJebJ00w7aXTfnV21TgrS03",
 		            metadata: {
 		              credits_granted: 50,
 		              credit_type: "one_time",
@@ -5983,8 +5983,8 @@
 		            internal_name: "pack_100",
 		            name: "C-oin Pack (100 tokens)",
 		            description: "A pack of 100 C-oin tokens. Each C-oin equals one prompt. Digital product. No refunds.",
-		            pricing: "TBD",
-		            stripe_url: "",
+		            pricing: "£9",
+		            stripe_url: "https://buy.stripe.com/dRm5kC4Mn9TP3FdbCtgrS02",
 		            metadata: {
 		              credits_granted: 100,
 		              credit_type: "one_time",
@@ -6007,10 +6007,10 @@
 		          },
 		          {
 		            internal_name: "stripe_topup_200",
-		            name: "Stripe Top-up (200 tokens)",
-		            description: "Legacy Stripe top-up (server-configured default: 200 C-oins). Digital product. No refunds.",
-		            pricing: "Stripe Payment Link",
-		            stripe_url: STRIPE_BUY_AGENTC_OINS_URL,
+		            name: "Passive Pack (200 tokens)",
+		            description: "A pack of 200 C-oin tokens. Each C-oin equals one prompt. Digital product. No refunds.",
+		            pricing: "£15",
+		            stripe_url: "https://buy.stripe.com/bJecN42Ef4zv3FdaypgrS04",
 		            metadata: {
 		              credits_granted: 200,
 		              credit_type: "one_time",
@@ -6466,7 +6466,7 @@
 	          }
 
 	          function openTheAgentFamilyGit() {
-	            return openExternalUrl("https://git.com/the-agent-family");
+	            return openExternalUrl("https://github.com/AgentFamily/the-agent-family");
 	          }
 
 		        function magicAuthContextForLLM(prompt) {
