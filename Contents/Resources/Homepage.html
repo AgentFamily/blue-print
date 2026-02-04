@@ -1724,6 +1724,7 @@
         padding: 0;
         width: min(760px, calc(100vw - 28px));
         max-height: min(86vh, 920px);
+        max-height: min(86dvh, 920px);
         overflow: hidden;
         box-shadow: var(--shadow);
         background: rgba(255, 255, 255, 0.92);
@@ -1900,17 +1901,15 @@
 	        display: flex;
 	        flex-direction: column;
 	        gap: 14px;
-	        overflow: hidden;
+	        overflow-x: hidden;
+	        overflow-y: auto;
+	        -webkit-overflow-scrolling: touch;
+	        overscroll-behavior: contain;
 	        min-height: 0; /* allow full settings scroll */
 	      }
 	
 	      #settingsModal .settings-viewport {
-	        flex: 1 1 auto;
 	        min-height: 0;
-	        overflow: auto;
-	        -webkit-overflow-scrolling: touch;
-	        overscroll-behavior: contain;
-	        touch-action: pan-y;
 	        display: flex;
 	        flex-direction: column;
 	        gap: 14px;
@@ -1918,17 +1917,50 @@
 	      }
 
 	      #settingsModal .settings-nav {
-	        position: relative;
 	        z-index: 3;
 	        display: flex;
 	        gap: 8px;
-	        flex-wrap: wrap;
+	        flex-wrap: nowrap;
+	        overflow-x: auto;
+	        overflow-y: hidden;
+	        -webkit-overflow-scrolling: touch;
+	        overscroll-behavior-x: contain;
+	        scroll-snap-type: x proximity;
+	        scrollbar-width: none;
+	        position: sticky;
+	        top: 0;
         padding: 10px 8px;
         margin: -6px -8px 0;
         background: rgba(255, 255, 255, 0.88);
         backdrop-filter: blur(14px);
         -webkit-backdrop-filter: blur(14px);
         border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+      }
+
+      #settingsModal .settings-nav::-webkit-scrollbar {
+        height: 0;
+      }
+
+      /* Avoid -webkit-mask-image on scrollable elements (can break scrolling on iOS/Safari). */
+      #settingsModal .settings-nav::before,
+      #settingsModal .settings-nav::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 22px;
+        pointer-events: none;
+        z-index: 4;
+      }
+
+      #settingsModal .settings-nav::before {
+        left: 0;
+        background: linear-gradient(90deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0));
+      }
+
+      #settingsModal .settings-nav::after {
+        right: 0;
+        background: linear-gradient(270deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0));
       }
 
 	      #settingsModal .settings-nav .chip-btn {
@@ -1938,6 +1970,8 @@
 	        background: rgba(255, 255, 255, 0.78);
 	        color: rgba(2, 6, 23, 0.82);
 	        font-size: var(--fs-ui-small);
+	        flex: 0 0 auto;
+	        scroll-snap-align: start;
 	        transition: transform 120ms ease, box-shadow 220ms ease, background 220ms ease, border-color 220ms ease;
 	      }
 	
@@ -2775,6 +2809,11 @@
 		            />
 		            <span id="onlineLabel">Online</span>
 		          </button>
+              <span class="pill" id="freeTrialPill" hidden title="Free trial prompts remaining">
+                <span class="dot coins" aria-hidden="true"></span>
+                <span id="freeTrialPillLabel">Free</span>
+                <span id="freePromptsCount">3</span>
+              </span>
 		          <button
 		            class="pill pill-btn"
 		            id="coinsBtn"
@@ -2939,14 +2978,15 @@
 			        <strong>Settings</strong>
 			        <button class="btn" id="closeSettingsBtn" type="button">Close</button>
 			      </div>
-				      <div class="modal-body settings-body">
-				        <div class="settings-nav" id="settingsNav" role="tablist" aria-label="Settings sections">
-				          <button class="chip-btn" id="settingsTabModels" type="button" role="tab" aria-controls="settingsModels" aria-selected="true" tabindex="0" data-settings-panel="settingsModels">Models</button>
-				          <button class="chip-btn" id="settingsTabAgents" type="button" role="tab" aria-controls="settingsAgents" aria-selected="false" tabindex="-1" data-settings-panel="settingsAgents">Agents</button>
-				          <button class="chip-btn" id="settingsTabModes" type="button" role="tab" aria-controls="settingsModes" aria-selected="false" tabindex="-1" data-settings-panel="settingsModes">Modes</button>
-				          <button class="chip-btn" id="settingsTabPrivacy" type="button" role="tab" aria-controls="settingsPrivacy" aria-selected="false" tabindex="-1" data-settings-panel="settingsPrivacy">Privacy</button>
-				          <button class="chip-btn" id="settingsTabNetwork" type="button" role="tab" aria-controls="settingsNetwork" aria-selected="false" tabindex="-1" data-settings-panel="settingsNetwork">Network</button>
-				        </div>
+					      <div class="modal-body settings-body">
+					        <div class="settings-nav" id="settingsNav" role="tablist" aria-label="Settings sections">
+					          <button class="chip-btn" id="settingsTabAll" type="button" role="tab" aria-controls="settingsViewport" aria-selected="false" tabindex="-1" data-settings-panel="settingsAll">All</button>
+					          <button class="chip-btn" id="settingsTabModels" type="button" role="tab" aria-controls="settingsModels" aria-selected="true" tabindex="0" data-settings-panel="settingsModels">Models</button>
+					          <button class="chip-btn" id="settingsTabAgents" type="button" role="tab" aria-controls="settingsAgents" aria-selected="false" tabindex="-1" data-settings-panel="settingsAgents">Agents</button>
+					          <button class="chip-btn" id="settingsTabModes" type="button" role="tab" aria-controls="settingsModes" aria-selected="false" tabindex="-1" data-settings-panel="settingsModes">Modes</button>
+					          <button class="chip-btn" id="settingsTabPrivacy" type="button" role="tab" aria-controls="settingsPrivacy" aria-selected="false" tabindex="-1" data-settings-panel="settingsPrivacy">Privacy</button>
+					          <button class="chip-btn" id="settingsTabNetwork" type="button" role="tab" aria-controls="settingsNetwork" aria-selected="false" tabindex="-1" data-settings-panel="settingsNetwork">Network</button>
+					        </div>
 			
 				        <div class="settings-viewport" id="settingsViewport" role="presentation">
 
@@ -3382,6 +3422,14 @@
               </div>
 	              <div class="hint">Clears history, profile, templates, and teachings from this device.</div>
 	            </div>
+              <div class="field full">
+                <label for="adminCodeInput">Admin / promo code (optional)</label>
+                <div class="template-row">
+                  <input id="adminCodeInput" type="password" placeholder="Enter code…" autocomplete="off" />
+                  <button class="btn secondary" id="adminCodeApplyBtn" type="button">Apply</button>
+                </div>
+                <div class="hint">Validated server-side. This does not replace Magic Link sign-in.</div>
+              </div>
 	          </div>
 	        </details>
 
@@ -7834,6 +7882,8 @@ Style rules:
           (() => {
             const snap = getMagicAuthSnapshot();
             const signedIn = Boolean(snap && snap.signedIn);
+            const isAdmin = hasMkAdmin();
+            const ioMode = effectiveIOMode();
 
 		            const onlineBtn = el("onlineBtn");
 		            const onlineLabel = el("onlineLabel");
@@ -7851,6 +7901,21 @@ Style rules:
 	              onlineStatusImg.alt = signedIn ? "Online on" : "Online off";
 	            }
 	          }
+
+              // Free trial indicator (online-only; hidden when signed in or admin).
+              try {
+                const pill = el("freeTrialPill");
+                const count = el("freePromptsCount");
+                if (pill && count) {
+                  const show = ioMode !== "local" && !signedIn && !isAdmin;
+                  const remaining = show ? getFreePromptsRemaining() : FREE_PROMPTS_DEFAULT;
+                  pill.hidden = !(show && remaining > 0);
+                  count.textContent = String(Math.max(0, Number(remaining) || 0));
+                  pill.title = show ? `Free trial: ${remaining} prompt${remaining === 1 ? "" : "s"} left` : "Free trial prompts remaining";
+                }
+              } catch {
+                // ignore
+              }
 
             const glitchBtn = el("glitchBtn");
             if (glitchBtn) {
@@ -9270,8 +9335,8 @@ Style rules:
 
 		          try {
 		            const dialog = el("settingsModal");
-		            const viewport = dialog?.querySelector?.("#settingsViewport");
-		            if (viewport) viewport.scrollTop = 0;
+		            const scrollEl = dialog?.querySelector?.(".modal-body.settings-body") || dialog?.querySelector?.("#settingsViewport");
+		            if (scrollEl) scrollEl.scrollTop = 0;
 		          } catch {
 		            // ignore
 		          }
@@ -9337,23 +9402,23 @@ Style rules:
 		          }
 
 		          openDialogById("settingsModal");
-		          window.setTimeout(() => {
-		            try {
-		              const activePanel = getActiveSettingsPanel();
-		              if (activePanel === "settingsModels") {
-		                el("endpointInput")?.focus?.({ preventScroll: true });
-		              } else {
-		                activateSettingsPanel(activePanel, { focusFirst: true });
-		              }
-		            } catch {
-		              try {
-		                const activePanel = getActiveSettingsPanel();
-		                if (activePanel === "settingsModels") {
-		                  el("endpointInput")?.focus?.();
-		                } else {
-		                  activateSettingsPanel(activePanel, { focusFirst: true });
-		                }
-		              } catch {
+			          window.setTimeout(() => {
+			            try {
+			              const activePanel = getActiveSettingsPanel();
+			              if (activePanel === "settingsModels" || activePanel === "settingsAll") {
+			                el("endpointInput")?.focus?.({ preventScroll: true });
+			              } else {
+			                activateSettingsPanel(activePanel, { focusFirst: true });
+			              }
+			            } catch {
+			              try {
+			                const activePanel = getActiveSettingsPanel();
+			                if (activePanel === "settingsModels" || activePanel === "settingsAll") {
+			                  el("endpointInput")?.focus?.();
+			                } else {
+			                  activateSettingsPanel(activePanel, { focusFirst: true });
+			                }
+			              } catch {
 		                // ignore
 		              }
 		            }
@@ -9824,7 +9889,8 @@ Style rules:
 		            return;
 		          }
 			          const snap = getMagicAuthSnapshot();
-			          if (!snap.signedIn && !hasMkAdmin()) {
+			          const ioMode = effectiveIOMode();
+			          if (ioMode !== "local" && !snap.signedIn && !hasMkAdmin()) {
 		            const before = getFreePromptsRemaining();
 		            const ok = consumeFreePrompt();
 		            if (!ok) {
@@ -9895,7 +9961,8 @@ Style rules:
 	            return;
 	          }
 		          const snap = getMagicAuthSnapshot();
-		          if (!snap.signedIn && !hasMkAdmin()) {
+		          const ioMode = effectiveIOMode();
+		          if (ioMode !== "local" && !snap.signedIn && !hasMkAdmin()) {
 	            const before = getFreePromptsRemaining();
 	            const ok = consumeFreePrompt();
 	            if (!ok) {
@@ -10022,9 +10089,9 @@ Style rules:
 		                // ignore
 		              }
 		            }
-		          });
-				          const SETTINGS_ACTIVE_PANEL_KEY = "mkSettingsActivePanelV1";
-				          const SETTINGS_PANEL_IDS = ["settingsModels", "settingsAgents", "settingsModes", "settingsPrivacy", "settingsNetwork"];
+				          });
+					          const SETTINGS_ACTIVE_PANEL_KEY = "mkSettingsActivePanelV1";
+				          const SETTINGS_PANEL_IDS = ["settingsAll", "settingsModels", "settingsAgents", "settingsModes", "settingsPrivacy", "settingsNetwork"];
 				
 				          const getActiveSettingsPanel = () => {
 				            try {
@@ -10049,6 +10116,15 @@ Style rules:
 				            const nav = el("settingsNav");
 				            const dialog = el("settingsModal");
 				            const viewport = dialog?.querySelector?.("#settingsViewport");
+				            const scrollEl = dialog?.querySelector?.(".modal-body.settings-body") || viewport;
+				            const reduceMotion = (() => {
+				              try {
+				                return window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+				              } catch {
+				                return false;
+				              }
+				            })();
+				            let activeTab = null;
 				
 				            try {
 				              nav?.querySelectorAll?.('[role="tab"][data-settings-panel]')?.forEach?.((b) => {
@@ -10056,31 +10132,56 @@ Style rules:
 				                const isActive = id === target;
 				                b.setAttribute?.("aria-selected", isActive ? "true" : "false");
 				                b.tabIndex = isActive ? 0 : -1;
+				                if (isActive) activeTab = b;
+				              });
+				            } catch {
+				              // ignore
+				            }
+
+				            try {
+				              activeTab?.scrollIntoView?.({
+				                behavior: reduceMotion ? "auto" : "smooth",
+				                block: "nearest",
+				                inline: "center"
 				              });
 				            } catch {
 				              // ignore
 				            }
 				
 				            try {
-				              dialog?.querySelectorAll?.("details.settings-section")?.forEach?.((sec) => {
-				                const isActive = sec?.id === target;
-				                if (isActive) {
-				                  sec.removeAttribute("hidden");
+				              const sections = Array.from(dialog?.querySelectorAll?.("details.settings-section") || []);
+				              if (target === "settingsAll") {
+				                sections.forEach((sec) => sec?.removeAttribute?.("hidden"));
+				                const anyOpen = sections.some((sec) => Boolean(sec && sec.open));
+				                if (!anyOpen) {
 				                  try {
-				                    sec.open = true;
+				                    const first = el("settingsModels");
+				                    if (first) first.open = true;
 				                  } catch {
 				                    // ignore
 				                  }
-				                } else {
-				                  sec.setAttribute("hidden", "");
 				                }
-				              });
+				              } else {
+				                sections.forEach((sec) => {
+				                  const isActive = sec?.id === target;
+				                  if (isActive) {
+				                    sec.removeAttribute("hidden");
+				                    try {
+				                      sec.open = true;
+				                    } catch {
+				                      // ignore
+				                    }
+				                  } else {
+				                    sec.setAttribute("hidden", "");
+				                  }
+				                });
+				              }
 				            } catch {
 				              // ignore
 				            }
 				
 				            try {
-				              if (viewport) viewport.scrollTop = 0;
+				              if (scrollEl) scrollEl.scrollTop = 0;
 				            } catch {
 				              // ignore
 				            }
@@ -10089,7 +10190,7 @@ Style rules:
 				
 				            if (!focusFirst) return;
 				            try {
-				              const activePanel = el(target);
+				              const activePanel = target === "settingsAll" ? (viewport || dialog) : el(target);
 				              const focusable =
 				                activePanel?.querySelector?.(
 				                  'input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), [tabindex]:not([tabindex="-1"])'
@@ -10290,17 +10391,26 @@ Style rules:
 	            const btn = el("insertTemplateBtn");
 	            if (btn) btn.disabled = !(select && select.value);
 	          });
-          el("insertTemplateBtn").addEventListener("click", insertSelectedTemplate);
-          el("manageTemplatesBtn").addEventListener("click", () => {
-            openSettings();
-            requestAnimationFrame(() => {
-              el("templatesField")?.scrollIntoView({ behavior: "smooth", block: "start" });
-              try {
-                el("templateNameInput")?.focus();
-              } catch {
-                // ignore
-              }
-	            });
+	          el("insertTemplateBtn").addEventListener("click", insertSelectedTemplate);
+	          el("manageTemplatesBtn").addEventListener("click", () => {
+	            try {
+	              localStorage.setItem(SETTINGS_ACTIVE_PANEL_KEY, "settingsAgents");
+	            } catch {
+	              // ignore
+	            }
+	            openSettings();
+	            window.setTimeout(() => {
+	              try {
+	                el("templatesField")?.scrollIntoView({ behavior: "smooth", block: "start" });
+	              } catch {
+	                // ignore
+	              }
+	              try {
+	                el("templateNameInput")?.focus?.({ preventScroll: true });
+	              } catch {
+	                // ignore
+	              }
+	            }, 60);
 	          });
 
 	          el("topicForm").addEventListener("submit", (e) => {
@@ -10344,7 +10454,7 @@ Style rules:
 	            renderVoicePreviewFromDraft();
 	            setStatusRight("Shuffled Agent languages.");
 	          });
-          el("templatesSelect").addEventListener("change", () => setTemplateEditorFromId(el("templatesSelect").value));
+	          el("templatesSelect").addEventListener("change", () => setTemplateEditorFromId(el("templatesSelect").value));
           el("newTemplateBtn").addEventListener("click", () => {
             const templatesSelect = el("templatesSelect");
             if (templatesSelect) templatesSelect.value = "";
@@ -10359,6 +10469,29 @@ Style rules:
 	          el("deleteTemplateBtn").addEventListener("click", deleteTemplateFromEditor);
 	          el("clearTeachingsBtn").addEventListener("click", clearTeachings);
 	          el("clearLocalDataBtn").addEventListener("click", clearLocalData);
+            el("adminCodeApplyBtn")?.addEventListener("click", async () => {
+              const input = el("adminCodeInput");
+              const code = String(input?.value || "").trim();
+              if (!code) {
+                setStatusRight("Enter an admin/promo code first.", true);
+                return;
+              }
+              setStatusRight("Checking code…");
+              try {
+                await mkAdminSignInWithCode(code);
+                try {
+                  if (input) input.value = "";
+                } catch {
+                  // ignore
+                }
+                setNotice("MK admin enabled. Enter a message to continue.");
+                setStatusRight("");
+              } catch (err) {
+                setStatusRight(String(err?.message || err) || "Code rejected.", true);
+              } finally {
+                render();
+              }
+            });
 	
 	          el("closeMemoryBtn")?.addEventListener("click", closeMemoryModal);
 	          el("saveMemoryBtn")?.addEventListener("click", saveMemoryFromModal);
