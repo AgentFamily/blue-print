@@ -60,15 +60,21 @@ def _first_env(*names: str) -> str:
 
 
 def _open_api_key() -> str:
-    return _first_env("open", "OPEN", "OPENAI_API_KEY", "OPEN_AI_API_KEY", "OPEN_API_KEY")
+    return _first_env("open", "OPEN", "OPENAI_API_KEY", "OPEN_AI_API_KEY", "OPEN_API_KEY", "OPENAI_KEY", "OPENAI_APIKEY")
 
 
 def _gateway_api_key() -> str:
-    return _first_env("AI_GATEWAY_API_KEY")
+    return _first_env("AI_GATEWAY_API_KEY", "AI_GATEWAY_KEY")
 
 
 def _gateway_mode_enabled() -> bool:
     return bool(_open_api_key() and _gateway_api_key())
+
+def _looks_like_openai_key(api_key: str) -> bool:
+    raw = str(api_key or "").strip()
+    if not raw:
+        return False
+    return bool(re.match(r"^sk-(proj-)?", raw, re.IGNORECASE))
 
 
 def _open_base_url() -> str:
@@ -76,7 +82,13 @@ def _open_base_url() -> str:
 
 
 def _gateway_base_url() -> str:
-    return (_first_env("AI_GATEWAY_BASE_URL") or "https://api.openai.com/v1").rstrip("/")
+    explicit = _first_env("AI_GATEWAY_BASE_URL")
+    if explicit:
+        return explicit.rstrip("/")
+    key = _gateway_api_key()
+    if _looks_like_openai_key(key):
+        return "https://api.openai.com/v1"
+    return "https://gateway.ai.vercel.com/v1"
 
 
 def _open_model() -> str:
@@ -84,7 +96,12 @@ def _open_model() -> str:
 
 
 def _gateway_model() -> str:
-    return _first_env("AI_GATEWAY_MODEL", "AI_MODEL") or "gpt-4o-mini"
+    key = _gateway_api_key()
+    explicit = _first_env("AI_GATEWAY_MODEL")
+    model = explicit or (_first_env("AI_MODEL") or "gpt-4o-mini")
+    if not explicit and key and not _looks_like_openai_key(key) and "/" not in model:
+        model = f"openai/{model}"
+    return model
 
 
 def _post_json(url: str, payload: Dict[str, Any], *, headers: Dict[str, str], timeout_s: int) -> Tuple[int, bytes]:
@@ -201,7 +218,16 @@ def _handle_gateway_chat(handler: http.server.BaseHTTPRequestHandler, body: byte
     except Exception:
         gateway_json = {}
     if gateway_status < 200 or gateway_status >= 300:
-        _json_response(handler, int(gateway_status), {"error": "AI Gateway upstream error", "details": gateway_json})
+        # Fail-open: return the OpenAI candidate if the evaluator is misconfigured or down.
+        _json_response(
+            handler,
+            200,
+            {
+                "message": {"role": "assistant", "content": open_text},
+                "open": {"model": open_model, "content": open_text},
+                "gateway_error": {"status": int(gateway_status), "details": gateway_json},
+            },
+        )
         return
 
     gateway_text = _extract_chat_content(gateway_json)
@@ -213,6 +239,64 @@ def _handle_gateway_chat(handler: http.server.BaseHTTPRequestHandler, body: byte
             "open": {"model": open_model, "content": open_text},
             "gateway": {"model": gateway_model, "content": gateway_text},
         },
+    )
+
+
+def _handle_open_chat(handler: http.server.BaseHTTPRequestHandler, body: bytes) -> None:
+    open_key = _open_api_key()
+    if not open_key:
+        _json_response(handler, 500, {"error": "Missing OpenAI key env (expected `open` or `OPENAI_API_KEY`)."})
+        return
+
+    try:
+        payload = json.loads(body.decode("utf-8") if body else "{}")
+    except Exception:
+        _json_response(handler, 400, {"error": "Invalid JSON body."})
+        return
+
+    messages = payload.get("messages") if isinstance(payload, dict) else None
+    if not isinstance(messages, list) or not messages:
+        _json_response(handler, 400, {"error": "Missing messages[]"})
+        return
+
+    options = payload.get("options") if isinstance(payload, dict) else None
+    temperature = 0.2
+    max_tokens = None
+    if isinstance(options, dict):
+        if isinstance(options.get("temperature"), (int, float)):
+            temperature = float(options.get("temperature"))
+        if isinstance(options.get("num_predict"), int):
+            max_tokens = int(options.get("num_predict"))
+
+    requested_model = str(payload.get("model") or "").strip() if isinstance(payload, dict) else ""
+    open_model = requested_model or _open_model()
+    timeout_s = int(os.getenv("OPEN_TIMEOUT_S") or "30")
+
+    open_url = _open_base_url() + "/chat/completions"
+    open_status, open_raw = _post_json(
+        open_url,
+        {
+            "model": open_model,
+            "messages": messages,
+            "temperature": temperature,
+            **({"max_tokens": max_tokens} if isinstance(max_tokens, int) and max_tokens > 0 else {}),
+        },
+        headers={"Authorization": f"Bearer {open_key}"},
+        timeout_s=timeout_s,
+    )
+    try:
+        open_json = json.loads(open_raw.decode("utf-8") if open_raw else "{}")
+    except Exception:
+        open_json = {}
+    if open_status < 200 or open_status >= 300:
+        _json_response(handler, int(open_status), {"error": "OpenAI upstream error", "details": open_json})
+        return
+
+    open_text = _extract_chat_content(open_json)
+    _json_response(
+        handler,
+        200,
+        {"message": {"role": "assistant", "content": open_text}, "open": {"model": open_model, "content": open_text}},
     )
 
 
@@ -315,11 +399,68 @@ def _handle_gateway_prompt(handler: http.server.BaseHTTPRequestHandler, body: by
     except Exception:
         gateway_json = {}
     if gateway_status < 200 or gateway_status >= 300:
-        _json_response(handler, int(gateway_status), {"error": "AI Gateway upstream error", "details": gateway_json})
+        # Fail-open: return the OpenAI candidate if the evaluator is misconfigured or down.
+        _json_response(
+            handler,
+            200,
+            {
+                "text": open_text,
+                "open_text": open_text,
+                "gateway_error": {"status": int(gateway_status), "details": gateway_json},
+            },
+        )
         return
 
     gateway_text = _extract_chat_content(gateway_json)
     _json_response(handler, 200, {"text": gateway_text, "open_text": open_text})
+
+
+def _handle_open_prompt(handler: http.server.BaseHTTPRequestHandler, body: bytes) -> None:
+    open_key = _open_api_key()
+    if not open_key:
+        _json_response(handler, 500, {"error": "Missing OpenAI key env (expected `open` or `OPENAI_API_KEY`)."})
+        return
+
+    try:
+        payload = json.loads(body.decode("utf-8") if body else "{}")
+    except Exception:
+        _json_response(handler, 400, {"error": "Invalid JSON body."})
+        return
+
+    prompt = payload.get("prompt") if isinstance(payload, dict) else None
+    if not isinstance(prompt, str) or not prompt.strip():
+        _json_response(handler, 400, {"error": "Missing prompt"})
+        return
+
+    timeout_s = int(os.getenv("OPEN_TIMEOUT_S") or "30")
+    open_model = _open_model()
+    open_url = _open_base_url() + "/chat/completions"
+    open_status, open_raw = _post_json(
+        open_url,
+        {
+            "model": open_model,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": "You are a concise assistant. Return a short, direct answer with no markdown unless asked.",
+                },
+                {"role": "user", "content": prompt.strip()},
+            ],
+            "temperature": 0.2,
+        },
+        headers={"Authorization": f"Bearer {open_key}"},
+        timeout_s=timeout_s,
+    )
+    try:
+        open_json = json.loads(open_raw.decode("utf-8") if open_raw else "{}")
+    except Exception:
+        open_json = {}
+    if open_status < 200 or open_status >= 300:
+        _json_response(handler, int(open_status), {"error": "OpenAI upstream error", "details": open_json})
+        return
+
+    open_text = _extract_chat_content(open_json)
+    _json_response(handler, 200, {"text": open_text, "open_text": open_text})
 
 
 def _handle_magic_wallet(handler: http.server.BaseHTTPRequestHandler, body: bytes) -> None:
@@ -1231,12 +1372,13 @@ def build_handler(*, upstream: str, tool_token: str):
                 _json_response(self, 200, {"ok": True, "prefs": _read_agentc_defaults()})
                 return
 
-            if path == "/api/tags" and _gateway_mode_enabled():
+            if path == "/api/tags" and _open_api_key():
                 _handle_gateway_tags(self)
                 return
 
-            if path == "/api/version" and _gateway_mode_enabled():
-                _json_response(self, 200, {"ok": True, "version": "gateway"})
+            if path == "/api/version" and _open_api_key():
+                mode = "gateway" if _gateway_api_key() else "open"
+                _json_response(self, 200, {"ok": True, "version": mode})
                 return
 
             if self.path.startswith("/api/"):
@@ -1337,16 +1479,22 @@ def build_handler(*, upstream: str, tool_token: str):
                 _handle_tool(self, tool_token, tool_name, body)
                 return
 
-            if path == "/api/chat" and _gateway_mode_enabled():
-                _handle_gateway_chat(self, body)
+            if path == "/api/chat" and _open_api_key():
+                if _gateway_api_key():
+                    _handle_gateway_chat(self, body)
+                else:
+                    _handle_open_chat(self, body)
                 return
 
-            if path == "/api/prompt" and _gateway_mode_enabled():
-                _handle_gateway_prompt(self, body)
+            if path == "/api/prompt" and _open_api_key():
+                if _gateway_api_key():
+                    _handle_gateway_prompt(self, body)
+                else:
+                    _handle_open_prompt(self, body)
                 return
 
-            if path == "/api/pull" and _gateway_mode_enabled():
-                _json_response(self, 400, {"error": "Model pull is not supported in gateway mode."})
+            if path == "/api/pull" and _open_api_key():
+                _json_response(self, 400, {"error": "Model pull is not supported in cloud mode."})
                 return
 
             if path.startswith("/api/"):

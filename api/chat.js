@@ -28,6 +28,12 @@ const firstEnv = (...names) => {
   return "";
 };
 
+const kvConfigured = () => {
+  const url = firstEnv("KV_REST_API_URL", "KV_RESTAPI_URL", "UPSTASH_REDIS_REST_URL");
+  const token = firstEnv("KV_REST_API_TOKEN", "KV_RESTAPI_TOKEN", "UPSTASH_REDIS_REST_TOKEN");
+  return Boolean(url && token);
+};
+
 const parseCookieHeader = (header) => {
   const out = {};
   const raw = String(header || "");
@@ -227,8 +233,8 @@ module.exports = async (req, res) => {
     }
   }
 
-  const openKey = firstEnv("open", "OPEN", "OPENAI_API_KEY", "OPEN_AI_API_KEY", "OPEN_API_KEY");
-  const gatewayKey = firstEnv("AI_GATEWAY_API_KEY");
+  const openKey = firstEnv("open", "OPEN", "OPENAI_API_KEY", "OPEN_AI_API_KEY", "OPEN_API_KEY", "OPENAI_KEY", "OPENAI_APIKEY");
+  const gatewayKey = firstEnv("AI_GATEWAY_API_KEY", "AI_GATEWAY_KEY");
 
   if (!messages || messages.length === 0) {
     res.statusCode = 400;
@@ -329,7 +335,7 @@ module.exports = async (req, res) => {
   // Token gating: charge 1 AgentC-oin per /api/chat call for Magic-signed-in users.
   let tokenCharged = false;
   let tokens = null;
-  if (magicUserId) {
+  if (magicUserId && kvConfigured()) {
     try {
       const jwt = getMagicJwtFromRequest(req);
       const email = jwt ? magicUserEmailFromJwt(jwt) : "";
