@@ -23,6 +23,12 @@ const firstEnv = (...names) => {
   return "";
 };
 
+const truthyEnv = (value) => {
+  const v = String(value || "").trim().toLowerCase();
+  if (!v) return false;
+  return v === "1" || v === "true" || v === "yes" || v === "y" || v === "on";
+};
+
 module.exports = async (req, res) => {
   if (req.method !== "POST") {
     res.statusCode = 405;
@@ -46,6 +52,14 @@ module.exports = async (req, res) => {
     res.statusCode = 400;
     res.setHeader("Content-Type", "application/json");
     res.end(JSON.stringify({ error: "Missing provider_id" }));
+    return;
+  }
+
+  if (truthyEnv(firstEnv("MAGIC_WALLET_DISABLED", "MAGIC_DISABLE_WALLET"))) {
+    res.statusCode = 403;
+    res.setHeader("Content-Type", "application/json");
+    res.setHeader("Cache-Control", "no-store");
+    res.end(JSON.stringify({ error: "Magic wallet is disabled by server configuration." }));
     return;
   }
 
@@ -81,4 +95,3 @@ module.exports = async (req, res) => {
     res.end(JSON.stringify({ error: err?.message || String(err) }));
   }
 };
-

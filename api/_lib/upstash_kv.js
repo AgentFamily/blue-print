@@ -7,8 +7,8 @@ const firstEnv = (...names) => {
 };
 
 const getKvConfig = () => {
-  const url = firstEnv("KV_REST_API_URL", "UPSTASH_REDIS_REST_URL");
-  const token = firstEnv("KV_REST_API_TOKEN", "UPSTASH_REDIS_REST_TOKEN");
+  const url = firstEnv("KV_REST_API_URL", "KV_RESTAPI_URL", "UPSTASH_REDIS_REST_URL");
+  const token = firstEnv("KV_REST_API_TOKEN", "KV_RESTAPI_TOKEN", "UPSTASH_REDIS_REST_TOKEN");
   return { url, token };
 };
 
@@ -92,4 +92,3 @@ module.exports = {
   kvSet,
   kvSetNX,
 };
-

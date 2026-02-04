@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Token Gate Demo</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0a0a0a;
+        --panel: #111111;
+        --panel2: #141414;
+        --border: #222222;
+        --text: #eaeaea;
+        --muted: #a3a3a3;
+        --blue: #2563eb;
+        --blue2: #3b82f6;
+        --green: #16a34a;
+        --green2: #22c55e;
+        --red: #f87171;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          Helvetica,
+          Arial,
+          "Apple Color Emoji",
+          "Segoe UI Emoji";
+        background: var(--bg);
+        color: var(--text);
+      }
+      .wrap {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+      }
+      .card {
+        width: 100%;
+        max-width: 720px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 20px;
+        box-shadow: 0 18px 60px rgba(0, 0, 0, 0.55);
+      }
+      header {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        padding-bottom: 14px;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 16px;
+      }
+      .kv {
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .kv b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .btn {
+        appearance: none;
+        border: 0;
+        border-radius: 14px;
+        padding: 10px 14px;
+        cursor: pointer;
+        font-weight: 600;
+        color: white;
+        background: var(--blue);
+      }
+      .btn:hover {
+        background: var(--blue2);
+      }
+      .btn.secondary {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--text);
+      }
+      .btn.secondary:hover {
+        background: #151515;
+      }
+      .btn.danger {
+        background: transparent;
+        border: 1px solid #3a1515;
+        color: var(--red);
+      }
+      .btn.danger:hover {
+        background: #140707;
+      }
+      .btn.green {
+        background: var(--green);
+      }
+      .btn.green:hover {
+        background: var(--green2);
+      }
+      .btn:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+      textarea {
+        width: 100%;
+        min-height: 120px;
+        resize: vertical;
+        border-radius: 14px;
+        border: 1px solid var(--border);
+        background: var(--panel2);
+        color: var(--text);
+        padding: 12px;
+        font-size: 14px;
+        line-height: 1.35;
+      }
+      .stack {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .notice {
+        border-radius: 14px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.03);
+        padding: 12px;
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.35;
+      }
+      .notice.error {
+        border-color: #3a1515;
+        background: rgba(248, 113, 113, 0.1);
+        color: #fecaca;
+      }
+      .mono {
+        font-family:
+          ui-monospace,
+          SFMono-Regular,
+          Menlo,
+          Monaco,
+          Consolas,
+          "Liberation Mono",
+          "Courier New",
+          monospace;
+      }
+      .log {
+        padding-top: 14px;
+        border-top: 1px solid var(--border);
+        margin-top: 14px;
+      }
+      .log h2 {
+        margin: 0 0 8px 0;
+        font-size: 12px;
+        color: var(--muted);
+        font-weight: 600;
+      }
+      .entry {
+        font-size: 12px;
+        color: #9ca3af;
+        padding: 6px 0;
+        border-bottom: 1px dashed rgba(255, 255, 255, 0.06);
+      }
+      .entry:last-child {
+        border-bottom: 0;
+      }
+      .footer {
+        margin-top: 14px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .footer a {
+        color: #93c5fd;
+        text-decoration: none;
+      }
+      .footer a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="card">
+        <header>
+          <div class="kv">Account: <b id="account">—</b></div>
+          <div class="kv">Tokens: <b id="tokens">—</b></div>
+          <div class="row">
+            <button id="loginBtn" class="btn">Log In</button>
+            <button id="logoutBtn" class="btn danger" style="display: none">Log Out</button>
+          </div>
+        </header>
+
+        <main id="signedOut" class="stack">
+          <div class="notice">
+            This page calls <span class="mono">/api/prompt</span>, which must be deployed as a Vercel
+            serverless function and configured with <span class="mono">AI_GATEWAY_API_KEY</span>.
+          </div>
+        </main>
+
+        <main id="signedIn" class="stack" style="display: none">
+          <textarea id="prompt" placeholder="Enter prompt"></textarea>
+          <button id="submitBtn" class="btn green">Submit Prompt</button>
+          <div id="error" class="notice error" style="display: none"></div>
+          <div id="result" class="notice mono" style="display: none; white-space: pre-wrap"></div>
+          <div id="noTokens" class="notice" style="display: none; text-align: center">
+            No prompts remaining
+          </div>
+        </main>
+
+        <section id="activity" class="log" style="display: none">
+          <h2>Activity Log</h2>
+          <div id="entries"></div>
+        </section>
+
+        <div class="footer">
+          Back to <a href="/">theagentfamily.com</a>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const MAX_TOKENS = 5;
+      const ACCOUNT_LABEL = "MK";
+
+      let signedIn = false;
+      let tokens = MAX_TOKENS;
+      let loading = false;
+      /** @type {Array<{id:string,time:string,type:'sign_in'|'sign_out'|'prompt_burn',hash?:string,account?:string}>} */
+      let events = [];
+
+      const el = {
+        account: document.getElementById("account"),
+        tokens: document.getElementById("tokens"),
+        loginBtn: document.getElementById("loginBtn"),
+        logoutBtn: document.getElementById("logoutBtn"),
+        signedOut: document.getElementById("signedOut"),
+        signedIn: document.getElementById("signedIn"),
+        prompt: document.getElementById("prompt"),
+        submitBtn: document.getElementById("submitBtn"),
+        error: document.getElementById("error"),
+        result: document.getElementById("result"),
+        noTokens: document.getElementById("noTokens"),
+        activity: document.getElementById("activity"),
+        entries: document.getElementById("entries"),
+      };
+
+      const newEvent = (event) => ({
+        id: crypto.randomUUID(),
+        time: new Date().toISOString(),
+        ...event,
+      });
+
+      const setError = (message) => {
+        if (!message) {
+          el.error.style.display = "none";
+          el.error.textContent = "";
+          return;
+        }
+        el.error.style.display = "block";
+        el.error.textContent = message;
+      };
+
+      const setResult = (text) => {
+        if (!text) {
+          el.result.style.display = "none";
+          el.result.textContent = "";
+          return;
+        }
+        el.result.style.display = "block";
+        el.result.textContent = text;
+      };
+
+      const renderLog = () => {
+        if (events.length === 0) {
+          el.activity.style.display = "none";
+          el.entries.replaceChildren();
+          return;
+        }
+
+        el.activity.style.display = "block";
+        el.entries.replaceChildren(
+          ...events.map((e) => {
+            const div = document.createElement("div");
+            div.className = "entry mono";
+            div.textContent =
+              e.type === "sign_in"
+                ? `${e.time} · LOG_IN · ${e.account}`
+                : e.type === "sign_out"
+                  ? `${e.time} · LOG_OUT`
+                  : `${e.time} · BURN · ${e.hash}`;
+            return div;
+          })
+        );
+      };
+
+      const render = () => {
+        el.account.textContent = signedIn ? ACCOUNT_LABEL : "—";
+        el.tokens.textContent = signedIn ? `${tokens} / ${MAX_TOKENS}` : "—";
+
+        el.loginBtn.style.display = signedIn ? "none" : "inline-block";
+        el.logoutBtn.style.display = signedIn ? "inline-block" : "none";
+        el.signedOut.style.display = signedIn ? "none" : "block";
+        el.signedIn.style.display = signedIn ? "block" : "none";
+
+        el.prompt.disabled = !signedIn || tokens === 0 || loading;
+        el.submitBtn.disabled = !signedIn || tokens === 0 || loading;
+        el.submitBtn.textContent = loading ? "Submitting…" : "Submit Prompt";
+
+        el.noTokens.style.display = signedIn && tokens === 0 ? "block" : "none";
+        renderLog();
+      };
+
+      const signIn = () => {
+        signedIn = true;
+        tokens = MAX_TOKENS;
+        loading = false;
+        el.prompt.value = "";
+        setError("");
+        setResult("");
+        events = [newEvent({ type: "sign_in", account: ACCOUNT_LABEL })];
+        render();
+      };
+
+      const signOut = () => {
+        signedIn = false;
+        tokens = MAX_TOKENS;
+        loading = false;
+        el.prompt.value = "";
+        setError("");
+        setResult("");
+        events = [...events, newEvent({ type: "sign_out" })];
+        render();
+      };
+
+      const submitPrompt = async () => {
+        if (!signedIn || tokens === 0 || loading) return;
+        const prompt = el.prompt.value.trim();
+        if (!prompt) return;
+
+        loading = true;
+        setError("");
+        setResult("");
+        render();
+
+        try {
+          const response = await fetch("/api/prompt", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ prompt }),
+          });
+
+          const data = await response.json().catch(() => null);
+          if (!response.ok) throw new Error(data?.error || "Request failed");
+
+          const text = String(data?.text ?? "");
+          const hash = crypto.randomUUID(); // placeholder for SHA-256
+
+          setResult(text);
+          events = [...events, newEvent({ type: "prompt_burn", hash })];
+          tokens -= 1;
+          el.prompt.value = "";
+        } catch (e) {
+          setError(e?.message || "Request failed");
+        } finally {
+          loading = false;
+          render();
+        }
+      };
+
+      el.loginBtn.addEventListener("click", signIn);
+      el.logoutBtn.addEventListener("click", signOut);
+      el.submitBtn.addEventListener("click", submitPrompt);
+
+      render();
+    </script>
+  </body>
+</html>
+

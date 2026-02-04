@@ -6,6 +6,12 @@ const firstEnv = (...names) => {
   return "";
 };
 
+const truthyEnv = (value) => {
+  const v = String(value || "").trim().toLowerCase();
+  if (!v) return false;
+  return v === "1" || v === "true" || v === "yes" || v === "y" || v === "on";
+};
+
 const findEnvValueMatching = (regex) => {
   for (const value of Object.values(process.env || {})) {
     if (typeof value !== "string") continue;
@@ -24,7 +30,7 @@ module.exports = async (req, res) => {
   }
 
   const publishableKey =
-    firstEnv("MAGIC_PUBLISHABLE_KEY", "MAGIC_API_KEY") ||
+    firstEnv("MAGIC_PUBLISHABLE_KEY", "NEXT_PUBLIC_MAGIC_PUBLISHABLE_KEY", "MAGIC_API_KEY") ||
     findEnvValueMatching(/^pk_(live|test)_[A-Za-z0-9]+$/);
 
   if (!publishableKey) {
@@ -37,6 +43,7 @@ module.exports = async (req, res) => {
 
   const providerId = firstEnv("MAGIC_PROVIDER_ID", "OIDC_PROVIDER_ID");
   const chain = firstEnv("MAGIC_CHAIN") || "ETH";
+  const walletDisabled = truthyEnv(firstEnv("MAGIC_WALLET_DISABLED", "MAGIC_DISABLE_WALLET"));
 
   res.statusCode = 200;
   res.setHeader("Content-Type", "application/json");
@@ -46,7 +53,7 @@ module.exports = async (req, res) => {
       publishableKey,
       providerId,
       chain,
+      walletDisabled,
     })
   );
 };
-
