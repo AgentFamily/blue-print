@@ -2651,29 +2651,162 @@
 	        transform: translateY(1px);
 	      }
 
-	      .coins-store-grid {
-	        display: grid;
-	        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-	        gap: 12px;
-	      }
+		      .coins-store-grid {
+		        display: grid;
+		        grid-template-columns: repeat(auto-fit, minmax(248px, 1fr));
+		        gap: 12px;
+		      }
 
-	      .coins-pack {
-	        border: 1px solid rgba(15, 23, 42, 0.12);
-	        border-radius: var(--radius-md);
-	        background: rgba(255, 255, 255, 0.76);
-	        box-shadow: var(--shadow-soft);
-	        padding: 12px 12px 10px;
-	        display: flex;
-	        flex-direction: column;
-	        gap: 8px;
-	      }
+		      .coins-store-intro {
+		        border: 1px solid rgba(15, 23, 42, 0.10);
+		        border-radius: var(--radius-md);
+		        background: linear-gradient(135deg, rgba(124, 58, 237, 0.10), rgba(37, 99, 235, 0.08), rgba(255, 255, 255, 0.72));
+		        box-shadow: var(--shadow-soft);
+		        padding: 12px;
+		        margin: 12px 0 10px;
+		      }
 
-	      .coins-pack h3 {
-	        margin: 0;
-	        font-size: 14px;
-	        font-weight: var(--sf-light);
-	        letter-spacing: -0.01em;
-	      }
+		      .coins-store-intro-top {
+		        display: grid;
+		        grid-template-columns: auto 1fr;
+		        gap: 12px;
+		        align-items: center;
+		      }
+
+		      .coins-store-intro-top img {
+		        width: 44px;
+		        height: 44px;
+		        border-radius: 14px;
+		        border: 1px solid rgba(15, 23, 42, 0.10);
+		        background: rgba(255, 255, 255, 0.65);
+		        padding: 6px;
+		        filter: drop-shadow(0 12px 22px rgba(2, 6, 23, 0.14));
+		      }
+
+		      .coins-store-eyebrow {
+		        font-size: 11px;
+		        letter-spacing: 0.16em;
+		        text-transform: uppercase;
+		        color: rgba(2, 6, 23, 0.60);
+		        margin-bottom: 2px;
+		      }
+
+		      .coins-store-title {
+		        font-size: 16px;
+		        letter-spacing: -0.02em;
+		        font-weight: var(--sf-light);
+		        margin: 0 0 4px;
+		      }
+
+		      .coins-store-sub {
+		        font-size: 12.5px;
+		        color: rgba(2, 6, 23, 0.70);
+		        line-height: 1.35;
+		      }
+
+		      .coins-store-steps {
+		        display: grid;
+		        grid-template-columns: repeat(4, minmax(0, 1fr));
+		        gap: 10px;
+		        margin-top: 10px;
+		      }
+
+		      .coins-step {
+		        border-radius: 14px;
+		        border: 1px solid rgba(15, 23, 42, 0.10);
+		        background: rgba(255, 255, 255, 0.62);
+		        padding: 8px 10px;
+		        display: grid;
+		        grid-template-columns: auto 1fr;
+		        gap: 8px;
+		        align-items: center;
+		      }
+
+		      .coins-step .n {
+		        width: 22px;
+		        height: 22px;
+		        border-radius: 999px;
+		        display: grid;
+		        place-items: center;
+		        font-size: 12px;
+		        font-weight: var(--sf-light);
+		        color: rgba(2, 6, 23, 0.78);
+		        background: rgba(2, 6, 23, 0.05);
+		        border: 1px solid rgba(2, 6, 23, 0.10);
+		      }
+
+		      .coins-step .t {
+		        font-size: 12px;
+		        font-weight: var(--sf-light);
+		        color: rgba(2, 6, 23, 0.80);
+		        line-height: 1.25;
+		      }
+
+		      @media (max-width: 720px) {
+		        .coins-store-steps {
+		          grid-template-columns: repeat(2, minmax(0, 1fr));
+		        }
+		      }
+
+		      .coins-pack {
+		        border: 1px solid rgba(15, 23, 42, 0.12);
+		        border-radius: var(--radius-md);
+		        background: linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(255, 255, 255, 0.70));
+		        box-shadow: var(--shadow-soft);
+		        padding: 12px 12px 10px;
+		        display: flex;
+		        flex-direction: column;
+		        gap: 8px;
+		        position: relative;
+		        overflow: hidden;
+		      }
+
+		      .coins-pack::before {
+		        content: "";
+		        position: absolute;
+		        inset: -2px;
+		        background: linear-gradient(135deg, rgba(124, 58, 237, 0.22), rgba(37, 99, 235, 0.18), rgba(245, 158, 11, 0.10));
+		        opacity: 0;
+		        transition: opacity 180ms ease;
+		        pointer-events: none;
+		        z-index: 0;
+		      }
+
+		      .coins-pack > * {
+		        position: relative;
+		        z-index: 1;
+		      }
+
+		      .coins-pack:hover::before {
+		        opacity: 1;
+		      }
+
+		      .coins-pack.recommended {
+		        border-color: rgba(245, 158, 11, 0.30);
+		        box-shadow: 0 14px 30px rgba(245, 158, 11, 0.12), var(--shadow-soft);
+		      }
+
+		      .coins-pack .ribbon {
+		        position: absolute;
+		        top: 10px;
+		        right: 10px;
+		        z-index: 2;
+		        padding: 4px 10px;
+		        border-radius: 999px;
+		        font-size: 11px;
+		        font-weight: var(--sf-light);
+		        color: rgba(2, 6, 23, 0.82);
+		        border: 1px solid rgba(245, 158, 11, 0.22);
+		        background: rgba(255, 251, 235, 0.80);
+		        box-shadow: 0 12px 20px rgba(2, 6, 23, 0.06);
+		      }
+
+		      .coins-pack h3 {
+		        margin: 0;
+		        font-size: 14px;
+		        font-weight: var(--sf-light);
+		        letter-spacing: -0.01em;
+		      }
 
 	      .coins-pack .sub {
 	        font-size: 12.5px;
@@ -2689,36 +2822,66 @@
 	        color: rgba(2, 6, 23, 0.78);
 	      }
 
-	      .coins-pack .badge {
-	        display: inline-flex;
-	        align-items: center;
-	        gap: 6px;
-	        padding: 3px 8px;
-	        border-radius: 999px;
-	        border: 1px solid rgba(2, 6, 23, 0.10);
-	        background: rgba(2, 6, 23, 0.03);
-	        font-size: 11px;
-	        color: rgba(2, 6, 23, 0.72);
-	      }
+		      .coins-pack .badge {
+		        display: inline-flex;
+		        align-items: center;
+		        gap: 6px;
+		        padding: 3px 8px;
+		        border-radius: 999px;
+		        border: 1px solid rgba(2, 6, 23, 0.10);
+		        background: rgba(2, 6, 23, 0.03);
+		        font-size: 11px;
+		        color: rgba(2, 6, 23, 0.72);
+		      }
 
-	      .coins-pack .actions {
-	        display: flex;
-	        gap: 8px;
-	        flex-wrap: wrap;
-	        margin-top: auto;
-	      }
+		      .coins-pack .per {
+		        font-size: 11px;
+		        color: rgba(2, 6, 23, 0.62);
+		        margin-top: -2px;
+		      }
 
-	      .coins-pack .actions .btn {
-	        flex: 1;
-	        min-width: 120px;
-	      }
+		      .coins-pack .actions {
+		        display: flex;
+		        gap: 8px;
+		        flex-wrap: wrap;
+		        margin-top: auto;
+		      }
 
-	      @media (max-width: 520px) {
-	        .coins-pack .actions .btn {
-	          min-width: 100%;
-	        }
-	      }
-	    </style>
+		      .coins-pack .actions .btn {
+		        flex: 1;
+		        min-width: 120px;
+		      }
+
+		      .coins-advanced {
+		        margin-top: 10px;
+		        border-radius: var(--radius-md);
+		        border: 1px dashed rgba(2, 6, 23, 0.18);
+		        background: rgba(255, 255, 255, 0.60);
+		        padding: 10px 12px;
+		      }
+
+		      .coins-advanced summary {
+		        cursor: pointer;
+		        font-size: 12px;
+		        font-weight: var(--sf-light);
+		        color: rgba(2, 6, 23, 0.72);
+		        list-style: none;
+		      }
+
+		      .coins-advanced summary::-webkit-details-marker {
+		        display: none;
+		      }
+
+		      .coins-advanced .hint {
+		        margin-top: 8px;
+		      }
+
+		      @media (max-width: 520px) {
+		        .coins-pack .actions .btn {
+		          min-width: 100%;
+		        }
+		      }
+		    </style>
     <script>
       (function () {
         try {
@@ -2800,15 +2963,15 @@
 	            <span class="dot glitch" aria-hidden="true"></span>
 	            <span>Glitch</span>
 	          </button>
-			          <button class="pill pill-btn" id="onlineBtn" type="button" aria-pressed="false" title="Online (optional)">
-		            <img
-		              id="onlineStatusImg"
-		              class="online-status-img"
-		              src="Logged OUT.png"
-		              alt="Online off"
-		            />
-		            <span id="onlineLabel">Online</span>
-		          </button>
+				          <button class="pill pill-btn" id="onlineBtn" type="button" aria-pressed="false" title="Account (optional)">
+			            <img
+			              id="onlineStatusImg"
+			              class="online-status-img"
+			              src="Logged OUT.png"
+			              alt="Signed out"
+			            />
+			            <span id="onlineLabel">Account</span>
+			          </button>
               <span class="pill" id="freeTrialPill" hidden title="Free trial prompts remaining">
                 <span class="dot coins" aria-hidden="true"></span>
                 <span id="freeTrialPillLabel">Free</span>
@@ -3676,41 +3839,61 @@
 	      </div>
 	    </dialog>
 
-	    <dialog id="coinsStoreModal" aria-label="C-oin Store">
-	      <div class="modal-head">
-	        <strong>C-oin Store</strong>
-	        <button class="btn" id="closeCoinsStoreBtn" type="button">Close</button>
-	      </div>
-	      <div class="modal-body">
-	        <div class="coins-store-meta">
-	          <div>
-	            Account <code id="coinsStoreAccount">—</code>
-	          </div>
-	          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-	            Balance <code id="coinsStoreBalance">—</code>
-	            <button class="btn tiny secondary" id="refreshCoinsStoreBalanceBtn" type="button">Refresh</button>
-	          </div>
-	        </div>
+		    <dialog id="coinsStoreModal" aria-label="C-oin Store">
+		      <div class="modal-head">
+		        <strong>C-oin Store</strong>
+		        <button class="btn" id="closeCoinsStoreBtn" type="button">Close</button>
+		      </div>
+		      <div class="modal-body">
+		        <div class="coins-store-meta">
+		          <div>
+		            Account <code id="coinsStoreAccount">—</code>
+		          </div>
+		          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+		            Balance <code id="coinsStoreBalance">—</code>
+		            <button class="btn tiny secondary" id="refreshCoinsStoreBalanceBtn" type="button">Refresh</button>
+		          </div>
+		        </div>
 
-	        <div class="coins-disclaimer">
-	          <label class="coins-disclaimer-row" for="coinsNoRefundAck">
-	            <input id="coinsNoRefundAck" type="checkbox" />
-	            <span>Digital product. No refunds.</span>
-	          </label>
-	          <div class="hint">You must acknowledge this before purchasing.</div>
-	        </div>
+		        <div class="coins-store-intro" aria-label="How AgentC-oins work">
+		          <div class="coins-store-intro-top">
+		            <img src="agentc_button.svg" alt="" aria-hidden="true" />
+		            <div>
+		              <div class="coins-store-eyebrow">AgentC-oins</div>
+		              <div class="coins-store-title">Top up prompts, keep moving</div>
+		              <div class="coins-store-sub">1 C-oin = 1 prompt. Secure checkout via Stripe. C-oins credit to your signed-in account.</div>
+		            </div>
+		          </div>
+		          <div class="coins-store-steps" role="list" aria-label="Purchase steps">
+		            <div class="coins-step" role="listitem"><span class="n">1</span><span class="t">Sign in</span></div>
+		            <div class="coins-step" role="listitem"><span class="n">2</span><span class="t">Choose a pack</span></div>
+		            <div class="coins-step" role="listitem"><span class="n">3</span><span class="t">Pay with Stripe</span></div>
+		            <div class="coins-step" role="listitem"><span class="n">4</span><span class="t">Return to sync</span></div>
+		          </div>
+		        </div>
 
-	        <div class="coins-store-grid" id="coinsStoreGrid" aria-label="C-oin packs"></div>
-	        <div class="hint" style="margin-top:10px">
-	          Magic.link note: Magic doesn’t auto-sync Stripe products, so the “Copy metadata” buttons below generate the pack config you can paste into
-	          Magic Dashboard → Wallet UI / Payments. Optional: enable Fiat On-Ramp there; example mapping: 1 USDC = 10 C-oins.
-	        </div>
-	      </div>
-	      <div class="modal-foot">
-	        <button class="btn secondary" id="coinsStoreOpenAgentFamilyBtn" type="button">Open GitHub: The Agent Family</button>
-	        <button class="btn primary" id="coinsStoreSignInBtn" type="button">Sign in</button>
-	      </div>
-	    </dialog>
+		        <div class="coins-disclaimer">
+		          <label class="coins-disclaimer-row" for="coinsNoRefundAck">
+		            <input id="coinsNoRefundAck" type="checkbox" />
+		            <span>Digital product. No refunds. (Required for checkout.)</span>
+		          </label>
+		          <div class="hint">You must acknowledge this before purchasing.</div>
+		        </div>
+
+		        <div class="coins-store-grid" id="coinsStoreGrid" aria-label="C-oin packs"></div>
+		        <details class="coins-advanced" id="coinsStoreAdvanced" hidden>
+		          <summary>Advanced (Magic Wallet config)</summary>
+		          <div class="hint">
+		            For admins: use “Copy metadata” to paste pack fields into Magic Dashboard → Wallet UI / Payments. Optional: enable Fiat On-Ramp; example mapping: 1 USDC = 10 C-oins.
+		          </div>
+		        </details>
+		      </div>
+		      <div class="modal-foot">
+		        <button class="btn secondary" id="coinsStoreOpenAgentFamilyBtn" type="button">Open GitHub: The Agent Family</button>
+		        <button class="btn secondary" id="coinsStoreSupportBtn" type="button">Support</button>
+		        <button class="btn primary" id="coinsStoreSignInBtn" type="button">Sign in</button>
+		      </div>
+		    </dialog>
 
 	    <dialog id="teachModal">
 	      <div class="modal-head">
@@ -6005,14 +6188,14 @@
 		              internal_name: "membership"
 		            }
 		          },
-		          {
-		            internal_name: "stripe_topup_200",
-		            name: "Passive Pack (200 tokens)",
-		            description: "A pack of 200 C-oin tokens. Each C-oin equals one prompt. Digital product. No refunds.",
-		            pricing: "£15",
-		            stripe_url: "https://buy.stripe.com/bJecN42Ef4zv3FdaypgrS04",
-		            metadata: {
-		              credits_granted: 200,
+			          {
+			            internal_name: "stripe_topup_200",
+			            name: "C-oin Pack (200 tokens)",
+			            description: "A pack of 200 C-oin tokens. Each C-oin equals one prompt. Digital product. No refunds.",
+			            pricing: "£15",
+			            stripe_url: "https://buy.stripe.com/bJecN42Ef4zv3FdaypgrS04",
+			            metadata: {
+			              credits_granted: 200,
 		              credit_type: "one_time",
 		              non_redeemable: true,
 		              internal_name: "stripe_topup_200"
@@ -6087,108 +6270,162 @@
 		          };
 		        }
 
-		        function renderCoinsStore() {
-		          const grid = el("coinsStoreGrid");
-		          if (!grid) return;
+			        function renderCoinsStore() {
+			          const grid = el("coinsStoreGrid");
+			          if (!grid) return;
 
-		          const snap = getMagicAuthSnapshot();
-		          const signedIn = Boolean(snap && snap.signedIn);
-		          const addr = String(snap?.embeddedAddress || "").trim();
-		          const acct = el("coinsStoreAccount");
-		          if (acct) acct.textContent = addr ? `${addr.slice(0, 6)}…${addr.slice(-4)}` : signedIn ? "Signed in" : "Not signed in";
-		          const bal = el("coinsStoreBalance");
-		          const tokens = state.coins == null ? null : Math.max(0, Number(state.coins) || 0);
-		          if (bal) bal.textContent = signedIn ? (state.coinsLoading ? "Loading…" : tokens == null ? "Unavailable" : `${tokens}`) : "—";
+			          const snap = getMagicAuthSnapshot();
+			          const signedIn = Boolean(snap && snap.signedIn);
+			          const showAdvanced = hasMkAdmin();
+			          const advanced = el("coinsStoreAdvanced");
+			          if (advanced) advanced.hidden = !showAdvanced;
+			          const addr = String(snap?.embeddedAddress || "").trim();
+			          const acct = el("coinsStoreAccount");
+			          if (acct) acct.textContent = addr ? `${addr.slice(0, 6)}…${addr.slice(-4)}` : signedIn ? "Signed in" : "Not signed in";
+			          const bal = el("coinsStoreBalance");
+			          const tokens = state.coins == null ? null : Math.max(0, Number(state.coins) || 0);
+			          if (bal) bal.textContent = signedIn ? (state.coinsLoading ? "Loading…" : tokens == null ? "Unavailable" : `${tokens} C-oins`) : "—";
 
-		          const signInBtn = el("coinsStoreSignInBtn");
-		          if (signInBtn) {
-		            signInBtn.textContent = signedIn ? "Signed in" : "Sign in";
-		            signInBtn.disabled = signedIn;
-		          }
+			          const signInBtn = el("coinsStoreSignInBtn");
+			          if (signInBtn) {
+			            signInBtn.textContent = signedIn ? "Signed in" : "Sign in";
+			            signInBtn.disabled = signedIn;
+			          }
 
-		          const ack = el("coinsNoRefundAck");
-		          const acknowledged = ack ? Boolean(ack.checked) : coinsNoRefundAcked();
+			          const ack = el("coinsNoRefundAck");
+			          const acknowledged = ack ? Boolean(ack.checked) : coinsNoRefundAcked();
 
-		          grid.innerHTML = "";
-		          for (const pack of COIN_PRODUCT_PACKS) {
-		            const card = document.createElement("div");
-		            card.className = "coins-pack";
+			          const maxUrlCredits = COIN_PRODUCT_PACKS.reduce((m, p) => {
+			            const has = Boolean(String(p?.stripe_url || "").trim());
+			            const n = parseInt(String(p?.metadata?.credits_granted ?? ""), 10);
+			            if (!has || !Number.isFinite(n) || n <= 0) return m;
+			            return Math.max(m, n);
+			          }, 0);
 
-		            const title = document.createElement("h3");
-		            title.textContent = String(pack.name || pack.internal_name || "Pack");
-		            card.appendChild(title);
+			          const priceGbpFromPricingText = (pricingText) => {
+			            const s = String(pricingText || "");
+			            const m = s.match(/£\s*([0-9]+(?:\.[0-9]+)?)/);
+			            if (!m) return NaN;
+			            const n = parseFloat(m[1]);
+			            return Number.isFinite(n) ? n : NaN;
+			          };
 
-		            const sub = document.createElement("div");
-		            sub.className = "sub";
-		            sub.textContent = String(pack.description || "");
-		            card.appendChild(sub);
+			          grid.innerHTML = "";
+			          for (const pack of COIN_PRODUCT_PACKS) {
+			            const credits = parseInt(String(pack?.metadata?.credits_granted ?? ""), 10);
+			            const safeCredits = Number.isFinite(credits) ? Math.max(0, credits) : 0;
+			            const creditType = String(pack?.metadata?.credit_type || "").trim();
+			            const isMembership = creditType === "membership" || String(pack?.internal_name || "") === "membership";
+			            const hasUrl = Boolean(String(pack?.stripe_url || "").trim());
+			            const isRecommended = hasUrl && safeCredits > 0 && safeCredits === maxUrlCredits && maxUrlCredits >= 100;
+			            const isPopular = hasUrl && safeCredits === 100;
+			            const showPerPrompt = hasUrl && safeCredits > 0;
+			            const priceGbp = priceGbpFromPricingText(pack?.pricing);
+			            const perPrompt = showPerPrompt && Number.isFinite(priceGbp) ? priceGbp / safeCredits : NaN;
 
-		            const row = document.createElement("div");
-		            row.className = "price";
-		            const badge = document.createElement("span");
-		            badge.className = "badge";
-		            badge.textContent = `${pack?.metadata?.credits_granted ?? "?"} credits`;
-		            row.appendChild(badge);
-		            const priceText = document.createElement("span");
-		            priceText.textContent = String(pack.pricing || "");
-		            row.appendChild(priceText);
-		            card.appendChild(row);
+			            const card = document.createElement("div");
+			            card.className = `coins-pack${isRecommended ? " recommended" : ""}`;
 
-		            const actions = document.createElement("div");
-		            actions.className = "actions";
+			            const ribbonText = isMembership && !hasUrl ? "Coming soon" : isRecommended ? "Best value" : isPopular ? "Most popular" : "";
+			            if (ribbonText) {
+			              const ribbon = document.createElement("div");
+			              ribbon.className = "ribbon";
+			              ribbon.textContent = ribbonText;
+			              card.appendChild(ribbon);
+			            }
 
-		            const buy = document.createElement("button");
-		            buy.className = "btn primary";
-		            buy.type = "button";
-		            buy.textContent = "Buy (Stripe)";
-		            const hasUrl = Boolean(String(pack.stripe_url || "").trim());
-		            buy.disabled = !hasUrl || !signedIn || !acknowledged || Boolean(state.loading);
-		            buy.title = !signedIn
-		              ? "Sign in to associate your purchase with your account."
-		              : !acknowledged
-		              ? "Acknowledge the no-refund policy to continue."
-		              : hasUrl
-		              ? "Opens Stripe checkout in a new window."
-		              : "Stripe link not configured for this pack.";
-		            buy.addEventListener("click", () => {
-		              if (!signedIn) {
-		                setStatusRight("Sign in via Auth (Magic) to purchase.", true);
-		                openMagicAuthPanel();
-		                return;
-		              }
-		              const ackNode = el("coinsNoRefundAck");
-		              const ok = ackNode ? Boolean(ackNode.checked) : coinsNoRefundAcked();
-		              if (!ok) {
-		                setStatusRight("Please acknowledge: Digital product. No refunds.", true);
-		                return;
-		              }
-		              const url = buildStripeBuyUrlForCurrentUser(pack.stripe_url);
-		              try {
-		                window.open(url, "_blank", "noopener,noreferrer");
-		              } catch {
-		                window.location.href = url;
-		              }
-		              setStatusRight("Opened Stripe checkout — return here to sync your C-oins.");
-		              startCoinsPolling({ durationMs: 90_000 });
-		            });
-		            actions.appendChild(buy);
+			            const title = document.createElement("h3");
+			            title.textContent = String(pack.name || pack.internal_name || "Pack");
+			            card.appendChild(title);
 
-		            const copy = document.createElement("button");
-		            copy.className = "btn secondary";
-		            copy.type = "button";
-		            copy.textContent = "Copy metadata";
-		            copy.title = "Copy Magic.link product fields + metadata JSON.";
-		            copy.addEventListener("click", async () => {
-		              const ok = await copyText(JSON.stringify(coinsStoreMagicPackConfig(pack), null, 2));
-		              armClipboardClear(30_000);
-		              setStatusRight(ok ? "Copied pack config." : "Copy failed.", !ok);
-		            });
-		            actions.appendChild(copy);
+			            const sub = document.createElement("div");
+			            sub.className = "sub";
+			            sub.textContent = String(pack.description || "");
+			            card.appendChild(sub);
 
-		            card.appendChild(actions);
-		            grid.appendChild(card);
-		          }
-		        }
+			            const row = document.createElement("div");
+			            row.className = "price";
+			            const badge = document.createElement("span");
+			            badge.className = "badge";
+			            badge.textContent = `${safeCredits || "?"} C-oins`;
+			            row.appendChild(badge);
+			            const priceText = document.createElement("span");
+			            priceText.textContent = String(pack.pricing || "");
+			            row.appendChild(priceText);
+			            card.appendChild(row);
+
+			            if (Number.isFinite(perPrompt) && perPrompt > 0) {
+			              const per = document.createElement("div");
+			              per.className = "per";
+			              per.textContent = `≈ £${perPrompt.toFixed(2)} / prompt`;
+			              card.appendChild(per);
+			            }
+
+			            const actions = document.createElement("div");
+			            actions.className = "actions";
+
+			            const buy = document.createElement("button");
+			            buy.className = "btn primary";
+			            buy.type = "button";
+			            buy.textContent = isMembership && !hasUrl ? "Join waitlist" : !hasUrl ? "Coming soon" : signedIn ? "Checkout (Stripe)" : "Sign in to buy";
+			            buy.disabled = Boolean(state.loading) || (!hasUrl && !isMembership);
+			            buy.title = isMembership && !hasUrl
+			              ? "Email support to enable membership."
+			              : !hasUrl
+			              ? "Stripe link not configured for this pack."
+			              : !signedIn
+			              ? "Sign in to associate your purchase with your account."
+			              : !acknowledged
+			              ? "Acknowledge the no-refund policy to continue."
+			              : "Opens Stripe checkout in a new window.";
+			            buy.addEventListener("click", () => {
+			              if (isMembership && !hasUrl) {
+			                const subject = encodeURIComponent("AgentC — C-oin Membership");
+			                const body = encodeURIComponent("Hi — I’d like to join the C-oin Membership waitlist.\n\nMy email:\nMy Magic account (optional):\n\n— Sent from AgentC");
+			                openExternalUrl(`mailto:ping@company.ai?subject=${subject}&body=${body}`);
+			                return;
+			              }
+			              if (!hasUrl) return;
+			              if (!signedIn) {
+			                setStatusRight("Sign in via Account (Magic Link) to purchase.", true);
+			                openMagicAuthPanel();
+			                return;
+			              }
+			              const ackNode = el("coinsNoRefundAck");
+			              const ok = ackNode ? Boolean(ackNode.checked) : coinsNoRefundAcked();
+			              if (!ok) {
+			                setStatusRight("Please acknowledge: Digital product. No refunds.", true);
+			                return;
+			              }
+			              const url = buildStripeBuyUrlForCurrentUser(pack.stripe_url);
+			              try {
+			                window.open(url, "_blank", "noopener,noreferrer");
+			              } catch {
+			                window.location.href = url;
+			              }
+			              setStatusRight("Opened Stripe checkout — return here to sync your C-oins.");
+			              startCoinsPolling({ durationMs: 90_000 });
+			            });
+			            actions.appendChild(buy);
+
+			            if (showAdvanced) {
+			              const copy = document.createElement("button");
+			              copy.className = "btn secondary";
+			              copy.type = "button";
+			              copy.textContent = "Copy metadata";
+			              copy.title = "Copy Magic.link product fields + metadata JSON.";
+			              copy.addEventListener("click", async () => {
+			                const ok = await copyText(JSON.stringify(coinsStoreMagicPackConfig(pack), null, 2));
+			                armClipboardClear(30_000);
+			                setStatusRight(ok ? "Copied pack config." : "Copy failed.", !ok);
+			              });
+			              actions.appendChild(copy);
+			            }
+
+			            card.appendChild(actions);
+			            grid.appendChild(card);
+			          }
+			        }
 
         async function refreshCoinsBalance({ quiet = false } = {}) {
 	          const snap = getMagicAuthSnapshot();
@@ -6961,7 +7198,7 @@ Style rules:
 		                lower.includes("trial exhausted");
 
 		              if (isTrial) {
-		                setNotice("Free trial exhausted. Sign in via Auth (Magic) to continue.");
+		                setNotice("Free trial exhausted. Sign in (Magic Link) to continue.");
 		                try {
 		                  if (!openMagicAuthPanel()) openTheAgentFamily();
 		                } catch {
@@ -7881,26 +8118,26 @@ Style rules:
 	          // Auth + coins header (rendered even when there are no rounds yet).
           (() => {
             const snap = getMagicAuthSnapshot();
-            const signedIn = Boolean(snap && snap.signedIn);
-            const isAdmin = hasMkAdmin();
-            const ioMode = effectiveIOMode();
+			            const signedIn = Boolean(snap && snap.signedIn);
+			            const isAdmin = hasMkAdmin();
+			            const ioMode = effectiveIOMode();
 
 		            const onlineBtn = el("onlineBtn");
 		            const onlineLabel = el("onlineLabel");
 		            const onlineStatusImg = el("onlineStatusImg");
-		            if (onlineBtn && onlineLabel) {
-		              onlineBtn.disabled = Boolean(state.loading);
-		              onlineBtn.setAttribute("aria-pressed", signedIn ? "true" : "false");
-		              onlineBtn.title = signedIn ? "Online (signed in — click to sign out)" : "Online (sign in via Magic Link)";
-		              onlineLabel.textContent = "Online";
-		              if (onlineStatusImg) {
-		              const LOGGED_OUT_PNG = "Logged OUT.png";
-		              const LOGGED_IN_PNG = "Logged IN.png";
-	              // Root fix: avoid legacy SVG→PNG localStorage caches (they can keep showing oversized icons).
-	              onlineStatusImg.src = signedIn ? LOGGED_IN_PNG : LOGGED_OUT_PNG;
-	              onlineStatusImg.alt = signedIn ? "Online on" : "Online off";
-	            }
-	          }
+			            if (onlineBtn && onlineLabel) {
+			              onlineBtn.disabled = Boolean(state.loading);
+			              onlineBtn.setAttribute("aria-pressed", signedIn ? "true" : "false");
+			              onlineBtn.title = signedIn ? "Account (signed in — click to sign out)" : "Account (sign in via Magic Link)";
+			              onlineLabel.textContent = signedIn ? "Account" : "Sign in";
+			              if (onlineStatusImg) {
+			              const LOGGED_OUT_PNG = "Logged OUT.png";
+			              const LOGGED_IN_PNG = "Logged IN.png";
+		              // Root fix: avoid legacy SVG→PNG localStorage caches (they can keep showing oversized icons).
+		              onlineStatusImg.src = signedIn ? LOGGED_IN_PNG : LOGGED_OUT_PNG;
+		              onlineStatusImg.alt = signedIn ? "Signed in" : "Signed out";
+		            }
+		          }
 
               // Free trial indicator (online-only; hidden when signed in or admin).
               try {
@@ -9812,7 +10049,7 @@ Style rules:
 			            const before = getFreePromptsRemaining();
 			            const ok = consumeFreePrompt();
 			            if (!ok) {
-			              setNotice("Free trial exhausted. Sign in via Auth (Magic) to continue.");
+			              setNotice("Free trial exhausted. Sign in (Magic Link) to continue.");
 			              openMagicAuthPanel();
 			              setStatusRight("");
 			              render();
@@ -9821,8 +10058,8 @@ Style rules:
 			            const after = Math.max(0, before - 1);
 			            setNotice(
 			              after > 0
-			                ? `Free trial: ${after} prompt${after === 1 ? "" : "s"} left. Sign in via Auth (Magic) to keep chatting after the trial.`
-			                : "Free trial used up. Sign in via Auth (Magic) to keep chatting."
+			                ? `Free trial: ${after} prompt${after === 1 ? "" : "s"} left. Sign in (Magic Link) to keep chatting after the trial.`
+			                : "Free trial used up. Sign in (Magic Link) to keep chatting."
 			            );
 			          }
 					          if (isExternalProfileIntent(topic)) {
@@ -9894,14 +10131,14 @@ Style rules:
 		            const before = getFreePromptsRemaining();
 		            const ok = consumeFreePrompt();
 		            if (!ok) {
-		              setNotice("Sign in via Auth (Magic) to continue.");
+		              setNotice("Sign in (Magic Link) to continue.");
 		              openMagicAuthPanel();
 		              setStatusRight("");
 		              render();
 		              return;
 		            }
 		            if (before <= 1) {
-		              setNotice('Free prompt used. Sign in via Auth (Magic) to keep chatting.');
+		              setNotice('Free prompt used. Sign in (Magic Link) to keep chatting.');
 		            }
 			          }
 			          if (effectiveIOMode() === "online_aes" && !aesSealReady()) {
@@ -9966,14 +10203,14 @@ Style rules:
 	            const before = getFreePromptsRemaining();
 	            const ok = consumeFreePrompt();
 	            if (!ok) {
-	              setNotice("Sign in via Auth (Magic) to continue.");
+	              setNotice("Sign in (Magic Link) to continue.");
 	              openMagicAuthPanel();
 	              setStatusRight("");
 	              render();
 	              return;
 	            }
 	            if (before <= 1) {
-	              setNotice('Free prompt used. Sign in via Auth (Magic) to keep chatting.');
+	              setNotice('Free prompt used. Sign in (Magic Link) to keep chatting.');
 	            }
 		          }
 		          if (effectiveIOMode() === "online_aes" && !aesSealReady()) {
@@ -10281,12 +10518,17 @@ Style rules:
 	                closeDialogById("confirmModal");
 	              });
 
-	              el("closeCoinsStoreBtn")?.addEventListener("click", () => closeDialogById("coinsStoreModal"));
-	              el("refreshCoinsStoreBalanceBtn")?.addEventListener("click", () => refreshCoinsBalance({ quiet: false }));
-	              el("coinsStoreOpenAgentFamilyBtn")?.addEventListener("click", () => openTheAgentFamilyGit());
-	              el("coinsStoreSignInBtn")?.addEventListener("click", () => {
-	                if (!openMagicAuthPanel()) openTheAgentFamily();
-	              });
+		              el("closeCoinsStoreBtn")?.addEventListener("click", () => closeDialogById("coinsStoreModal"));
+		              el("refreshCoinsStoreBalanceBtn")?.addEventListener("click", () => refreshCoinsBalance({ quiet: false }));
+		              el("coinsStoreOpenAgentFamilyBtn")?.addEventListener("click", () => openTheAgentFamilyGit());
+		              el("coinsStoreSupportBtn")?.addEventListener("click", () => {
+		                const subject = encodeURIComponent("AgentC — Support");
+		                const body = encodeURIComponent("Hi — I need help with AgentC / C-oins.\n\nWhat I was doing:\nBrowser/device:\nAccount (optional):\n\n— Sent from AgentC");
+		                openExternalUrl(`mailto:ping@company.ai?subject=${subject}&body=${body}`);
+		              });
+		              el("coinsStoreSignInBtn")?.addEventListener("click", () => {
+		                if (!openMagicAuthPanel()) openTheAgentFamily();
+		              });
 	              el("coinsNoRefundAck")?.addEventListener("change", (e) => {
 	                setCoinsNoRefundAcked(Boolean(e?.target?.checked));
 	                renderCoinsStore();

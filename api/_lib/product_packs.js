@@ -3,7 +3,7 @@ const COIN_PRODUCT_PACKS = [
     internal_name: "starter_10",
     name: "C-oin Starter Pack (10 tokens)",
     description: "A starter pack of 10 C-oin tokens. Each C-oin equals one prompt. Digital product. No refunds.",
-    pricing: "£1 equivalent (via Magic onramp/crypto if used)",
+    pricing: "£1",
     metadata: {
       credits_granted: 10,
       credit_type: "one_time",
@@ -15,7 +15,7 @@ const COIN_PRODUCT_PACKS = [
     internal_name: "pack_50",
     name: "C-oin Pack (50 tokens)",
     description: "A pack of 50 C-oin tokens. Each C-oin equals one prompt. Digital product. No refunds.",
-    pricing: "TBD",
+    pricing: "£5",
     metadata: {
       credits_granted: 50,
       credit_type: "one_time",
@@ -27,7 +27,7 @@ const COIN_PRODUCT_PACKS = [
     internal_name: "pack_100",
     name: "C-oin Pack (100 tokens)",
     description: "A pack of 100 C-oin tokens. Each C-oin equals one prompt. Digital product. No refunds.",
-    pricing: "TBD",
+    pricing: "£9",
     metadata: {
       credits_granted: 100,
       credit_type: "one_time",
@@ -36,10 +36,22 @@ const COIN_PRODUCT_PACKS = [
     },
   },
   {
+    internal_name: "stripe_topup_200",
+    name: "C-oin Pack (200 tokens)",
+    description: "A pack of 200 C-oin tokens. Each C-oin equals one prompt. Digital product. No refunds.",
+    pricing: "£15",
+    metadata: {
+      credits_granted: 200,
+      credit_type: "one_time",
+      non_redeemable: true,
+      internal_name: "stripe_topup_200",
+    },
+  },
+  {
     internal_name: "membership",
     name: "C-oin Membership",
     description: "A membership plan that grants recurring C-oin credits. Digital product. No refunds.",
-    pricing: "TBD",
+    pricing: "Coming soon",
     metadata: {
       credits_granted: 0,
       credit_type: "membership",
