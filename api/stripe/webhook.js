@@ -68,12 +68,68 @@ const verifyStripeSignature = ({ secret, signatureHeader, payload }) => {
 const creditedKey = (sessionId) => `agentc:stripe:credited:${sessionId}`;
 const emailKey = (email) => `agentc:email_to_user:${String(email || "").trim().toLowerCase()}`;
 
+const linkAliases = (value) => {
+  const raw = String(value || "").trim();
+  if (!raw) return [];
+  const out = new Set([raw]);
+  if (/^https?:/i.test(raw)) {
+    try {
+      const url = new URL(raw);
+      out.add(`${url.origin}${url.pathname}`);
+      const last = url.pathname.split("/").filter(Boolean).pop();
+      if (last) out.add(last);
+    } catch {
+      // ignore invalid URL
+    }
+  }
+  return [...out];
+};
+
 const parseAllowedPaymentLinks = () => {
+  const map = {};
   const raw = firstEnv("STRIPE_ALLOWED_PAYMENT_LINKS");
-  if (!raw) return null;
-  const json = safeJsonParse(raw);
-  if (!json || typeof json !== "object") return null;
-  return json;
+  if (raw) {
+    const json = safeJsonParse(raw);
+    if (json && typeof json === "object") {
+      for (const [key, value] of Object.entries(json)) {
+        const n = parseInt(String(value ?? ""), 10);
+        if (!Number.isFinite(n) || n <= 0) continue;
+        for (const alias of linkAliases(key)) map[alias] = n;
+      }
+    }
+  }
+
+  const directId = firstEnv("STRIPE_PAYMENT_LINK_ID");
+  const directTokens = firstEnv("STRIPE_PAYMENT_LINK_TOKENS");
+  if (directId && directTokens) {
+    const n = parseInt(String(directTokens), 10);
+    if (Number.isFinite(n) && n > 0) {
+      for (const alias of linkAliases(directId)) map[alias] = n;
+    }
+  }
+
+  for (const key of Object.keys(process.env || {})) {
+    const match = key.match(/^STRIPE_PAYMENT_LINK_ID_(\d+)$/i);
+    if (!match) continue;
+    const suffix = match[1];
+    const id = firstEnv(`STRIPE_PAYMENT_LINK_ID_${suffix}`);
+    const tokens = firstEnv(`STRIPE_PAYMENT_LINK_TOKENS_${suffix}`);
+    if (!id || !tokens) continue;
+    const n = parseInt(String(tokens), 10);
+    if (!Number.isFinite(n) || n <= 0) continue;
+    for (const alias of linkAliases(id)) map[alias] = n;
+  }
+
+  return Object.keys(map).length ? map : null;
+};
+
+const resolveAllowedTokens = (allowed, paymentLinkValue) => {
+  if (!allowed || !paymentLinkValue) return 0;
+  for (const alias of linkAliases(paymentLinkValue)) {
+    const n = parseInt(String(allowed[alias] ?? ""), 10);
+    if (Number.isFinite(n) && n > 0) return n;
+  }
+  return 0;
 };
 
 module.exports = async (req, res) => {
@@ -122,7 +178,7 @@ module.exports = async (req, res) => {
   const sessionId = String(session?.id || "").trim();
   const paymentStatus = String(session?.payment_status || "").trim();
   let userId = String(session?.client_reference_id || "").trim();
-  const paymentLinkId = String(session?.payment_link || "").trim();
+  const paymentLinkId = String(session?.payment_link || session?.payment_link_url || session?.metadata?.payment_link || "").trim();
   const metaUserId =
     String(session?.metadata?.user_id || "").trim() ||
     String(session?.metadata?.userId || "").trim();
@@ -171,15 +227,19 @@ module.exports = async (req, res) => {
 
     const allowed = parseAllowedPaymentLinks();
     if (!tokensToCredit && allowed) {
-      const n = parseInt(String(allowed[paymentLinkId] ?? ""), 10);
+      const n = resolveAllowedTokens(allowed, paymentLinkId);
       if (Number.isFinite(n) && n > 0) tokensToCredit = n;
     } else if (!tokensToCredit) {
       const requiredLinkId = firstEnv("STRIPE_PAYMENT_LINK_ID");
-      if (requiredLinkId && paymentLinkId && paymentLinkId !== requiredLinkId) {
+      if (requiredLinkId && paymentLinkId) {
+        const expected = linkAliases(requiredLinkId);
+        const matches = expected.some((alias) => linkAliases(paymentLinkId).includes(alias));
+        if (!matches) {
         res.statusCode = 200;
         res.setHeader("Content-Type", "application/json");
         res.end(JSON.stringify({ received: true }));
         return;
+        }
       }
       const fallback = parseInt(firstEnv("STRIPE_PAYMENT_LINK_TOKENS") || "200", 10);
       tokensToCredit = Number.isFinite(fallback) && fallback > 0 ? fallback : 200;
