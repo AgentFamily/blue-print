@@ -7,27 +7,23 @@
     <style>
       :root {
         color-scheme: light;
-        --ink: #0b1021;
-        --muted: #5b647a;
-        --line: rgba(11, 16, 33, 0.12);
-        --bg: #f6f7fb;
-        --card: rgba(255, 255, 255, 0.9);
-        --glass: rgba(255, 255, 255, 0.75);
-        --shadow: 0 20px 60px rgba(11, 16, 33, 0.12);
-        --soft: 0 8px 30px rgba(11, 16, 33, 0.08);
-        --accent: #2f6cff;
-        --accent-2: #ff9a3c;
-        --accent-3: #14b8a6;
-        --hero-grad: radial-gradient(1200px 400px at 15% -10%, rgba(47, 108, 255, 0.18), transparent 60%),
-          radial-gradient(900px 600px at 85% 10%, rgba(255, 154, 60, 0.18), transparent 60%),
-          linear-gradient(180deg, #ffffff 0%, #f6f7fb 100%);
-        --font-display: "Avenir Next", "Iowan Old Style", "Garamond", "Times New Roman", serif;
-        --font-body: "Avenir Next", "SF Pro Text", "Segoe UI", system-ui, sans-serif;
-        --max: 1180px;
-        --radius-xl: 32px;
-        --radius-lg: 22px;
+        --ink: #1a1f36;
+        --muted: #5d6480;
+        --bg: #f7f4ff;
+        --surface: #ffffff;
+        --line: rgba(26, 31, 54, 0.12);
+        --accent: #4f6df5;
+        --accent-2: #ffd6a7;
+        --accent-3: #c9d1ff;
+        --shadow: 0 24px 60px rgba(26, 31, 54, 0.12);
+        --soft: 0 14px 40px rgba(26, 31, 54, 0.08);
+        --radius-xl: 34px;
+        --radius-lg: 24px;
         --radius-md: 16px;
         --radius-sm: 12px;
+        --max: 1140px;
+        --font-display: "Baskerville", "Palatino Linotype", "Book Antiqua", serif;
+        --font-body: "Gill Sans", "Trebuchet MS", "Verdana", sans-serif;
       }
 
       * {
@@ -37,8 +33,10 @@
       body {
         margin: 0;
         font-family: var(--font-body);
-        background: var(--bg);
         color: var(--ink);
+        background: radial-gradient(circle at 20% 10%, rgba(79, 109, 245, 0.12), transparent 45%),
+          radial-gradient(circle at 85% 0%, rgba(255, 214, 167, 0.28), transparent 40%),
+          linear-gradient(180deg, #fbf9ff 0%, #f4f0ff 100%);
       }
 
       img {
@@ -51,6 +49,10 @@
         text-decoration: none;
       }
 
+      button {
+        font-family: inherit;
+      }
+
       .wrap {
         width: min(var(--max), 100% - 40px);
         margin: 0 auto;
@@ -59,539 +61,341 @@
       header {
         position: sticky;
         top: 0;
-        z-index: 40;
-        backdrop-filter: blur(16px);
-        background: rgba(255, 255, 255, 0.8);
-        border-bottom: 1px solid var(--line);
+        z-index: 30;
+        background: rgba(251, 249, 255, 0.9);
+        border-bottom: 1px solid rgba(26, 31, 54, 0.08);
+        backdrop-filter: blur(12px);
       }
 
       .nav {
         display: grid;
         grid-template-columns: auto 1fr auto;
         align-items: center;
-        gap: 32px;
+        gap: 20px;
         padding: 18px 0;
-      }
-
-      .nav-group {
-        display: flex;
-        align-items: center;
-        gap: 16px;
       }
 
       .brand {
         display: flex;
         align-items: center;
         gap: 12px;
-        font-weight: 600;
+        font-weight: 700;
       }
 
       .brand img {
-        width: 36px;
-        height: 36px;
+        width: 34px;
+        height: 34px;
       }
 
       .nav-links {
         display: flex;
         gap: 18px;
-        font-size: 14px;
+        font-size: 13px;
         color: var(--muted);
+        justify-content: center;
       }
 
-      .nav-cta {
+      .nav-actions {
         display: flex;
-        gap: 14px;
-        align-items: center;
-      }
-
-      .nav-meta {
-        display: inline-flex;
         align-items: center;
         gap: 10px;
       }
 
-      .icon-btn {
-        width: 40px;
-        height: 40px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 12px;
+      .icon-dot {
+        width: 34px;
+        height: 34px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
         border: 1px solid var(--line);
-        background: rgba(255, 255, 255, 0.9);
-        cursor: pointer;
-        transition: all 0.2s ease;
-      }
-
-      .icon-btn:hover {
         background: #fff;
-        box-shadow: 0 4px 12px rgba(11, 16, 33, 0.1);
+        font-size: 12px;
       }
 
-      .pill {
+      .btn {
         padding: 10px 18px;
         border-radius: 999px;
         border: 1px solid var(--line);
         background: #fff;
         font-size: 13px;
-      }
-
-      .pill.secondary {
-        background: rgba(255, 255, 255, 0.7);
-        color: var(--muted);
-      }
-
-      .pill.ghost {
-        background: transparent;
-        color: var(--muted);
-        border-color: transparent;
-        padding: 8px 12px;
-      }
-
-      .pill.primary {
-        background: var(--accent);
-        color: #fff;
-        border-color: transparent;
-        box-shadow: 0 12px 24px rgba(47, 108, 255, 0.3);
+        cursor: pointer;
         transition: all 0.2s ease;
       }
 
-      .pill.primary:hover {
-        background: #1e5aff;
-        box-shadow: 0 16px 32px rgba(47, 108, 255, 0.4);
+      .btn.primary {
+        background: var(--accent);
+        color: #fff;
+        border-color: transparent;
+        box-shadow: 0 12px 26px rgba(79, 109, 245, 0.3);
+      }
+
+      .btn.primary:hover {
         transform: translateY(-1px);
+        box-shadow: 0 16px 32px rgba(79, 109, 245, 0.35);
       }
 
       .hero {
-        background: var(--hero-grad);
         padding: 80px 0 40px;
+        position: relative;
       }
 
       .hero-grid {
         display: grid;
         grid-template-columns: 1.1fr 0.9fr;
-        gap: 30px;
+        gap: 28px;
         align-items: center;
       }
 
       .hero h1 {
         font-family: var(--font-display);
-        font-size: clamp(32px, 4vw, 56px);
-        line-height: 1.05;
-        margin: 0 0 18px;
-        letter-spacing: -0.02em;
+        font-size: clamp(34px, 4vw, 54px);
+        margin: 0 0 16px;
       }
 
       .hero p {
-        font-size: 16px;
+        margin: 0 0 22px;
         color: var(--muted);
-        margin: 0 0 24px;
+        font-size: 16px;
       }
 
-      .hero-badges {
+      .hero-actions {
         display: flex;
         gap: 12px;
         flex-wrap: wrap;
       }
 
-      .badge {
-        padding: 8px 14px;
-        border-radius: 999px;
-        background: rgba(47, 108, 255, 0.1);
-        color: #234bd2;
-        font-size: 12px;
-        font-weight: 600;
+      .hero-visual {
+        position: relative;
+        display: grid;
+        place-items: center;
       }
 
-      .hero-card {
-        border-radius: var(--radius-xl);
-        background: var(--card);
-        border: 1px solid var(--line);
-        box-shadow: var(--shadow);
-        padding: 28px;
+      .hero-visual .glow {
+        position: absolute;
+        inset: 8% 12% 0;
+        border-radius: 40% 60% 50% 50%;
+        background: radial-gradient(circle, rgba(79, 109, 245, 0.18), transparent 65%);
+        z-index: 0;
       }
 
-      .hero-card .title {
-        font-size: 14px;
-        color: var(--muted);
-        text-transform: uppercase;
-        letter-spacing: 0.12em;
+      .hero-visual .orbit {
+        position: absolute;
+        width: 220px;
+        height: 220px;
+        border-radius: 50%;
+        border: 1px dashed rgba(26, 31, 54, 0.2);
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
       }
 
-      .hero-card h3 {
-        margin: 10px 0 12px;
-        font-size: 22px;
+      .hero-visual .avatar {
+        width: 180px;
+        filter: drop-shadow(0 20px 40px rgba(26, 31, 54, 0.25));
+        z-index: 1;
       }
 
-      .hero-card .row {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-        margin-top: 16px;
+      .hero-visual .avatar.right {
+        position: absolute;
+        width: 170px;
+        right: -10px;
+        bottom: -10px;
       }
 
       .section {
-        padding: 72px 0;
+        padding: 64px 0;
       }
 
       .section h2 {
         font-family: var(--font-display);
-        font-size: clamp(26px, 3vw, 38px);
-        margin: 0 0 16px;
+        font-size: clamp(24px, 3vw, 34px);
+        margin: 0 0 14px;
+        text-align: center;
       }
 
-      .section p.lede {
+      .lede {
+        text-align: center;
+        margin: 0 auto 26px;
         color: var(--muted);
-        margin: 0 0 28px;
+        max-width: 620px;
       }
 
-      .grid-2 {
+      .language-row {
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 22px;
-      }
-
-      .grid-3 {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 22px;
-      }
-
-      .card {
-        border-radius: var(--radius-lg);
-        background: var(--card);
-        border: 1px solid var(--line);
-        padding: 22px;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 16px;
+        background: rgba(255, 255, 255, 0.7);
+        border: 1px solid rgba(26, 31, 54, 0.08);
+        border-radius: var(--radius-xl);
+        padding: 18px;
         box-shadow: var(--soft);
       }
 
-      .card h4 {
-        margin: 0 0 8px;
-        font-size: 16px;
-      }
-
-      .card p {
-        margin: 0;
-        color: var(--muted);
-        font-size: 14px;
-        line-height: 1.5;
-      }
-
-      .split {
+      .lang-card {
         display: grid;
-        grid-template-columns: 0.9fr 1.1fr;
-        gap: 26px;
-        align-items: center;
-      }
-
-      .agents-strip {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 18px;
-        margin-top: 28px;
-      }
-
-      .languages-showcase {
-        position: relative;
-        border-radius: var(--radius-xl);
-        border: 1px solid var(--line);
-        padding: 36px;
-        background: linear-gradient(135deg, rgba(47, 108, 255, 0.08), rgba(255, 255, 255, 0.95) 40%, rgba(255, 154, 60, 0.08));
-        overflow: visible;
-      }
-
-      .language-selector {
-        display: flex;
+        place-items: center;
         gap: 10px;
-        flex-wrap: wrap;
-        justify-content: center;
-        margin-bottom: 24px;
-      }
-
-      .language-tab {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 10px 16px;
-        border-radius: 999px;
-        border: 1px solid var(--line);
-        background: rgba(255, 255, 255, 0.7);
-        font-size: 13px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.2s ease;
-      }
-
-      .language-tab:hover {
-        background: #fff;
-        border-color: var(--accent);
-        color: var(--accent);
-      }
-
-      .language-tab.active {
-        background: var(--accent);
-        color: #fff;
-        border-color: var(--accent);
-        box-shadow: 0 4px 12px rgba(47, 108, 255, 0.25);
-      }
-
-      .language-tab img {
-        width: 24px;
-        height: 24px;
-        border-radius: 6px;
-      }
-
-      .unlock-strip {
-        display: flex;
-        gap: 12px;
-        flex-wrap: wrap;
-        margin: 14px 0 24px;
-      }
-
-      .unlock-chip {
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        padding: 8px 12px;
-        border-radius: 999px;
-        border: 1px dashed rgba(11, 16, 33, 0.2);
-        background: rgba(255, 255, 255, 0.7);
-        font-size: 12px;
-        color: var(--muted);
-      }
-
-      .showcase-header {
         text-align: center;
-        margin-bottom: 24px;
-      }
-
-      .showcase-header h3 {
-        font-size: 18px;
-        margin: 0 0 8px;
-        color: var(--ink);
-      }
-
-      .showcase-header p {
-        font-size: 14px;
         color: var(--muted);
-        margin: 0;
-      }
-
-      .languages-characters {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-        gap: 20px;
-        margin: 28px 0;
-        justify-items: center;
-      }
-
-      .lang-char {
-        width: 110px;
-        height: auto;
-        filter: drop-shadow(0 12px 24px rgba(11, 16, 33, 0.16));
-        transition: transform 0.3s ease;
-      }
-
-      .lang-char:hover {
-        transform: scale(1.05) rotate(2deg);
-      }
-
-      .languages-content {
-        position: relative;
-        z-index: 1;
-      }
-
-      .agent-chip {
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        padding: 16px;
-        border-radius: var(--radius-md);
-        background: rgba(255, 255, 255, 0.95);
-        border: 1px solid var(--line);
-        box-shadow: 0 4px 12px rgba(11, 16, 33, 0.08);
-        transition: all 0.2s ease;
-      }
-
-      .agent-chip:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(11, 16, 33, 0.12);
-      }
-
-      .agent-chip strong {
-        display: block;
-        margin-bottom: 4px;
-      }
-
-      .agent-chip img {
-        width: 48px;
-        height: 48px;
-      }
-
-      .toggle {
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        background: rgba(11, 16, 33, 0.04);
-        border-radius: 999px;
-        padding: 6px 12px;
         font-size: 12px;
       }
 
-      .toggle span {
-        width: 12px;
-        height: 12px;
-        border-radius: 999px;
-        background: var(--accent-3);
-        box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.2);
+      .lang-card img {
+        width: 90px;
+        filter: drop-shadow(0 12px 22px rgba(26, 31, 54, 0.18));
       }
 
-      .list {
-        display: grid;
-        gap: 10px;
-        font-size: 14px;
-        color: var(--muted);
-      }
-
-      .list strong {
-        color: var(--ink);
-      }
-
-      .logic-panel {
-        padding: 24px;
-        border-radius: var(--radius-lg);
-        background: linear-gradient(135deg, rgba(47, 108, 255, 0.12), rgba(255, 154, 60, 0.12));
-        border: 1px solid rgba(47, 108, 255, 0.2);
-      }
-
-      .logic-panel h3 {
-        margin: 0 0 12px;
-        font-size: 20px;
-      }
-
-      .cta-row {
-        display: flex;
-        gap: 12px;
-        flex-wrap: wrap;
-        margin-top: 16px;
-      }
-
-      .cta-row .pill {
-        border-color: transparent;
-        background: #111827;
-        color: #fff;
-      }
-
-      .cta-row .pill.secondary {
-        background: #fff;
-        color: #111827;
-        border: 1px solid var(--line);
-      }
-
-      .price-tag {
-        font-size: 12px;
-        color: var(--muted);
-        margin-top: 8px;
-      }
-
-      .preflight {
-        background: #0b1021;
-        color: #e2e8f0;
-        border-radius: var(--radius-xl);
-        padding: 28px;
-        position: relative;
-        overflow: hidden;
-      }
-
-      .preflight::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background: radial-gradient(400px 200px at 80% 0%, rgba(47, 108, 255, 0.35), transparent 60%);
-        pointer-events: none;
-      }
-
-      .preflight h3 {
-        margin: 0 0 12px;
-        font-size: 22px;
-      }
-
-      .preflight p {
-        margin: 0 0 10px;
-        color: rgba(226, 232, 240, 0.8);
-      }
-
-      .footer {
-        padding: 40px 0 60px;
-        color: var(--muted);
-        font-size: 13px;
-      }
-
-      .img-stack {
+      .bubble-grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 20px;
+        margin-top: 30px;
+      }
+
+      .bubble-stack {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-xl);
+        padding: 18px;
+        box-shadow: var(--soft);
+        display: grid;
+        gap: 12px;
+      }
+
+      .bubble {
+        display: grid;
+        grid-template-columns: 44px 1fr;
+        gap: 10px;
+        align-items: center;
+        background: rgba(79, 109, 245, 0.06);
+        border-radius: 999px;
+        padding: 8px 12px;
+        font-size: 13px;
+      }
+
+      .bubble img {
+        width: 44px;
+        height: 44px;
+      }
+
+      .bubble small {
+        display: block;
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      .pill-row {
+        display: grid;
+        gap: 10px;
+      }
+
+      .pill-row .pill {
+        display: grid;
+        grid-template-columns: 30px 1fr;
+        gap: 12px;
+        align-items: center;
+        padding: 12px 16px;
+        background: #fff;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        font-size: 13px;
+      }
+
+      .pill-row .pill span {
+        width: 30px;
+        height: 30px;
+        border-radius: 10px;
+        display: grid;
+        place-items: center;
+        background: rgba(79, 109, 245, 0.12);
+      }
+
+      .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 16px;
       }
 
-      .img-card {
-        border-radius: var(--radius-lg);
+      .feature-card {
         background: #fff;
         border: 1px solid var(--line);
-        padding: 10px;
+        border-radius: var(--radius-lg);
+        padding: 16px;
+        text-align: center;
         box-shadow: var(--soft);
       }
 
-      .hero-characters {
-        display: flex;
-        gap: 12px;
-        justify-content: center;
-        padding-top: 12px;
+      .feature-card h4 {
+        margin: 8px 0 6px;
       }
 
-      .hero-characters img {
-        width: 120px;
+      .tri-response {
+        margin-top: 28px;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .tri-card {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        padding: 16px;
+        box-shadow: var(--soft);
+      }
+
+      .tri-card header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border: none;
+        background: transparent;
+        position: static;
+        padding: 0;
+      }
+
+      .tri-card img {
+        width: 46px;
+        height: 46px;
+      }
+
+      .tri-card p {
+        margin: 10px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .footer {
+        padding: 50px 0 70px;
+        text-align: center;
+        color: var(--muted);
+        font-size: 12px;
       }
 
       @media (max-width: 980px) {
-        .hero-grid,
-        .split,
-        .grid-3,
-        .grid-2 {
+        .hero-grid {
           grid-template-columns: 1fr;
         }
         .nav-links {
           display: none;
         }
-        .nav-cta {
-          width: 100%;
-          justify-content: space-between;
+        .language-row {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
         }
-        .language-selector {
-          justify-content: flex-start;
+        .feature-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
         }
-        .languages-characters {
-          grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
-          gap: 16px;
+        .tri-response {
+          grid-template-columns: 1fr;
         }
       }
 
       @media (max-width: 720px) {
-        .languages-showcase {
-          padding: 24px;
+        .language-row {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
         }
-        .lang-char {
-          width: 90px;
-        }
-        .languages-characters {
-          grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
-          gap: 12px;
-        }
-        .agents-strip {
+        .bubble-grid {
           grid-template-columns: 1fr;
-        }
-        .language-tab {
-          font-size: 12px;
-          padding: 8px 12px;
         }
       }
     </style>
@@ -601,25 +405,18 @@
       <div class="wrap nav">
         <div class="brand">
           <img src="Contents/Resources/agentc_button.svg" alt="AgentC" />
-          <span>Agent Family</span>
+          <span>AgentC</span>
         </div>
         <nav class="nav-links">
-          <a href="#live">Capabilities</a>
           <a href="#languages">Languages</a>
-          <a href="#docs" target="_blank" rel="noreferrer">Docs</a>
-          <a href="#account">Profile</a>
+          <a href="#tri">Tri Response</a>
+          <a href="#detected">Detected Models</a>
+          <a href="#security">Security</a>
         </nav>
-        <div class="nav-cta">
-          <div class="nav-meta">
-            <span class="pill ghost">💰 12 C-oins</span>
-            <button class="icon-btn" aria-label="Settings">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="3"/>
-                <path d="M12 1v6m0 6v6m-5.2-9.8L10.6 13m3.4 0l3.8-3.8M1 12h6m6 0h6m-9.8 5.2L13 10.6m0-3.4L16.8 3.8"/>
-              </svg>
-            </button>
-          </div>
-          <button class="pill primary">Start for free</button>
+        <div class="nav-actions">
+          <span class="icon-dot">A</span>
+          <span class="icon-dot">B</span>
+          <button class="btn primary">Start for free</button>
         </div>
       </div>
     </header>
@@ -628,227 +425,188 @@
       <div class="wrap hero-grid">
         <div>
           <h1>An intelligence system, not a chatbot.</h1>
-          <p>
-            You don’t talk to AI. You configure intelligence. This page is the operating brain: rules, roles, modes,
-            and execution control.
-          </p>
-          <div class="hero-badges">
-            <span class="badge">1 C-oin = 1 execution round</span>
-            <span class="badge">Up to 3 responders</span>
-            <span class="badge">Local or Online</span>
-          </div>
-          <div class="hero-characters">
-            <img src="Contents/Resources/ui/characters/agent-neutral.svg" alt="Agent X" />
-            <img src="Contents/Resources/ui/characters/agent-angry.svg" alt="Agent C" />
-            <img src="Contents/Resources/ui/characters/agent-neutral-glitch.svg" alt="System" />
+          <p>Configure how intelligence thinks, speaks, and decides. One prompt in, three agent responses out.</p>
+          <div class="hero-actions">
+            <button class="btn primary">Start for free</button>
+            <button class="btn">Read the docs</button>
           </div>
         </div>
-        <div class="hero-card">
-          <div class="title">Instruction Panel</div>
-          <h3>How intelligence is configured and executed.</h3>
-          <div class="list">
-            <div><strong>Execution Flow</strong> · Input → Agents respond → System synthesizes → Result delivered</div>
-            <div><strong>Cost</strong> · Each execution consumes 1 C-oin</div>
-            <div><strong>Responders</strong> · Up to 3 active, at least 1 required</div>
-            <div><strong>Rule</strong> · Disabled responders are skipped, no partial refunds</div>
-          </div>
-          <div class="row">
-            <span class="toggle"><span></span>LOCAL</span>
-            <span class="toggle"><span></span>ONLINE</span>
-          </div>
-          <div class="price-tag">This action will consume 1 C-oin.</div>
-        </div>
-      </div>
-    </section>
-
-    <section class="section" id="live">
-      <div class="wrap split">
-        <div>
-          <h2>Live Evaluation Panel</h2>
-          <p class="lede">
-            This is the interactive core. A single prompt input. Clear cost. Intelligent output stack.
-          </p>
-          <div class="card">
-            <h4>Run Evaluation</h4>
-            <p>Execute intelligence with the selected responders. Disabled if no responders or C-oin balance = 0.</p>
-            <div class="cta-row">
-              <span class="pill">Run Evaluation</span>
-              <span class="pill secondary">Review settings</span>
-              <span class="pill secondary">Cancel</span>
-            </div>
-          </div>
-        </div>
-        <div class="img-stack">
-          <div class="img-card"><img src="Contents/Resources/ui/icons/vault-local.svg" alt="Local" /></div>
-          <div class="img-card"><img src="Contents/Resources/ui/icons/vault-online.svg" alt="Online" /></div>
-          <div class="img-card"><img src="Contents/Resources/ui/icons/vault-upload.svg" alt="Upload" /></div>
-          <div class="img-card"><img src="Contents/Resources/ui/icons/vault-download.svg" alt="Download" /></div>
+        <div class="hero-visual">
+          <div class="glow"></div>
+          <div class="orbit"></div>
+          <img class="avatar" src="Contents/Resources/ui/characters/language-01.png" alt="Agent C" />
+          <img class="avatar right" src="Contents/Resources/ui/characters/language-07.png" alt="Agent X" />
         </div>
       </div>
     </section>
 
     <section class="section" id="languages">
       <div class="wrap">
-        <h2>Agents &amp; Language Intelligence</h2>
-        <p class="lede">
-          Multi-lingual reasoning across 7 supported languages. Each agent adapts its intelligence to the selected language context.
-        </p>
-        <div class="unlock-strip">
-          <span class="unlock-chip">🎨 Unlock character skins through usage &amp; achievements</span>
-          <span class="unlock-chip">🌍 Language selection affects agent personality &amp; reasoning style</span>
-        </div>
-        <div class="languages-showcase">
-          <div class="showcase-header">
-            <h3>Select Your Language Intelligence</h3>
-            <p>Characters and reasoning adapt to your language preference</p>
+        <h2>Intelligence that speaks your language.</h2>
+        <p class="lede">Each agent can reason independently in a selected language and tone.</p>
+        <div class="language-row">
+          <div class="lang-card">
+            <img src="Contents/Resources/ui/characters/language-01.png" alt="Language pack 01" />
+            Espanol
           </div>
-          <div class="language-selector">
-            <div class="language-tab active">
-              <span>🇬🇧</span>
-              English
-            </div>
-            <div class="language-tab">
-              <span>🇪🇸</span>
-              Español
-            </div>
-            <div class="language-tab">
-              <span>🇫🇷</span>
-              Français
-            </div>
-            <div class="language-tab">
-              <span>🇩🇪</span>
-              Deutsch
-            </div>
-            <div class="language-tab">
-              <span>🇯🇵</span>
-              日本語
-            </div>
-            <div class="language-tab">
-              <span>🇨🇳</span>
-              中文
-            </div>
-            <div class="language-tab">
-              <span>🇷🇺</span>
-              Русский
-            </div>
+          <div class="lang-card">
+            <img src="Contents/Resources/ui/characters/language-02.png" alt="Language pack 02" />
+            Francais
           </div>
-          <div class="languages-characters">
-            <img class="lang-char" src="Contents/Resources/ui/characters/language-01.png" alt="English intelligence" />
-            <img class="lang-char" src="Contents/Resources/ui/characters/language-02.png" alt="Spanish intelligence" />
-            <img class="lang-char" src="Contents/Resources/ui/characters/language-03.png" alt="French intelligence" />
-            <img class="lang-char" src="Contents/Resources/ui/characters/language-04.png" alt="German intelligence" />
-            <img class="lang-char" src="Contents/Resources/ui/characters/language-05.png" alt="Japanese intelligence" />
-            <img class="lang-char" src="Contents/Resources/ui/characters/language-06.png" alt="Chinese intelligence" />
-            <img class="lang-char" src="Contents/Resources/ui/characters/language-07.png" alt="Russian intelligence" />
+          <div class="lang-card">
+            <img src="Contents/Resources/ui/characters/language-03.png" alt="Language pack 03" />
+            Deutsch
           </div>
-          <div class="languages-content">
-            <div class="agents-strip">
-              <div class="agent-chip">
-                <img src="Contents/Resources/ui/characters/agent-neutral.svg" alt="Agent X" />
-                <div>
-                  <strong>Agent X</strong>
-                  <div class="list">Exploratory reasoning · Creative analysis</div>
-                </div>
-              </div>
-              <div class="agent-chip">
-                <img src="Contents/Resources/ui/characters/agent-neutral-glitch.svg" alt="System" />
-                <div>
-                  <strong>System</strong>
-                  <div class="list">Synthesis · Verification · Integration</div>
-                </div>
-              </div>
-              <div class="agent-chip">
-                <img src="Contents/Resources/ui/characters/agent-angry.svg" alt="Agent C" />
-                <div>
-                  <strong>Agent C</strong>
-                  <div class="list">Logic · Constraints · Precision</div>
-                </div>
-              </div>
-            </div>
+          <div class="lang-card">
+            <img src="Contents/Resources/ui/characters/language-04.png" alt="Language pack 04" />
+            Portugues
+          </div>
+          <div class="lang-card">
+            <img src="Contents/Resources/ui/characters/language-05.png" alt="Language pack 05" />
+            Glitch
           </div>
         </div>
       </div>
     </section>
 
-    <section class="section">
-      <div class="wrap grid-3">
-        <div class="card">
-          <h4>Modes</h4>
-          <p>Chat · Synthesis · Constraint · Automation. Modes change priority, not knowledge.</p>
+    <section class="section" id="tri">
+      <div class="wrap">
+        <h2>One response in. Three answers back.</h2>
+        <p class="lede">User input is routed to three agents: explorer, verifier, and constraint engine.</p>
+        <div class="bubble-grid">
+          <div class="bubble-stack">
+            <div class="bubble">
+              <img src="Contents/Resources/ui/characters/agent-neutral.svg" alt="Agent X" />
+              <div>
+                <strong>Agent X</strong>
+                <small>Explores solution space</small>
+              </div>
+            </div>
+            <div class="bubble">
+              <img src="Contents/Resources/ui/characters/agent-neutral-glitch.svg" alt="System" />
+              <div>
+                <strong>System</strong>
+                <small>Verifies and merges</small>
+              </div>
+            </div>
+            <div class="bubble">
+              <img src="Contents/Resources/ui/characters/agent-angry.svg" alt="Agent C" />
+              <div>
+                <strong>Agent C</strong>
+                <small>Applies constraints</small>
+              </div>
+            </div>
+          </div>
+          <div class="pill-row">
+            <div class="pill">
+              <span>1</span>
+              User sends a single prompt
+            </div>
+            <div class="pill">
+              <span>2</span>
+              Three agents respond in parallel
+            </div>
+            <div class="pill">
+              <span>3</span>
+              You compare, merge, or select the best
+            </div>
+          </div>
         </div>
-        <div class="card">
-          <h4>Security &amp; Execution</h4>
-          <p>LOCAL / ONLINE toggles. AES-256 sealing after generation. Passphrase optional.</p>
-        </div>
-        <div class="card">
-          <h4>Edge Cases</h4>
-          <p>Failed execution refunds C-oin. Navigation away continues server-side. History optional.</p>
+        <div class="tri-response">
+          <div class="tri-card">
+            <header>
+              <img src="Contents/Resources/ui/characters/agent-neutral.svg" alt="Agent X" />
+              <div>
+                <strong>Agent X</strong>
+                <div class="muted">Exploration</div>
+              </div>
+            </header>
+            <p>List multiple approaches and highlight creative alternatives.</p>
+          </div>
+          <div class="tri-card">
+            <header>
+              <img src="Contents/Resources/ui/characters/agent-neutral-glitch.svg" alt="System" />
+              <div>
+                <strong>System</strong>
+                <div class="muted">Verification</div>
+              </div>
+            </header>
+            <p>Check logic, resolve contradictions, and summarize the best path.</p>
+          </div>
+          <div class="tri-card">
+            <header>
+              <img src="Contents/Resources/ui/characters/agent-angry.svg" alt="Agent C" />
+              <div>
+                <strong>Agent C</strong>
+                <div class="muted">Constraints</div>
+              </div>
+            </header>
+            <p>Enforce policy, highlight risks, and define boundaries.</p>
+          </div>
         </div>
       </div>
     </section>
 
-    <section class="section" id="account">
-      <div class="wrap split">
-        <div class="logic-panel">
-          <h3>Account Panel</h3>
-          <div class="list">
-            <div>Email (Magic.link verified)</div>
-            <div>Current plan</div>
-            <div>C-oin balance</div>
-            <div>Stripe billing link</div>
-            <div>Logout</div>
+    <section class="section" id="detected">
+      <div class="wrap">
+        <h2>Detected Models</h2>
+        <p class="lede">Under the hood, the best available model is assigned per role.</p>
+        <div class="feature-grid">
+          <div class="feature-card">
+            <span class="icon-dot">X</span>
+            <h4>Agent X</h4>
+            <p>Chat model detected: 1</p>
           </div>
-        </div>
-        <div class="card">
-          <h4>C-oin Display</h4>
-          <p>Balance: 12 C-oins · 1 C-oin = 3 responders / 1 evaluation round</p>
+          <div class="feature-card">
+            <span class="icon-dot">S</span>
+            <h4>System</h4>
+            <p>Verifier model detected: 1</p>
+          </div>
+          <div class="feature-card">
+            <span class="icon-dot">C</span>
+            <h4>Agent C</h4>
+            <p>Constraints model detected: 1</p>
+          </div>
+          <div class="feature-card">
+            <span class="icon-dot">R</span>
+            <h4>Router</h4>
+            <p>Routing model detected: 1</p>
+          </div>
         </div>
       </div>
     </section>
 
-    <section class="section">
-      <div class="wrap split">
-        <div>
-          <h2>Pricing Logic</h2>
-          <p class="lede">You charge for decision bandwidth, not tokens.</p>
-          <div class="grid-2">
-            <div class="card">
-              <h4>Starter</h4>
-              <p>10 C-oins · Light experimentation</p>
-            </div>
-            <div class="card">
-              <h4>Builder</h4>
-              <p>50 C-oins · Regular iteration</p>
-            </div>
-            <div class="card">
-              <h4>Operator</h4>
-              <p>200 C-oins · Serious evaluation loops</p>
-            </div>
-            <div class="card">
-              <h4>Free Tier</h4>
-              <p>5 C-oins · No card · Full system access</p>
-            </div>
+    <section class="section" id="security">
+      <div class="wrap">
+        <h2>Security</h2>
+        <p class="lede">Intelligence is local and encrypts every output.</p>
+        <div class="feature-grid">
+          <div class="feature-card">
+            <span class="icon-dot">L</span>
+            <h4>On-device</h4>
+            <p>Runs without forced cloud connectivity.</p>
           </div>
-        </div>
-        <div class="preflight">
-          <h3>Pre-Execution Instructions</h3>
-          <p>You are about to run a configured intelligence system.</p>
-          <p>Each agent operates within assigned roles and constraints.</p>
-          <p>Outputs may vary between runs; variance reflects reasoning paths.</p>
-          <p>Execution consumes 1 C-oin. You remain responsible for decisions.</p>
-          <div class="cta-row">
-            <span class="pill">Execute intelligence</span>
-            <span class="pill secondary">Review settings</span>
-            <span class="pill secondary">Cancel</span>
+          <div class="feature-card">
+            <span class="icon-dot">E</span>
+            <h4>AES-256</h4>
+            <p>Outputs sealed after generation.</p>
+          </div>
+          <div class="feature-card">
+            <span class="icon-dot">M</span>
+            <h4>Memory</h4>
+            <p>User-editable memory controls.</p>
+          </div>
+          <div class="feature-card">
+            <span class="icon-dot">P</span>
+            <h4>Policy</h4>
+            <p>Configurable guardrails and filters.</p>
           </div>
         </div>
       </div>
     </section>
 
     <footer class="footer" id="docs">
-      <div class="wrap">
-        The Agent Family · Intelligence Configuration Console · Documentation opens in a new tab.
-      </div>
+      <div class="wrap">AgentC - LLM UI system for multi-agent responses.</div>
     </footer>
   </body>
 </html>
