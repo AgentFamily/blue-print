@@ -812,6 +812,12 @@
         background: rgba(255, 255, 255, 0.55);
       }
 
+      .tools-summary {
+        padding: 10px 14px 0;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
       .tools summary {
         cursor: pointer;
         color: var(--muted);
@@ -6223,13 +6229,37 @@
 	          return sub || "";
 	        }
 
-		        function buildStripeBuyUrlForCurrentUser(baseUrl) {
+	        const DEVICE_ID_KEY = "mkDeviceIdV1";
+
+	        function getOrCreateDeviceId() {
+	          try {
+	            const existing = String(localStorage.getItem(DEVICE_ID_KEY) || "").trim();
+	            if (existing) return existing;
+	          } catch {
+	            // ignore
+	          }
+	          let id = "";
+	          try {
+	            if (crypto && typeof crypto.randomUUID === "function") id = crypto.randomUUID();
+	          } catch {
+	            // ignore
+	          }
+	          if (!id) id = `dev_${Date.now().toString(36)}_${Math.random().toString(16).slice(2)}`;
+	          try {
+	            localStorage.setItem(DEVICE_ID_KEY, id);
+	          } catch {
+	            // ignore
+	          }
+	          return id;
+	        }
+
+		        function buildStripeBuyUrlForCurrentUser(baseUrl, { allowDevice = true } = {}) {
 		          const snap = getMagicAuthSnapshot();
 		          const base = String(baseUrl || STRIPE_BUY_AGENTC_OINS_URL).trim() || STRIPE_BUY_AGENTC_OINS_URL;
-		          if (!snap?.signedIn) return base;
-
-	          const userId = magicUserIdFromJwt(snap.jwt);
-	          if (!userId) return base;
+		          const signedIn = Boolean(snap?.signedIn);
+		          const userId = signedIn ? magicUserIdFromJwt(snap.jwt) : "";
+		          const deviceId = !signedIn && allowDevice ? getOrCreateDeviceId() : "";
+		          if (!userId && !deviceId) return base;
 
 	          let email = "";
 	          try {
@@ -6239,7 +6269,7 @@
 	          }
 
 	          const url = new URL(base);
-	          url.searchParams.set("client_reference_id", userId);
+	          url.searchParams.set("client_reference_id", userId ? userId : `device:${deviceId}`);
 	          if (email) url.searchParams.set("prefilled_email", email);
 		          return url.toString();
 		        }
@@ -6386,27 +6416,39 @@
 			                return;
 			              }
 			              if (!hasUrl) return;
-			              if (!signedIn) {
-			                setStatusRight("Sign in via Account (Magic Link) to purchase.", true);
-			                openMagicAuthPanel();
-			                return;
-			              }
 			              const ackNode = el("coinsNoRefundAck");
 			              const ok = ackNode ? Boolean(ackNode.checked) : coinsNoRefundAcked();
 			              if (!ok) {
 			                setStatusRight("Please acknowledge: Digital product. No refunds.", true);
 			                return;
 			              }
-			              const url = buildStripeBuyUrlForCurrentUser(pack.stripe_url);
-			              try {
-			                window.open(url, "_blank", "noopener,noreferrer");
-			              } catch {
-			                window.location.href = url;
+			              const url = buildStripeBuyUrlForCurrentUser(pack.stripe_url, { allowDevice: true });
+			              const opened = openExternalUrl(url);
+			              if (!opened) {
+			                setStatusRight("Unable to open Stripe checkout.", true);
+			                return;
 			              }
-			              setStatusRight("Opened Stripe checkout — return here to sync your C-oins.");
-			              startCoinsPolling({ durationMs: 90_000 });
+			              setStatusRight(
+			                signedIn
+			                  ? "Opened Stripe checkout — return here to sync your C-oins."
+			                  : "Opened guest checkout — credits will attach to this device. Sign in to sync across devices."
+			              );
+			              if (signedIn) startCoinsPolling({ durationMs: 90_000 });
 			            });
 			            actions.appendChild(buy);
+
+			            if (!signedIn) {
+			              const magic = document.createElement("button");
+			              magic.className = "btn secondary";
+			              magic.type = "button";
+			              magic.textContent = "Magic Link (optional)";
+			              magic.title = "Sign in with Magic Link to sync C-oins across devices.";
+			              magic.addEventListener("click", () => {
+			                setStatusRight("Sign in with Magic Link to sync C-oins across devices.");
+			                if (!openMagicAuthPanel()) openTheAgentFamily();
+			              });
+			              actions.appendChild(magic);
+			            }
 
 			            if (showAdvanced) {
 			              const copy = document.createElement("button");
@@ -7397,18 +7439,25 @@ Style rules:
 
 	Return a single JSON object only (no extra text, no markdown) matching:
 	{
+	  "summary": "1–2 sentence plan",
 	  "actions": [
-	    {"tool":"write_file","path":"relative/path.ext","content":"...","overwrite":true},
-	    {"tool":"read_file","path":"relative/path.ext","max_chars":240000},
-	    {"tool":"list_dir","path":"relative/dir"},
-	    {"tool":"run_shell","command":"...","timeout_ms":120000}
-	  ]
+	    {"tool":"write_file","path":"relative/path.ext","content":"...","overwrite":true,"reason":"..."},
+	    {"tool":"read_file","path":"relative/path.ext","max_chars":240000,"reason":"..."},
+	    {"tool":"list_dir","path":"relative/dir","reason":"..."},
+	    {"tool":"run_shell","command":"...","timeout_ms":120000,"reason":"..."}
+	  ],
+	  "risk": "low|medium|high",
+	  "confidence": 0.0,
+	  "notes": "optional short text"
 	}
 
 	Rules:
-	- If no tools are needed, return {"actions": []}.
-	- Never use tools to access external websites or social media profiles (instagram, URLs, @handles, .com domains). If MK asks to open/browse a profile/post/site, return {"actions": []}.
+	- If no tools are needed, return {"summary":"No tools needed.","actions":[],"risk":"low","confidence":0.5}.
+	- Never use tools to access external websites or social media profiles (instagram, URLs, @handles, .com domains). If MK asks to open/browse a profile/post/site, return no actions.
 	- All paths are relative to the workspace root. Never use absolute paths and never use "..".
+	- Always read/list/search before write/run. Prefer list_dir/read_file/rg to find evidence first.
+	- Max 4 actions total; max 1 run_shell; max 1 write_file.
+	- Avoid destructive or external commands (rm, mv, chmod, chown, sudo, curl/wget, ssh/scp, git push, npm publish).
 	- Prefer minimal, safe actions. Keep each write under 2MB.
 	- If MK asks to build something, prefer to create runnable artifacts in the workspace (files + commands) instead of only describing steps.
 	- Before creating a new script/tool, check if a similar tool already exists in "tools/" (use list_dir and/or read_file as needed).
@@ -7425,9 +7474,10 @@ Style rules:
 	          const allowed = new Set(["write_file", "read_file", "list_dir", "run_shell"]);
 	          const cleaned = [];
 	          for (const a of actions) {
-            if (!a || typeof a !== "object") continue;
-            const tool = String(a.tool || "").trim();
-            if (!allowed.has(tool)) continue;
+	            if (!a || typeof a !== "object") continue;
+	            const tool = String(a.tool || "").trim();
+	            if (!allowed.has(tool)) continue;
+	            const reason = String(a.reason || "").trim();
 
 	            if (tool === "run_shell") {
 	              const command = String(a.command || "").trim();
@@ -7438,7 +7488,8 @@ Style rules:
 	                tool,
 	                command,
 	                timeout_ms: Number(a.timeout_ms) || 120000,
-	                max_chars: Number(a.max_chars) || 120000
+	                max_chars: Number(a.max_chars) || 120000,
+	                ...(reason ? { reason } : {})
 	              });
 	              continue;
 	            }
@@ -7447,40 +7498,51 @@ Style rules:
 	            if (path.startsWith("/") || path.includes("..")) continue;
 	            if ((tool === "read_file" || tool === "list_dir") && looksLikeExternalTarget(path)) continue;
 
-            if (tool === "write_file") {
-              const content = a.content;
-              if (content == null) continue;
-              cleaned.push({
-                tool,
-                path,
-                content: String(content),
-                overwrite: a.overwrite !== false,
-                max_bytes: Number(a.max_bytes) || 2_000_000
-              });
-              continue;
-            }
+	            if (tool === "write_file") {
+	              const content = a.content;
+	              if (content == null) continue;
+	              cleaned.push({
+	                tool,
+	                path,
+	                content: String(content),
+	                overwrite: a.overwrite !== false,
+	                max_bytes: Number(a.max_bytes) || 2_000_000,
+	                ...(reason ? { reason } : {})
+	              });
+	              continue;
+	            }
 
-            cleaned.push({ tool, path, max_chars: Number(a.max_chars) || 240000 });
-          }
-          return cleaned.slice(0, 12);
-        }
+	            cleaned.push({ tool, path, max_chars: Number(a.max_chars) || 240000, ...(reason ? { reason } : {}) });
+	          }
+	          return cleaned.slice(0, 12);
+	        }
 
-        function summarizeActions(actions) {
-          return actions
-            .map((a, i) => {
-              if (a.tool === "run_shell") return `${i + 1}. run_shell: ${a.command}`;
-              if (a.tool === "write_file") return `${i + 1}. write_file: ${a.path} (${(a.content || "").length} chars)`;
-              if (a.tool === "read_file") return `${i + 1}. read_file: ${a.path}`;
-              if (a.tool === "list_dir") return `${i + 1}. list_dir: ${a.path}`;
-              return `${i + 1}. ${a.tool}`;
-            })
-            .join("\n");
-        }
+	        function summarizeActions(actions) {
+	          return actions
+	            .map((a, i) => {
+	              const note = a.reason ? ` — ${a.reason}` : "";
+	              if (a.tool === "run_shell") return `${i + 1}. run_shell: ${a.command}${note}`;
+	              if (a.tool === "write_file") return `${i + 1}. write_file: ${a.path} (${(a.content || "").length} chars)${note}`;
+	              if (a.tool === "read_file") return `${i + 1}. read_file: ${a.path}${note}`;
+	              if (a.tool === "list_dir") return `${i + 1}. list_dir: ${a.path}${note}`;
+	              return `${i + 1}. ${a.tool}`;
+	            })
+	            .join("\n");
+	        }
 
 	        let pendingToolApproval = null;
-	        function requestToolApproval(actions) {
+	        function requestToolApproval(plan) {
+	          const actions = Array.isArray(plan?.actions) ? plan.actions : [];
+	          const summary = String(plan?.summary || "").trim();
+	          const risk = String(plan?.risk || "").trim();
+	          const confidence = Number(plan?.confidence);
+	          const meta = [];
+	          if (summary) meta.push(`Plan: ${summary}`);
+	          if (risk) meta.push(`Risk: ${risk}`);
+	          if (Number.isFinite(confidence)) meta.push(`Confidence: ${confidence}`);
+	          const header = meta.length ? `${meta.join(" • ")}\n\n` : "";
 	          if (state.toolsAutoApprove) return Promise.resolve(true);
-	          el("toolsPlanPre").textContent = summarizeActions(actions) || "(no actions)";
+	          el("toolsPlanPre").textContent = `${header}${summarizeActions(actions) || "(no actions)"}`;
 	          openDialogById("toolsModal");
 	          return new Promise((resolve) => {
 	            pendingToolApproval = resolve;
@@ -7571,24 +7633,198 @@ Style rules:
           return `Tools: ${parts.join("; ")}`;
         }
 
-        function dedupeActions(actions) {
-          const seen = new Set();
-          const out = [];
-          for (const a of actions) {
-            const key = JSON.stringify(a);
-            if (seen.has(key)) continue;
-            seen.add(key);
-            out.push(a);
+        function summarizeToolRunsForUI(toolRuns) {
+          if (!Array.isArray(toolRuns) || toolRuns.length === 0) return "";
+          const parts = [];
+          for (const tr of toolRuns.slice(0, 8)) {
+            const a = tr?.action;
+            if (!a) continue;
+            if (a.tool === "run_shell") parts.push(`run_shell(${clip(a.command, 40)})`);
+            if (a.tool === "write_file") parts.push(`write_file(${a.path})`);
+            if (a.tool === "read_file") parts.push(`read_file(${a.path})`);
+            if (a.tool === "list_dir") parts.push(`list_dir(${a.path})`);
           }
-          return out;
+          const count = toolRuns.length;
+          const suffix = parts.length ? ` • ${parts.join(" • ")}` : "";
+          return `Tools ran: ${count} action${count === 1 ? "" : "s"}${suffix}`;
         }
 
-        async function planToolsVariant(userContext, toolRuns, variant) {
-          const historyBlock = toolRuns.length ? `\n\nAlready ran tools:\n${summarizeActions(toolRuns.map((t) => t.action))}` : "";
-          const style =
-            variant === "AgentX"
-              ? "Plan like AgentX: move fast, build-first, prefer creating runnable artifacts in the workspace."
-              : "Plan like AgentC: be cautious, verify first, and keep actions minimal and auditable.";
+	        function dedupeActions(actions) {
+	          const seen = new Set();
+	          const out = [];
+	          for (const a of actions) {
+	            const key = JSON.stringify(a);
+	            if (seen.has(key)) continue;
+	            seen.add(key);
+	            out.push(a);
+	          }
+	          return out;
+	        }
+
+	        function isSafeShellCommand(command) {
+	          const raw = String(command || "").trim();
+	          if (!raw) return false;
+	          const c = raw.toLowerCase();
+	          if (/\b(rm|mv|chmod|chown|sudo|curl|wget|ssh|scp)\b/.test(c)) return false;
+	          if (/\bgit\s+push\b/.test(c)) return false;
+	          if (/\bnpm\s+publish\b/.test(c)) return false;
+	          return true;
+	        }
+
+	        function capActionsToLimits(actions) {
+	          const out = [];
+	          let runShellCount = 0;
+	          let writeCount = 0;
+	          for (const a of actions) {
+	            if (out.length >= 4) break;
+	            if (a.tool === "run_shell") {
+	              if (runShellCount >= 1) continue;
+	              runShellCount += 1;
+	            }
+	            if (a.tool === "write_file") {
+	              if (writeCount >= 1) continue;
+	              writeCount += 1;
+	            }
+	            out.push(a);
+	          }
+	          return out;
+	        }
+
+	        function normalizePlanMeta(plan) {
+	          const summary = String(plan?.summary || "").trim();
+	          const riskRaw = String(plan?.risk || "").trim().toLowerCase();
+	          const risk = ["low", "medium", "high"].includes(riskRaw) ? riskRaw : "low";
+	          const conf = Number(plan?.confidence);
+	          const confidence = Number.isFinite(conf) ? Math.max(0, Math.min(1, conf)) : 0.5;
+	          const notes = String(plan?.notes || "").trim();
+	          return { summary, risk, confidence, notes };
+	        }
+
+	        function validateToolPlan(plan) {
+	          const meta = normalizePlanMeta(plan);
+	          let actions = sanitizeActions(plan?.actions);
+	          actions = dedupeActions(actions);
+	          if (!actions.length) return { ok: true, actions: [], ...meta };
+	          const hasReadOrList = actions.some((a) => a.tool === "read_file" || a.tool === "list_dir");
+	          const hasWriteOrRun = actions.some((a) => a.tool === "write_file" || a.tool === "run_shell");
+	          if (hasWriteOrRun && !hasReadOrList) return { ok: false, reason: "missing_read_list" };
+	          for (const a of actions) {
+	            if (a.tool === "run_shell" && !isSafeShellCommand(a.command)) return { ok: false, reason: "unsafe_shell" };
+	            if ((a.tool === "read_file" || a.tool === "list_dir" || a.tool === "write_file") && (a.path || "").includes("..")) {
+	              return { ok: false, reason: "invalid_path" };
+	            }
+	          }
+	          actions = capActionsToLimits(actions);
+	          return { ok: true, actions, ...meta };
+	        }
+
+        function shellQuote(text) {
+          const s = String(text || "");
+          return "'" + s.replace(/'/g, "'\"'\"'") + "'";
+        }
+
+	        function looksLikePathCandidate(value) {
+	          const s = String(value || "").trim();
+	          if (!s) return false;
+	          if (s.startsWith("http://") || s.startsWith("https://")) return false;
+	          if (s.startsWith("/") || s.includes("..")) return false;
+	          if (/\s/.test(s)) return false;
+	          return /[\\/]/.test(s) || /\.[a-z0-9]{1,6}$/i.test(s);
+	        }
+
+	        function extractBacktickPath(message) {
+	          const m = String(message || "").match(/`([^`]+)`/);
+	          if (!m) return "";
+	          const v = String(m[1] || "").trim();
+	          return looksLikePathCandidate(v) ? v : "";
+	        }
+
+	        function extractPathFromMessage(message) {
+	          const backtick = extractBacktickPath(message);
+	          if (backtick) return backtick;
+	          const m = String(message || "").match(/\b([A-Za-z0-9_.\/-]+\.(?:js|ts|json|md|py|html|css|txt|tsx|jsx|yml|yaml|sh))\b/);
+	          const v = String(m?.[1] || "").trim();
+	          return looksLikePathCandidate(v) ? v : "";
+	        }
+
+        function extractDirFromMessage(message) {
+          const m = String(message || "").match(/\b(?:in|of|under)\s+([A-Za-z0-9_.\/-]+)/i);
+          const v = String(m?.[1] || "").trim();
+          if (!v) return ".";
+          if (v.startsWith("/") || v.includes("..")) return ".";
+          if (/\s/.test(v)) return ".";
+          return v;
+        }
+
+	        function extractSearchTerm(message) {
+	          const m = String(message || "").match(/\b(?:find|search|rg|grep)\b\s+(?:for\s+)?["']?([^"'\n]+)["']?/i);
+	          const v = String(m?.[1] || "").trim();
+	          if (!v) return "";
+	          if (v.length > 120) return v.slice(0, 120);
+	          return v;
+	        }
+
+	        function preflightToolPlan(message) {
+	          const text = String(message || "").trim();
+	          if (!text) return null;
+	          const lower = text.toLowerCase();
+	          if (/\b(add|edit|update|modify|change|fix|remove|delete|refactor|create|write|append|run|test|build|lint|format|compile|execute)\b/.test(lower)) {
+	            return null;
+	          }
+	          if (/\b(list|ls)\b/.test(lower) && /\b(dir|directory|folder|files)\b/.test(lower)) {
+	            const path = extractDirFromMessage(text);
+	            return {
+	              summary: "List directory contents.",
+	              actions: [{ tool: "list_dir", path, reason: "Read-only directory listing." }],
+	              risk: "low",
+	              confidence: 0.7,
+	              notes: ""
+	            };
+	          }
+	          if (/\b(show|open|read|display|print|view)\b/.test(lower)) {
+	            const path = extractPathFromMessage(text);
+	            if (path) {
+	              return {
+	                summary: "Read the requested file.",
+	                actions: [{ tool: "read_file", path, max_chars: 240000, reason: "Read-only file view." }],
+	                risk: "low",
+	                confidence: 0.7,
+	                notes: ""
+	              };
+	            }
+	          }
+	          if (/\b(find|search|rg|grep)\b/.test(lower)) {
+	            const term = extractSearchTerm(text);
+	            if (term) {
+	              const cmd = `rg -n ${shellQuote(term)} .`;
+	              return {
+	                summary: "Search the workspace for the requested term.",
+	                actions: [{ tool: "run_shell", command: cmd, timeout_ms: 120000, reason: "Read-only text search." }],
+	                risk: "low",
+	                confidence: 0.6,
+	                notes: ""
+	              };
+	            }
+	          }
+	          const path = extractPathFromMessage(text);
+	          if (path && /\b(file|path)\b/.test(lower)) {
+	            return {
+	              summary: "Read the requested file.",
+	              actions: [{ tool: "read_file", path, max_chars: 240000, reason: "Read-only file view." }],
+	              risk: "low",
+	              confidence: 0.6,
+	              notes: ""
+	            };
+	          }
+	          return null;
+	        }
+
+	        async function planToolsVariant(userContext, toolRuns, variant) {
+	          const historyBlock = toolRuns.length ? `\n\nAlready ran tools:\n${summarizeActions(toolRuns.map((t) => t.action))}` : "";
+	          const style =
+	            variant === "AgentX"
+	              ? "Plan like AgentX: move fast, build-first, prefer creating runnable artifacts in the workspace."
+	              : "Plan like AgentC: be cautious, verify first, and keep actions minimal and auditable.";
 
           const res = await ollamaChat({
             system: TOOL_PLANNER_SYSTEM,
@@ -7597,24 +7833,29 @@ Style rules:
             format: "json"
           });
 
-          let parsed = null;
-          try {
-            parsed = JSON.parse(res.content);
-          } catch {
-            parsed = null;
-          }
-          return { actions: sanitizeActions(parsed?.actions), model: res.model };
-        }
+	          let parsed = null;
+	          try {
+	            parsed = JSON.parse(res.content);
+	          } catch {
+	            parsed = null;
+	          }
+	          return { plan: parsed || {}, model: res.model };
+	        }
 
-        async function planTools(userContext, toolRuns) {
-          const [x, c] = await Promise.all([
-            planToolsVariant(userContext, toolRuns, "AgentX"),
-            planToolsVariant(userContext, toolRuns, "AgentC")
-          ]);
+	        async function planTools(userContext, toolRuns) {
+	          const [x, c] = await Promise.all([
+	            planToolsVariant(userContext, toolRuns, "AgentX"),
+	            planToolsVariant(userContext, toolRuns, "AgentC")
+	          ]);
 
-          const merged = dedupeActions([...(x.actions || []), ...(c.actions || [])]).slice(0, 12);
-          return { actions: merged, model: x.model || c.model };
-        }
+	          const xActions = sanitizeActions(x?.plan?.actions);
+	          const cActions = sanitizeActions(c?.plan?.actions);
+	          const merged = dedupeActions([...(xActions || []), ...(cActions || [])]).slice(0, 12);
+	          const primary = xActions.length >= cActions.length ? x?.plan : c?.plan;
+	          const secondary = xActions.length >= cActions.length ? c?.plan : x?.plan;
+	          const meta = normalizePlanMeta(primary || secondary || {});
+	          return { actions: merged, model: x.model || c.model, ...meta };
+	        }
 
 	        async function runToolsIfNeeded(userContext) {
 	          if (!state.toolsEnabled) return { toolRuns: [], userContext };
@@ -7646,27 +7887,53 @@ Style rules:
 	          }
 
 	          const toolRuns = [];
-	          const maxLoops = 3;
+	          const preflight = preflightToolPlan(latestMkMessage);
+	          if (preflight) {
+	            const validated = validateToolPlan(preflight);
+	            if (!validated.ok) {
+	              setStatusRight("Tools skipped (invalid plan / unsafe command).", true);
+	              return { toolRuns, userContext };
+	            }
+	            if (!validated.actions.length) return { toolRuns, userContext };
+	            const approved = await requestToolApproval(validated);
+	            if (!approved) return { toolRuns, userContext };
+	            setStatusRight(`Running ${validated.actions.length} tool(s)…`);
+	            for (const action of validated.actions) {
+	              const endpoint = action.tool;
+	              const payload = { ...action };
+	              delete payload.tool;
+	              const result = await toolFetch(endpoint, payload);
+	              toolRuns.push({ action, result, at: Date.now() });
+	            }
+	            setStatusRight(`Tools ran: ${validated.actions.length} action${validated.actions.length === 1 ? "" : "s"}.`);
+	            return { toolRuns, userContext: userContext + toolResultsToContext(toolRuns) };
+	          }
 
-          for (let i = 0; i < maxLoops; i++) {
-            const plan = await planTools(userContext, toolRuns);
-            if (!plan.actions.length) break;
+	          const maxLoops = 1;
+	          for (let i = 0; i < maxLoops; i++) {
+	            setStatusRight("Planning tools (safe-first)…");
+	            const plan = await planTools(userContext, toolRuns);
+	            const validated = validateToolPlan(plan);
+	            if (!validated.ok) {
+	              setStatusRight("Tools skipped (invalid plan / unsafe command).", true);
+	              break;
+	            }
+	            if (!validated.actions.length) break;
+	            const approved = await requestToolApproval(validated);
+	            if (!approved) break;
+	            setStatusRight(`Running ${validated.actions.length} tool(s)…`);
+	            for (const action of validated.actions) {
+	              const endpoint = action.tool;
+	              const payload = { ...action };
+	              delete payload.tool;
+	              const result = await toolFetch(endpoint, payload);
+	              toolRuns.push({ action, result, at: Date.now() });
+	            }
+	            setStatusRight(`Tools ran: ${validated.actions.length} action${validated.actions.length === 1 ? "" : "s"}.`);
+	          }
 
-            const approved = await requestToolApproval(plan.actions);
-            if (!approved) break;
-
-            setStatusRight(`Running ${plan.actions.length} tool(s)…`);
-            for (const action of plan.actions) {
-              const endpoint = action.tool;
-              const payload = { ...action };
-              delete payload.tool;
-              const result = await toolFetch(endpoint, payload);
-              toolRuns.push({ action, result, at: Date.now() });
-            }
-          }
-
-          return { toolRuns, userContext: userContext + toolResultsToContext(toolRuns) };
-        }
+	          return { toolRuns, userContext: userContext + toolResultsToContext(toolRuns) };
+	        }
 
 	        async function runSystemReflection({ baseContext, agentXText, agentCText }) {
 	          const sysUser = [
@@ -8345,6 +8612,7 @@ Style rules:
 
             const toolsJSON =
               Array.isArray(round.tools) && round.tools.length ? escapeHTML(JSON.stringify(round.tools, null, 2)) : "";
+            const toolsSummary = summarizeToolRunsForUI(round.tools);
 
             roundEl.innerHTML = `
               <div class="round-meta">
@@ -8412,7 +8680,7 @@ Style rules:
 	              </div>
               ${
                 toolsJSON
-                  ? `<details class="tools"><summary class="sf-thin">Tools</summary><pre>${toolsJSON}</pre></details>`
+                  ? `<div class="tools-summary sf-thin">${escapeHTML(toolsSummary)}</div><details class="tools"><summary class="sf-thin">Tool details</summary><pre>${toolsJSON}</pre></details>`
                   : ""
               }
             `;
@@ -9926,14 +10194,10 @@ Style rules:
 				          if (!openMagicAuthPanel()) openTheAgentFamily();
 				        }
 
-		        function openDownload() {
-		          const url = "https://doi.org/10.5281/zenodo.18334441";
-		          try {
-		            window.open(url, "_blank", "noopener,noreferrer");
-		          } catch {
-		            window.location.href = url;
-		          }
-		        }
+				function openDownload() {
+					const url = "https://doi.org/10.5281/zenodo.18334441";
+					openExternalUrl(url);
+				}
 
 	        async function refreshModels({ quiet = false } = {}) {
 	          if (!quiet) setStatusRight("Loading models…");

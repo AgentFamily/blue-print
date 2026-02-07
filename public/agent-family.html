@@ -94,24 +94,8 @@
 
       .nav-cta {
         display: flex;
+        gap: 10px;
         align-items: center;
-        gap: 8px;
-      }
-
-      .btn-group {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        background: rgba(11, 16, 33, 0.04);
-        border: 1px solid var(--line);
-        border-radius: 999px;
-        padding: 6px;
-      }
-
-      .btn-group .pill {
-        padding: 8px 14px;
-        border: 1px solid transparent;
-        background: #fff;
       }
 
       .pill {
@@ -396,25 +380,11 @@
         width: 120px;
       }
 
-      .photo-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 16px;
-      }
-
-      .photo-grid img {
-        border-radius: var(--radius-lg);
-        border: 1px solid var(--line);
-        box-shadow: var(--soft);
-        background: #fff;
-      }
-
       @media (max-width: 980px) {
         .hero-grid,
         .split,
         .grid-3,
-        .grid-2,
-        .photo-grid {
+        .grid-2 {
           grid-template-columns: 1fr;
         }
         .nav-links {
@@ -427,7 +397,7 @@
     <header>
       <div class="wrap nav">
         <div class="brand">
-          <img src="agentc_button.svg" alt="AgentC" />
+          <img src="Contents/Resources/agentc_button.svg" alt="AgentC" />
           <span>Agent Family</span>
         </div>
         <nav class="nav-links">
@@ -438,10 +408,7 @@
         </nav>
         <div class="nav-cta">
           <span class="pill">C-oin Balance: 12</span>
-          <div class="btn-group">
-            <a class="pill secondary" href="https://assistantlady.com" target="_blank" rel="noreferrer">AIMissLead</a>
-            <span class="pill primary">Start for free</span>
-          </div>
+          <span class="pill primary">Start for free</span>
         </div>
       </div>
     </header>
@@ -460,9 +427,9 @@
             <span class="badge">Local or Online</span>
           </div>
           <div class="hero-characters">
-            <img src="ui/characters/agent-neutral.svg" alt="Agent X" />
-            <img src="ui/characters/agent-angry.svg" alt="Agent C" />
-            <img src="ui/characters/agent-neutral-glitch.svg" alt="System" />
+            <img src="Contents/Resources/ui/characters/agent-neutral.svg" alt="Agent X" />
+            <img src="Contents/Resources/ui/characters/agent-angry.svg" alt="Agent C" />
+            <img src="Contents/Resources/ui/characters/agent-neutral-glitch.svg" alt="System" />
           </div>
         </div>
         <div class="hero-card">
@@ -480,13 +447,6 @@
           </div>
           <div class="price-tag">This action will consume 1 C-oin.</div>
         </div>
-      </div>
-    </section>
-
-    <section class="section">
-      <div class="wrap photo-grid">
-        <img src="ui/characters/agent-sad.svg" alt="Agent character" />
-        <img src="ui/characters/agent-angry-glitch.svg" alt="Agent character" />
       </div>
     </section>
 
@@ -508,10 +468,10 @@
           </div>
         </div>
         <div class="img-stack">
-          <div class="img-card"><img src="ui/icons/vault-local.svg" alt="Local" /></div>
-          <div class="img-card"><img src="ui/icons/vault-online.svg" alt="Online" /></div>
-          <div class="img-card"><img src="ui/icons/vault-upload.svg" alt="Upload" /></div>
-          <div class="img-card"><img src="ui/icons/vault-download.svg" alt="Download" /></div>
+          <div class="img-card"><img src="Contents/Resources/ui/icons/vault-local.svg" alt="Local" /></div>
+          <div class="img-card"><img src="Contents/Resources/ui/icons/vault-online.svg" alt="Online" /></div>
+          <div class="img-card"><img src="Contents/Resources/ui/icons/vault-upload.svg" alt="Upload" /></div>
+          <div class="img-card"><img src="Contents/Resources/ui/icons/vault-download.svg" alt="Download" /></div>
         </div>
       </div>
     </section>
@@ -524,21 +484,21 @@
         </p>
         <div class="agents-strip">
           <div class="agent-chip">
-            <img src="ui/characters/agent-neutral.svg" alt="Agent X" />
+            <img src="Contents/Resources/ui/characters/agent-neutral.svg" alt="Agent X" />
             <div>
               <strong>Agent X</strong>
               <div class="list">Exploratory · Language: Auto</div>
             </div>
           </div>
           <div class="agent-chip">
-            <img src="ui/characters/agent-neutral-glitch.svg" alt="System" />
+            <img src="Contents/Resources/ui/characters/agent-neutral-glitch.svg" alt="System" />
             <div>
               <strong>System</strong>
               <div class="list">Synthesis &amp; verification · Language: Auto</div>
             </div>
           </div>
           <div class="agent-chip">
-            <img src="ui/characters/agent-angry.svg" alt="Agent C" />
+            <img src="Contents/Resources/ui/characters/agent-angry.svg" alt="Agent C" />
             <div>
               <strong>Agent C</strong>
               <div class="list">Logic &amp; constraints · Language: Auto</div>
