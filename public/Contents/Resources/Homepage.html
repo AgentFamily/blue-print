@@ -95,7 +95,7 @@
       .nav-cta {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 12px;
       }
 
       .btn-group {
@@ -120,6 +120,18 @@
         border: 1px solid var(--line);
         background: #fff;
         font-size: 13px;
+      }
+
+      .pill.secondary {
+        background: rgba(255, 255, 255, 0.7);
+        color: var(--muted);
+      }
+
+      .pill.ghost {
+        background: transparent;
+        color: var(--muted);
+        border-color: transparent;
+        padding: 8px 12px;
       }
 
       .pill.primary {
@@ -257,6 +269,153 @@
         gap: 16px;
       }
 
+      .languages-showcase {
+        position: relative;
+        border-radius: var(--radius-xl);
+        border: 1px solid var(--line);
+        padding: 28px;
+        background: linear-gradient(120deg, rgba(47, 108, 255, 0.12), rgba(255, 255, 255, 0.9) 45%, rgba(255, 154, 60, 0.12));
+        overflow: hidden;
+      }
+
+      .engineers-row {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+        margin-bottom: 22px;
+      }
+
+      .engineer-card {
+        position: relative;
+        border-radius: var(--radius-lg);
+        background: var(--card);
+        border: 1px solid var(--line);
+        box-shadow: var(--soft);
+        padding: 16px 18px;
+        display: grid;
+        grid-template-columns: 120px 1fr;
+        gap: 16px;
+        align-items: center;
+        min-height: 140px;
+        overflow: hidden;
+      }
+
+      .engineer-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(180px 120px at 90% 10%, rgba(47, 108, 255, 0.12), transparent 60%);
+        pointer-events: none;
+      }
+
+      .engineer-card.red::after {
+        background: radial-gradient(180px 120px at 90% 10%, rgba(255, 80, 80, 0.14), transparent 60%);
+      }
+
+      .engineer-card img {
+        width: 120px;
+        height: auto;
+        filter: drop-shadow(0 12px 24px rgba(11, 16, 33, 0.2));
+      }
+
+      .engineer-meta strong {
+        display: block;
+        font-size: 16px;
+        margin-bottom: 6px;
+      }
+
+      .engineer-meta .list {
+        font-size: 13px;
+      }
+
+      .unlock-strip {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin: 14px 0 24px;
+      }
+
+      .unlock-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        border: 1px dashed rgba(11, 16, 33, 0.2);
+        background: rgba(255, 255, 255, 0.7);
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .languages-showcase::after {
+        content: "";
+        position: absolute;
+        inset: 12px;
+        border-radius: calc(var(--radius-xl) - 10px);
+        border: 1px dashed rgba(47, 108, 255, 0.2);
+        pointer-events: none;
+      }
+
+      .languages-characters {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      .lang-char {
+        position: absolute;
+        width: 140px;
+        filter: drop-shadow(0 16px 28px rgba(11, 16, 33, 0.18));
+        opacity: 0.95;
+      }
+
+      .lang-char.c1 {
+        top: -18px;
+        left: -6px;
+        transform: rotate(-8deg);
+      }
+
+      .lang-char.c2 {
+        top: 8px;
+        right: 6px;
+        transform: rotate(10deg);
+      }
+
+      .lang-char.c3 {
+        bottom: -6px;
+        left: 18%;
+        transform: rotate(6deg);
+      }
+
+      .lang-char.c4 {
+        bottom: -10px;
+        right: 12%;
+        transform: rotate(-6deg);
+      }
+
+      .lang-char.c5 {
+        top: 45%;
+        left: -10px;
+        transform: rotate(4deg);
+      }
+
+      .lang-char.c6 {
+        top: 42%;
+        right: -8px;
+        transform: rotate(-4deg);
+      }
+
+      .lang-char.c7 {
+        bottom: -18px;
+        left: 52%;
+        transform: rotate(3deg);
+      }
+
+      .languages-content {
+        position: relative;
+        z-index: 1;
+      }
+
       .agent-chip {
         display: flex;
         align-items: center;
@@ -265,6 +424,11 @@
         border-radius: var(--radius-md);
         background: rgba(255, 255, 255, 0.9);
         border: 1px solid var(--line);
+      }
+
+      .agent-chip strong {
+        display: block;
+        margin-bottom: 4px;
       }
 
       .agent-chip img {
@@ -420,6 +584,30 @@
         .nav-links {
           display: none;
         }
+        .nav-cta {
+          width: 100%;
+          justify-content: space-between;
+        }
+        .engineers-row {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 720px) {
+        .languages-showcase {
+          padding: 22px;
+        }
+        .lang-char {
+          width: 110px;
+          opacity: 0.85;
+        }
+        .lang-char.c2,
+        .lang-char.c4,
+        .lang-char.c5,
+        .lang-char.c6,
+        .lang-char.c7 {
+          display: none;
+        }
       }
     </style>
   </head>
@@ -437,11 +625,11 @@
           <a href="#account">Profile</a>
         </nav>
         <div class="nav-cta">
-          <span class="pill">C-oin Balance: 12</span>
           <div class="btn-group">
+            <span class="pill ghost">C-oin Balance: 12</span>
             <a class="pill secondary" href="https://assistantlady.com" target="_blank" rel="noreferrer">AIMissLead</a>
-            <span class="pill primary">Start for free</span>
           </div>
+          <span class="pill primary">Start for free</span>
         </div>
       </div>
     </header>
@@ -522,26 +710,61 @@
         <p class="lede">
           Each agent reasons in its own language; output is unified unless Mixed Output is enabled.
         </p>
-        <div class="agents-strip">
-          <div class="agent-chip">
-            <img src="ui/characters/agent-neutral.svg" alt="Agent X" />
-            <div>
-              <strong>Agent X</strong>
-              <div class="list">Exploratory · Language: Auto</div>
+        <div class="engineers-row">
+          <div class="engineer-card blue">
+            <img src="ui/characters/engineer-agentc-default.png" alt="Agent C engineer" />
+            <div class="engineer-meta">
+              <strong>Agent C · Default Engineer</strong>
+              <div class="list">Blue core · Primary reasoning</div>
+              <div class="list">Personality adapts to conversation mode</div>
             </div>
           </div>
-          <div class="agent-chip">
-            <img src="ui/characters/agent-neutral-glitch.svg" alt="System" />
-            <div>
-              <strong>System</strong>
-              <div class="list">Synthesis &amp; verification · Language: Auto</div>
+          <div class="engineer-card red">
+            <img src="ui/characters/engineer-agentx-default.png" alt="Agent X engineer" />
+            <div class="engineer-meta">
+              <strong>Agent X · Default Engineer</strong>
+              <div class="list">Red core · Creative exploration</div>
+              <div class="list">Swaps skins with language &amp; unlocks</div>
             </div>
           </div>
-          <div class="agent-chip">
-            <img src="ui/characters/agent-angry.svg" alt="Agent C" />
-            <div>
-              <strong>Agent C</strong>
-              <div class="list">Logic &amp; constraints · Language: Auto</div>
+        </div>
+        <div class="unlock-strip">
+          <span class="unlock-chip">Unlock skins by usage, quests, or plans</span>
+          <span class="unlock-chip">Language presets can swap uniforms</span>
+        </div>
+        <div class="languages-showcase">
+          <div class="languages-characters">
+            <img class="lang-char c1" src="ui/characters/language-01.png" alt="Agent character reading" />
+            <img class="lang-char c2" src="ui/characters/language-02.png" alt="Agent character with journal" />
+            <img class="lang-char c3" src="ui/characters/language-03.png" alt="Agent character greeting" />
+            <img class="lang-char c4" src="ui/characters/language-04.png" alt="Agent character presenting" />
+            <img class="lang-char c5" src="ui/characters/language-05.png" alt="Agent character pointing" />
+            <img class="lang-char c6" src="ui/characters/language-06.png" alt="Agent character studying" />
+            <img class="lang-char c7" src="ui/characters/language-07.png" alt="Agent character verifying" />
+          </div>
+          <div class="languages-content">
+            <div class="agents-strip">
+              <div class="agent-chip">
+                <img src="ui/characters/agent-neutral.svg" alt="Agent X" />
+                <div>
+                  <strong>Agent X</strong>
+                  <div class="list">Exploratory · Language: Auto</div>
+                </div>
+              </div>
+              <div class="agent-chip">
+                <img src="ui/characters/agent-neutral-glitch.svg" alt="System" />
+                <div>
+                  <strong>System</strong>
+                  <div class="list">Synthesis &amp; verification · Language: Auto</div>
+                </div>
+              </div>
+              <div class="agent-chip">
+                <img src="ui/characters/agent-angry.svg" alt="Agent C" />
+                <div>
+                  <strong>Agent C</strong>
+                  <div class="list">Logic &amp; constraints · Language: Auto</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
