@@ -3119,6 +3119,10 @@
 		            <span class="dot changelog" aria-hidden="true"></span>
 		            <span>Changelog</span>
 		          </button>
+		          <button class="pill pill-btn" id="aiRealtorBtn" type="button" title="Open AI Realtor">
+		            <span class="dot context" aria-hidden="true"></span>
+		            <span>AI Realtor</span>
+		          </button>
 		        </div>
 
 		        <div class="home-slide-row">
@@ -3197,7 +3201,7 @@
 		          <div class="composer-row">
 		            <textarea id="topicInput" placeholder="Ask anything (AgentX + AgentC + System)..." rows="1"></textarea>
 		            <div class="composer-actions">
-		              <button class="btn icon" id="imageUploadBtn" type="button" aria-label="Attach image" title="Attach image for SmolVLM2">🖼️</button>
+		              <button class="btn icon" id="imageUploadBtn" type="button" aria-label="Attach file" title="Attach image or document for SmolVLM2 auto-read">🖼️</button>
 		              <button class="btn primary" id="startBtn" type="submit">Send</button>
 		              <button class="btn icon" id="composerMoreBtn" type="button" aria-expanded="false" aria-label="More options" title="More">⋯</button>
 		            </div>
@@ -3209,7 +3213,7 @@
                   <button class="btn tiny secondary" id="clearAttachmentBtn" type="button">Remove</button>
                 </div>
               </div>
-              <input id="imageUploadInput" type="file" accept="image/*" hidden />
+              <input id="imageUploadInput" type="file" accept="image/*,.pdf,.txt,.md,.markdown,.json,.csv,.tsv,.html,.xml,.log,.rtf,.doc,.docx" hidden />
 		          <div class="composer-tools" aria-label="Modes and templates">
 	            <select id="agentXModeQuickSelect" aria-label="Agent X mode">
 	              <option value="chat">Agent X · Chat</option>
@@ -4540,7 +4544,24 @@ Boundaries and safety:
                 "hf.co/bartowski/HuggingFaceTB_SmolVLM2-500M-Instruct-GGUF:Q8_0"
               ];
               const IMAGE_UPLOAD_MAX_BYTES = 8 * 1024 * 1024;
+              const DOCUMENT_UPLOAD_MAX_BYTES = 12 * 1024 * 1024;
               const IMAGE_UPLOAD_MIME_ALLOW = new Set(["image/png", "image/jpeg", "image/webp", "image/gif", "image/jpg"]);
+              const DOCUMENT_UPLOAD_EXT_ALLOW = new Set(["pdf", "txt", "md", "markdown", "json", "csv", "tsv", "html", "xml", "log", "rtf", "doc", "docx"]);
+              const DOCUMENT_UPLOAD_MIME_ALLOW = new Set([
+                "application/pdf",
+                "text/plain",
+                "text/markdown",
+                "application/json",
+                "text/csv",
+                "text/tab-separated-values",
+                "text/html",
+                "application/xml",
+                "text/xml",
+                "application/rtf",
+                "text/rtf",
+                "application/msword",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              ]);
 
 		        const RECOMMENDED_MODELS = ["gemma3:1b", "gemma3:4b", "gemma3:12b"];
 
@@ -7029,6 +7050,10 @@ Boundaries and safety:
 	            return openExternalUrl("https://github.com/AgentFamily/the-agent-family");
 	          }
 
+	          function openAiRealtor() {
+	            return openExternalUrl("https://AiRealtor.UK");
+	          }
+
 		        function magicAuthContextForLLM(prompt) {
 		          const snap = getMagicAuthSnapshot();
 		          if (hasMkAdmin()) {
@@ -8281,28 +8306,83 @@ Style rules:
 		          return { toolRuns, userContext: userContext + toolResultsToContext(toolRuns) };
 		        }
 
-          async function summarizeImageWithToolModel({ topic, image }) {
-            if (!image || !image.b64) return "";
-            const prompt = [
-              "You are a local image analyst for MK.",
-              "Return concise visual facts from the uploaded image only.",
-              "Output exactly this format:",
-              "Summary: <1-2 short sentences>",
-              "Details:",
-              "- <up to 5 factual bullets>",
-              "",
-              `MK request context: ${String(topic || "").trim() || "(none provided)"}`,
-              `Image file: ${String(image.name || "image")}`
-            ].join("\n");
-            const res = await ollamaChat({
-              agent: "tool",
-              system:
-                "Describe what is visible with high precision. Do not invent unreadable text. Keep uncertain details marked as uncertain.",
-              user: prompt,
-              temperature: 0.1,
-              images: [image.b64]
+          async function resolveAttachmentToolModelName() {
+            const models = await listOllamaModels();
+            const smol = findSmolToolModelName(models);
+            if (smol) return smol;
+            if (state.toolModelOverride) return resolveModelOverrideForAgent("tool", state.toolModelOverride);
+            return ensureModelForAgent("tool");
+          }
+
+          async function summarizeAttachmentWithToolModel({ topic, attachment }) {
+            if (!attachment) return "";
+            const kind = String(attachment.kind || "").toLowerCase();
+            const isImage = kind === "image" && Boolean(attachment.b64);
+            const isDocument = kind === "document" && Boolean(attachment.text);
+            if (!isImage && !isDocument) return "";
+
+            const model = await resolveAttachmentToolModelName();
+            const context = String(topic || "").trim() || "(none provided)";
+
+            let system = "";
+            let user = "";
+            const userMessage = { role: "user", content: "" };
+
+            if (isImage) {
+              system =
+                "You are a local image and OCR analyst for MK. Extract visual facts and readable text. Mark uncertainty clearly.";
+              user = [
+                "Analyze the uploaded image.",
+                "Return exactly this format:",
+                "Summary: <1-2 short sentences>",
+                "Details:",
+                "- <up to 5 factual bullets>",
+                "",
+                `MK request context: ${context}`,
+                `Image file: ${String(attachment.name || "image")}`
+              ].join("\n");
+              userMessage.images = [String(attachment.b64 || "")];
+            } else {
+              const excerpt = clip(String(attachment.text || "").trim(), 12000);
+              system =
+                "You are a local document reader for MK. Extract concrete facts from the provided text only. Mark uncertainty clearly.";
+              user = [
+                "Analyze the uploaded document text.",
+                "Return exactly this format:",
+                "Summary: <1-2 short sentences>",
+                "Details:",
+                "- <up to 5 factual bullets>",
+                "",
+                `MK request context: ${context}`,
+                `Document file: ${String(attachment.name || "document")}`,
+                `Document MIME: ${String(attachment.mime || "unknown")}`,
+                "Document text excerpt:",
+                excerpt || "(empty)"
+              ].join("\n");
+            }
+
+            userMessage.content = user;
+            const body = {
+              model,
+              stream: false,
+              options: {
+                num_ctx: Math.max(2048, Math.min(8192, Number(state.options?.numCtx) || 4096)),
+                num_predict: 320,
+                temperature: 0.1
+              },
+              messages: [
+                { role: "system", content: system },
+                userMessage
+              ]
+            };
+
+            const json = await fetchJSON("/api/chat", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(body)
             });
-            return String(res?.content || "").trim();
+            const content = json?.message?.content ?? json?.response ?? "";
+            return String(content || "").trim();
           }
 
 	        async function runSystemReflection({ baseContext, agentXText, agentCText }) {
@@ -8460,22 +8540,22 @@ Style rules:
 		            contextParts.push(`MK message: ${prompt}`);
               if (attachment && attachment.name) {
                 contextParts.push(
-                  `MK attached image: ${attachment.name} (${attachment.mime || "image"}, ${formatBytes(attachment.size)}).`
+                  `MK attached file: ${attachment.name} (${attachment.mime || "attachment"}, ${formatBytes(attachment.size)}).`
                 );
               }
               if (attachmentSummary) {
-                contextParts.push(`Image analysis from Tool model:\n${clip(String(attachmentSummary || "").trim(), 2600)}`);
+                contextParts.push(`Attachment analysis from Tool model (SmolVLM2 auto-read):\n${clip(String(attachmentSummary || "").trim(), 2600)}`);
               }
 		            contextParts.push("Respond to MK’s message. Use the context above only if it helps.");
 		          } else {
 		            contextParts.push(`MK message: ${prompt}`);
               if (attachment && attachment.name) {
                 contextParts.push(
-                  `MK attached image: ${attachment.name} (${attachment.mime || "image"}, ${formatBytes(attachment.size)}).`
+                  `MK attached file: ${attachment.name} (${attachment.mime || "attachment"}, ${formatBytes(attachment.size)}).`
                 );
               }
               if (attachmentSummary) {
-                contextParts.push(`Image analysis from Tool model:\n${clip(String(attachmentSummary || "").trim(), 2600)}`);
+                contextParts.push(`Attachment analysis from Tool model (SmolVLM2 auto-read):\n${clip(String(attachmentSummary || "").trim(), 2600)}`);
               }
 		          }
 
@@ -9092,7 +9172,7 @@ Style rules:
 	            const toolsSummary = summarizeToolRunsForUI(round.tools);
             const attachmentLine =
               round.attachment && round.attachment.name
-                ? `<div class="topic-attachment">Image: ${escapeHTML(round.attachment.name)} (${escapeHTML(
+                ? `<div class="topic-attachment">Attachment: ${escapeHTML(round.attachment.name)} (${escapeHTML(
                     formatBytes(round.attachment.size)
                   )})</div>`
                 : "";
@@ -9472,8 +9552,65 @@ Style rules:
             return `${(value / (1024 * 1024)).toFixed(1)} MB`;
           }
 
+          function fileExtension(name) {
+            const raw = String(name || "").trim();
+            const idx = raw.lastIndexOf(".");
+            if (idx < 0) return "";
+            return raw.slice(idx + 1).toLowerCase();
+          }
+
+          function hasPendingAttachment() {
+            const pending = state.pendingImage;
+            if (!pending || typeof pending !== "object") return false;
+            if (pending.kind === "image") return Boolean(pending.b64);
+            if (pending.kind === "document") return Boolean(pending.text);
+            return Boolean(pending.b64 || pending.text);
+          }
+
           function hasPendingImage() {
-            return Boolean(state.pendingImage && state.pendingImage.b64);
+            const pending = state.pendingImage;
+            return Boolean(pending && pending.kind === "image" && pending.b64);
+          }
+
+          function cleanExtractedDocText(raw, maxChars = 24000) {
+            const text = String(raw || "").replace(/\u0000/g, "").replace(/\r\n/g, "\n").trim();
+            if (!text) return "";
+            return text.length > maxChars ? `${text.slice(0, maxChars)}\n\n[truncated]` : text;
+          }
+
+          function extractPrintableTextFromBytes(bytes, maxChars = 24000) {
+            try {
+              const decoded = new TextDecoder("latin1").decode(bytes);
+              const chunks = decoded.match(/[\x20-\x7E]{6,}/g) || [];
+              if (!chunks.length) return "";
+              const merged = chunks.slice(0, 2000).join("\n");
+              return cleanExtractedDocText(merged, maxChars);
+            } catch {
+              return "";
+            }
+          }
+
+          async function extractDocumentTextFromFile(file, mime, ext) {
+            const textLike =
+              String(mime || "").startsWith("text/") ||
+              mime === "application/json" ||
+              mime === "application/xml" ||
+              mime === "text/xml" ||
+              mime === "application/rtf" ||
+              mime === "text/rtf" ||
+              ["txt", "md", "markdown", "json", "csv", "tsv", "html", "xml", "log", "rtf"].includes(String(ext || ""));
+
+            if (textLike) {
+              const raw = await file.text();
+              const text = cleanExtractedDocText(raw);
+              if (text) return text;
+            }
+
+            const ab = await file.arrayBuffer();
+            const bytes = new Uint8Array(ab);
+            const extracted = extractPrintableTextFromBytes(bytes);
+            if (extracted) return extracted;
+            throw new Error("Could not read this document. Use image, PDF, TXT, MD, JSON, CSV, DOC, or DOCX.");
           }
 
           function renderPendingImage() {
@@ -9484,7 +9621,7 @@ Style rules:
             if (!wrap || !name || !meta) return;
 
             const pending = state.pendingImage;
-            if (!pending || !pending.b64) {
+            if (!hasPendingAttachment()) {
               wrap.hidden = true;
               name.textContent = "";
               meta.textContent = "";
@@ -9493,8 +9630,9 @@ Style rules:
             }
 
             wrap.hidden = false;
-            name.textContent = pending.name || "image";
-            meta.textContent = `${pending.mime || "image"} • ${formatBytes(pending.size)}`;
+            name.textContent = pending.name || "attachment";
+            const kind = pending.kind === "document" ? "document" : "image";
+            meta.textContent = `${kind} • ${pending.mime || kind} • ${formatBytes(pending.size)} • SmolVLM2 auto-read`;
             if (uploadBtn) uploadBtn.setAttribute("aria-pressed", "true");
           }
 
@@ -9514,26 +9652,50 @@ Style rules:
 
           async function setPendingImageFromFile(file) {
             if (!file) return;
+            const name = String(file.name || "attachment").trim() || "attachment";
             const mime = String(file.type || "").trim().toLowerCase();
-            if (!mime.startsWith("image/")) {
-              throw new Error("Please upload an image file.");
-            }
-            if (IMAGE_UPLOAD_MIME_ALLOW.size && !IMAGE_UPLOAD_MIME_ALLOW.has(mime)) {
-              throw new Error("Unsupported image type. Use PNG, JPG, WEBP, or GIF.");
-            }
+            const ext = fileExtension(name);
             const size = Number(file.size) || 0;
-            if (size <= 0) throw new Error("Selected image is empty.");
-            if (size > IMAGE_UPLOAD_MAX_BYTES) {
-              throw new Error(`Image is too large (${formatBytes(size)}). Max ${formatBytes(IMAGE_UPLOAD_MAX_BYTES)}.`);
+            if (size <= 0) throw new Error("Selected file is empty.");
+
+            if (mime.startsWith("image/")) {
+              if (IMAGE_UPLOAD_MIME_ALLOW.size && !IMAGE_UPLOAD_MIME_ALLOW.has(mime)) {
+                throw new Error("Unsupported image type. Use PNG, JPG, WEBP, or GIF.");
+              }
+              if (size > IMAGE_UPLOAD_MAX_BYTES) {
+                throw new Error(`Image is too large (${formatBytes(size)}). Max ${formatBytes(IMAGE_UPLOAD_MAX_BYTES)}.`);
+              }
+
+              const ab = await file.arrayBuffer();
+              const b64 = bytesToB64(new Uint8Array(ab));
+              state.pendingImage = {
+                kind: "image",
+                name,
+                mime,
+                size,
+                b64
+              };
+              renderPendingImage();
+              updateComposerDisabled();
+              updateClarityHint();
+              return;
             }
 
-            const ab = await file.arrayBuffer();
-            const b64 = bytesToB64(new Uint8Array(ab));
+            const looksLikeDoc = DOCUMENT_UPLOAD_MIME_ALLOW.has(mime) || DOCUMENT_UPLOAD_EXT_ALLOW.has(ext);
+            if (!looksLikeDoc) {
+              throw new Error("Unsupported file type. Use image, PDF, TXT, MD, JSON, CSV, HTML, XML, LOG, RTF, DOC, or DOCX.");
+            }
+            if (size > DOCUMENT_UPLOAD_MAX_BYTES) {
+              throw new Error(`Document is too large (${formatBytes(size)}). Max ${formatBytes(DOCUMENT_UPLOAD_MAX_BYTES)}.`);
+            }
+
+            const text = await extractDocumentTextFromFile(file, mime, ext);
             state.pendingImage = {
-              name: String(file.name || "image").trim() || "image",
-              mime,
+              kind: "document",
+              name,
+              mime: mime || "application/octet-stream",
               size,
-              b64
+              text
             };
             renderPendingImage();
             updateComposerDisabled();
@@ -9544,15 +9706,15 @@ Style rules:
 	          const node = el("clarityHint");
 	          const raw = String(el("topicInput")?.value || "");
 	          const text = raw.trim();
-            const hasImage = hasPendingImage();
+            const hasAttachment = hasPendingAttachment();
 	          if (!node) return;
-	          if (!text && !hasImage) {
+	          if (!text && !hasAttachment) {
 	            node.textContent = "";
 	            node.classList.remove("show");
 	            return;
 	          }
-            if (!text && hasImage) {
-              node.textContent = "Image attached. Add one line about what you want extracted.";
+            if (!text && hasAttachment) {
+              node.textContent = "Attachment ready. Add one line describing what to extract.";
               node.classList.add("show");
               return;
             }
@@ -9590,8 +9752,8 @@ Style rules:
 
 	        function updateComposerDisabled() {
 	          const topic = el("topicInput")?.value?.trim() ?? "";
-            const withImage = hasPendingImage();
-	          el("startBtn").disabled = state.loading || (!topic && !withImage);
+            const withAttachment = hasPendingAttachment();
+	          el("startBtn").disabled = state.loading || (!topic && !withAttachment);
 	        }
 
         function loadOptions() {
@@ -9853,7 +10015,7 @@ Style rules:
                     r.attachment && typeof r.attachment === "object"
                       ? {
                           name: String(r.attachment.name || "").trim(),
-                          mime: String(r.attachment.mime || "image").trim() || "image",
+                          mime: String(r.attachment.mime || "application/octet-stream").trim() || "application/octet-stream",
                           size: Math.max(0, Number(r.attachment.size) || 0)
                         }
                       : null,
@@ -10790,6 +10952,40 @@ Style rules:
 					openExternalUrl(url);
 				}
 
+	        function isLikelyLocalHostName(host) {
+	          const h = String(host || "").trim().toLowerCase();
+	          if (!h) return false;
+	          return h === "localhost" || h === "127.0.0.1" || h === "::1" || h.endsWith(".local");
+	        }
+
+	        function endpointLooksLocal() {
+	          const endpoint = String(state.endpoint || window.location.origin || "").trim();
+	          if (!endpoint) return false;
+	          try {
+	            const u = new URL(endpoint, window.location.origin);
+	            return isLikelyLocalHostName(u.hostname);
+	          } catch {
+	            return /localhost|127\.0\.0\.1|\[::1\]|\.local/i.test(endpoint);
+	          }
+	        }
+
+	        async function maybePreferLocalModeForSend() {
+	          const mode = effectiveIOMode();
+	          if (mode === "local") return false;
+	          if (!endpointLooksLocal()) return false;
+	          try {
+	            const models = await listOllamaModels();
+	            const hasLocal = Array.isArray(models) && models.some((m) => !isRemoteModel(m));
+	            if (!hasLocal) return false;
+	            state.profile = { ...state.profile, ioMode: "local" };
+	            saveProfile();
+	            setNotice("Localhost detected. Switched to LOCAL mode and using installed models.");
+	            return true;
+	          } catch {
+	            return false;
+	          }
+	        }
+
 	        async function refreshModels({ quiet = false } = {}) {
 	          if (!quiet) setStatusRight("Loading models…");
 	          try {
@@ -10857,11 +11053,12 @@ Style rules:
 				        async function startDebateFromUI() {
 				          await ensureEndpoint();
                   const rawTopic = String(el("topicInput")?.value || "").trim();
-                  const pendingImage = hasPendingImage() ? { ...state.pendingImage } : null;
-                  const topic = rawTopic || (pendingImage ? "Analyze the attached image." : "");
+                  const pendingImage = hasPendingAttachment() ? { ...state.pendingImage } : null;
+				          const topic = rawTopic || (pendingImage ? "Analyze the attached file." : "");
 				          if (!topic) return;
 			          setComposerMoreOpen(false);
 				          setNotice(null);
+			          await maybePreferLocalModeForSend();
 				          const adminCmd = parseAdminCommand(topic);
 			          if (adminCmd != null) {
 			            if (hasMkAdmin()) {
@@ -10937,11 +11134,16 @@ Style rules:
 			            return;
 			          }
 			          if (effectiveIOMode() === "online_aes" && !aesSealReady()) {
+			            const switched = await maybePreferLocalModeForSend();
+			            if (switched) {
+			              render();
+			            } else {
 			            setNotice("Encryption unavailable — transmission blocked. Open Settings → Arm AES.");
 			            setStatusRight("");
 			            render();
 			            openSettings();
 			            return;
+			            }
 			          }
 
 		          state.forceScrollToBottomOnce = true;
@@ -10951,16 +11153,16 @@ Style rules:
 
 	          try {
                 let attachmentSummary = "";
-                if (pendingImage && pendingImage.b64) {
-                  setStatusRight(`Analyzing image: ${pendingImage.name}…`);
+                if (pendingImage) {
+                  setStatusRight(`Auto-reading attachment with SmolVLM2: ${pendingImage.name}…`);
                   render();
                   try {
-                    attachmentSummary = await summarizeImageWithToolModel({
+                    attachmentSummary = await summarizeAttachmentWithToolModel({
                       topic,
-                      image: pendingImage
+                      attachment: pendingImage
                     });
                   } catch (err) {
-                    setStatusRight(`Image analysis skipped: ${summarizeRoundError(err)}`, true);
+                    setStatusRight(`Attachment analysis skipped: ${summarizeRoundError(err)}`, true);
                   }
                 }
 		            const first = await runDebate(topic, {
@@ -11018,6 +11220,7 @@ Style rules:
 		            render();
 		            return;
 		          }
+		          await maybePreferLocalModeForSend();
 			          const snap = getMagicAuthSnapshot();
 			          const ioMode = effectiveIOMode();
 			          if (ioMode !== "local" && !snap.signedIn && !hasMkAdmin()) {
@@ -11035,11 +11238,16 @@ Style rules:
 		            }
 			          }
 			          if (effectiveIOMode() === "online_aes" && !aesSealReady()) {
+			            const switched = await maybePreferLocalModeForSend();
+			            if (switched) {
+			              render();
+			            } else {
 			            setNotice("Encryption unavailable — transmission blocked. Open Settings → Arm AES.");
 			            setStatusRight("");
 			            render();
 			            openSettings();
 			            return;
+			            }
 			          }
 				          state.forceScrollToBottomOnce = true;
 				          state.loading = true;
@@ -11091,6 +11299,7 @@ Style rules:
 	            render();
 	            return;
 	          }
+	          await maybePreferLocalModeForSend();
 		          const snap = getMagicAuthSnapshot();
 		          const ioMode = effectiveIOMode();
 		          if (ioMode !== "local" && !snap.signedIn && !hasMkAdmin()) {
@@ -11108,11 +11317,16 @@ Style rules:
 	            }
 		          }
 		          if (effectiveIOMode() === "online_aes" && !aesSealReady()) {
+		            const switched = await maybePreferLocalModeForSend();
+		            if (switched) {
+		              render();
+		            } else {
 		            setNotice("Encryption unavailable — transmission blocked. Open Settings → Arm AES.");
 		            setStatusRight("");
 		            render();
 		            openSettings();
 		            return;
+		            }
 		          }
 
 		          state.forceScrollToBottomOnce = true;
@@ -11490,6 +11704,7 @@ Style rules:
 			          el("coinsBtn")?.addEventListener("click", () => openCoinsPurchase());
 			          el("downloadBtn")?.addEventListener("click", openDownload);
 			          el("changelogBtn")?.addEventListener("click", () => openDialogById("changelogModal"));
+			          el("aiRealtorBtn")?.addEventListener("click", openAiRealtor);
 			          el("memoryBtn")?.addEventListener("click", openMemoryModal);
 		          el("toolsBtn").addEventListener("click", () => {
 		            if (!toolsAvailable()) {
@@ -11519,7 +11734,7 @@ Style rules:
               const file = e?.target?.files?.[0];
               if (!file) return;
               await setPendingImageFromFile(file);
-              setStatusRight("Image attached.");
+              setStatusRight("Attachment ready. SmolVLM2 will auto-read on send.");
             } catch (err) {
               setStatusRight(String(err?.message || err), true);
               clearPendingImage({ keepStatus: true });
