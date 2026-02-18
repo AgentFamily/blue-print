@@ -1,4 +1,10 @@
 {
+  "rewrites": [
+    {
+      "source": "/api/balance",
+      "destination": "/api/tokens/balance"
+    }
+  ],
   "functions": {
     "api/**/*.js": {
       "maxDuration": 30
