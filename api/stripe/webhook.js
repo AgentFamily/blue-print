@@ -1,6 +1,6 @@
 const crypto = require("crypto");
-const { kvGet, kvSetNX } = require("../_lib/upstash_kv");
-const { creditTokens } = require("../_lib/token");
+const { kvGet, kvSetNX } = require("../../lib/upstash_kv");
+const { creditTokens } = require("../../lib/token");
 
 const firstEnv = (...names) => {
   for (const name of names) {

@@ -1,6 +1,6 @@
-const { getMagicJwtFromRequest, magicUserEmailFromJwt, getMagicUserIdFromRequest } = require("../_lib/magic_user");
-const { kvSet } = require("../_lib/upstash_kv");
-const { getBalance } = require("../_lib/token");
+const { getMagicJwtFromRequest, magicUserEmailFromJwt, getMagicUserIdFromRequest } = require("../../lib/magic_user");
+const { kvSet } = require("../../lib/upstash_kv");
+const { getBalance } = require("../../lib/token");
 
 const emailKey = (email) => `agentc:email_to_user:${String(email || "").trim().toLowerCase()}`;
 

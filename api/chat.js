@@ -15,9 +15,9 @@ const readJsonBody = async (req) => {
   }
 };
 
-const { getMagicJwtFromRequest, magicUserEmailFromJwt, getMagicUserIdFromRequest } = require("./_lib/magic_user");
-const { kvGetInt, kvIncrBy, kvSet, kvSetNX } = require("./_lib/upstash_kv");
-const { creditTokens, spendTokens, tokenKey } = require("./_lib/token");
+const { getMagicJwtFromRequest, magicUserEmailFromJwt, getMagicUserIdFromRequest } = require("../lib/magic_user");
+const { kvGetInt, kvIncrBy, kvSet, kvSetNX } = require("../lib/upstash_kv");
+const { creditTokens, spendTokens, tokenKey } = require("../lib/token");
 const crypto = require("crypto");
 
 const firstEnv = (...names) => {

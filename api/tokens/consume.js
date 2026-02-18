@@ -1,5 +1,5 @@
-const { getMagicUserIdFromRequest } = require("../_lib/magic_user");
-const { spendTokens } = require("../_lib/token");
+const { getMagicUserIdFromRequest } = require("../../lib/magic_user");
+const { spendTokens } = require("../../lib/token");
 
 module.exports = async (req, res) => {
   if (req.method !== "POST") {

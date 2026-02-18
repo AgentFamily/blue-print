@@ -1,4 +1,4 @@
-const { COIN_PRODUCT_PACKS } = require("../_lib/product_packs");
+const { COIN_PRODUCT_PACKS } = require("../../lib/product_packs");
 
 module.exports = async (req, res) => {
   if (req.method !== "GET") {
@@ -13,4 +13,3 @@ module.exports = async (req, res) => {
   res.setHeader("Cache-Control", "no-store");
   res.end(JSON.stringify({ packs: COIN_PRODUCT_PACKS }));
 };
-
