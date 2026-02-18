@@ -7709,7 +7709,14 @@ Style rules:
 	          return ensureModel();
 	        }
 
-	        async function ollamaChat({ system, user, temperature, format, agent = "system", images = [] }) {
+	        function buildChatHeaders(roundId) {
+	          const headers = { "Content-Type": "application/json" };
+	          const rid = String(roundId || "").trim();
+	          if (rid) headers["X-AgentC-Round-Id"] = rid;
+	          return headers;
+	        }
+
+	        async function ollamaChat({ system, user, temperature, format, agent = "system", images = [], roundId = "" }) {
 	          const buildBody = async () => {
 	            const model = await ensureModelForAgent(agent);
               const userMessage = { role: "user", content: user };
@@ -7749,7 +7756,7 @@ Style rules:
             const { model, body } = await buildBody();
             const json = await fetchJSON("/api/chat", {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
+              headers: buildChatHeaders(roundId),
               body: JSON.stringify(body)
             });
 
@@ -8189,7 +8196,7 @@ Style rules:
 	          return null;
 	        }
 
-	        async function planToolsVariant(userContext, toolRuns, variant) {
+	        async function planToolsVariant(userContext, toolRuns, variant, roundId = "") {
 	          const historyBlock = toolRuns.length ? `\n\nAlready ran tools:\n${summarizeActions(toolRuns.map((t) => t.action))}` : "";
 	          const style =
 	            variant === "AgentX"
@@ -8201,7 +8208,8 @@ Style rules:
             user: `${userContext}${historyBlock}\n\n${style}\nReturn tool actions if needed.`,
             temperature: 0.0,
             format: "json",
-            agent: "tool"
+            agent: "tool",
+            roundId
           });
 
 	          let parsed = null;
@@ -8213,10 +8221,10 @@ Style rules:
 	          return { plan: parsed || {}, model: res.model };
 	        }
 
-	        async function planTools(userContext, toolRuns) {
+	        async function planTools(userContext, toolRuns, roundId = "") {
 	          const [x, c] = await Promise.all([
-	            planToolsVariant(userContext, toolRuns, "AgentX"),
-	            planToolsVariant(userContext, toolRuns, "AgentC")
+	            planToolsVariant(userContext, toolRuns, "AgentX", roundId),
+	            planToolsVariant(userContext, toolRuns, "AgentC", roundId)
 	          ]);
 
 	          const xActions = sanitizeActions(x?.plan?.actions);
@@ -8228,7 +8236,7 @@ Style rules:
 	          return { actions: merged, model: x.model || c.model, ...meta };
 	        }
 
-	        async function runToolsIfNeeded(userContext) {
+	        async function runToolsIfNeeded(userContext, roundId = "") {
 	          if (!state.toolsEnabled) return { toolRuns: [], userContext };
 	          if (!toolsAvailable()) {
 	            state.toolsEnabled = false;
@@ -8283,7 +8291,7 @@ Style rules:
 	          const maxLoops = 1;
 	          for (let i = 0; i < maxLoops; i++) {
 	            setStatusRight("Planning tools (safe-first)…");
-	            const plan = await planTools(userContext, toolRuns);
+	            const plan = await planTools(userContext, toolRuns, roundId);
 	            const validated = validateToolPlan(plan);
 	            if (!validated.ok) {
 	              setStatusRight("Tools skipped (invalid plan / unsafe command).", true);
@@ -8314,7 +8322,7 @@ Style rules:
             return ensureModelForAgent("tool");
           }
 
-          async function summarizeAttachmentWithToolModel({ topic, attachment }) {
+          async function summarizeAttachmentWithToolModel({ topic, attachment, roundId = "" }) {
             if (!attachment) return "";
             const kind = String(attachment.kind || "").toLowerCase();
             const isImage = kind === "image" && Boolean(attachment.b64);
@@ -8378,14 +8386,14 @@ Style rules:
 
             const json = await fetchJSON("/api/chat", {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
+              headers: buildChatHeaders(roundId),
               body: JSON.stringify(body)
             });
             const content = json?.message?.content ?? json?.response ?? "";
             return String(content || "").trim();
           }
 
-	        async function runSystemReflection({ baseContext, agentXText, agentCText }) {
+	        async function runSystemReflection({ baseContext, agentXText, agentCText, roundId = "" }) {
 	          const sysUser = [
 	            String(baseContext || "").trim(),
 	            `Agent X answer:\n${clip(String(agentXText || ""), 2200)}`,
@@ -8398,7 +8406,8 @@ Style rules:
           const sys = await ollamaChat({
             system: systemPrompt(SYSTEM_ROLE, "system"),
             user: sysUser,
-            temperature: agentTemperature("system")
+            temperature: agentTemperature("system"),
+            roundId
           });
 
 	          return { content: normalizeOutput(sys.content), model: sys.model };
@@ -8414,7 +8423,7 @@ Style rules:
 	          return `${agentName} unavailable for this round (${msg}).`;
 	        }
 
-	        async function runSystemFallbackOnly({ baseContext, failureNotes }) {
+	        async function runSystemFallbackOnly({ baseContext, failureNotes, roundId = "" }) {
 	          const fallbackUser = [
 	            String(baseContext || "").trim(),
 	            failureNotes ? `Pipeline status:\n${failureNotes}` : "",
@@ -8428,24 +8437,27 @@ Style rules:
 	            agent: "system",
 	            system: systemPrompt(SYSTEM_ROLE, "system"),
 	            user: fallbackUser,
-	            temperature: agentTemperature("system")
+	            temperature: agentTemperature("system"),
+	            roundId
 	          });
 	          return { content: normalizeOutput(sys.content), model: sys.model };
 	        }
 
-	        async function runTriadWithFallback({ baseContext, userForX, userForC }) {
+	        async function runTriadWithFallback({ baseContext, userForX, userForC, roundId = "" }) {
 	          const [xResult, cResult] = await Promise.allSettled([
 	            ollamaChat({
 	              agent: "x",
 	              system: systemPrompt(state.profile.agentXRole || AGENT_X_ROLE, "x"),
 	              user: userForX,
-	              temperature: agentTemperature("x")
+	              temperature: agentTemperature("x"),
+	              roundId
 	            }),
 	            ollamaChat({
 	              agent: "c",
 	              system: systemPrompt(state.profile.agentCRole || AGENT_C_ROLE, "c"),
 	              user: userForC,
-	              temperature: agentTemperature("c")
+	              temperature: agentTemperature("c"),
+	              roundId
 	            })
 	          ]);
 
@@ -8467,7 +8479,8 @@ Style rules:
 	          if (!agentXText && !agentCText) {
 	            sys = await runSystemFallbackOnly({
 	              baseContext,
-	              failureNotes: failureBits.join("\n")
+	              failureNotes: failureBits.join("\n"),
+	              roundId
 	            });
 	            agentXText = "Agent X unavailable for this round.";
 	            agentCText = "Agent C unavailable for this round.";
@@ -8475,7 +8488,8 @@ Style rules:
 	            sys = await runSystemReflection({
 	              baseContext,
 	              agentXText: agentXText || "Agent X unavailable for this round.",
-	              agentCText: agentCText || "Agent C unavailable for this round."
+	              agentCText: agentCText || "Agent C unavailable for this round.",
+	              roundId
 	            });
 	          }
 
@@ -8490,7 +8504,7 @@ Style rules:
 	          };
 	        }
 
-	        async function runDebate(topic, { attachment = null, attachmentSummary = "" } = {}) {
+	        async function runDebate(topic, { attachment = null, attachmentSummary = "", roundId = "" } = {}) {
 	          const prompt = String(topic || "").trim();
 	          if (!prompt) throw new Error("Enter a message.");
 
@@ -8560,14 +8574,15 @@ Style rules:
 		          }
 
 	          let userContext = contextParts.join("\n\n");
-	          const tools = await runToolsIfNeeded(userContext);
+	          const tools = await runToolsIfNeeded(userContext, roundId);
 	          userContext = tools.userContext;
 
 	          state.runUtc = new Date().toISOString();
 	          const triad = await runTriadWithFallback({
 	            baseContext: userContext,
 	            userForX: `${userContext}\n\n${agentGuidance("x")}`,
-	            userForC: `${userContext}\n\n${agentGuidance("c")}`
+	            userForC: `${userContext}\n\n${agentGuidance("c")}`,
+	            roundId
 	          });
 	          const seals = await maybeSealTriplet({
 	            agentXText: triad.agentXText,
@@ -8594,7 +8609,7 @@ Style rules:
 			          };
 	        }
 
-	        async function runLoop() {
+	        async function runLoop(roundId = "") {
 	          const last = state.rounds[state.rounds.length - 1];
 	          if (!last) throw new Error("Start a conversation first.");
 
@@ -8647,14 +8662,15 @@ Style rules:
 	          contextParts.push("This is a continuation. Improve and extend the previous answers with at least one new useful detail, avoiding repetition.");
 
 	          let context = contextParts.join("\n\n");
-	          const tools = await runToolsIfNeeded(context);
+	          const tools = await runToolsIfNeeded(context, roundId);
 	          context = tools.userContext;
 
 	          state.runUtc = new Date().toISOString();
 	          const triad = await runTriadWithFallback({
 	            baseContext: context,
 	            userForX: `${context}\n\n${agentGuidance("x")}`,
-	            userForC: `${context}\n\n${agentGuidance("c")}`
+	            userForC: `${context}\n\n${agentGuidance("c")}`,
+	            roundId
 	          });
 	          const seals = await maybeSealTriplet({
 	            agentXText: triad.agentXText,
@@ -8677,7 +8693,7 @@ Style rules:
 		          };
 	        }
 
-	        async function runRefineLoop() {
+	        async function runRefineLoop(roundId = "") {
 	          const last = state.rounds[state.rounds.length - 1];
 	          if (!last) throw new Error("Start a conversation first.");
 
@@ -8730,7 +8746,7 @@ Style rules:
           );
 
 	          let baseContext = contextParts.join("\n\n");
-	          const tools = await runToolsIfNeeded(baseContext);
+	          const tools = await runToolsIfNeeded(baseContext, roundId);
 	          baseContext = tools.userContext;
 
 	          state.runUtc = new Date().toISOString();
@@ -8741,7 +8757,8 @@ Style rules:
 	            )}`,
 	            userForC: `${baseContext}\n\nAgent X last message:\n${clip(last.agentX, 2200)}\n\nRespond to Agent X while addressing MK.\n\n${agentGuidance(
 	              "c"
-	            )}`
+	            )}`,
+	            roundId
 	          });
 	          const seals = await maybeSealTriplet({
 	            agentXText: triad.agentXText,
@@ -11052,6 +11069,7 @@ Style rules:
 
 				        async function startDebateFromUI() {
 				          await ensureEndpoint();
+                  const roundChargeId = makeId("round");
                   const rawTopic = String(el("topicInput")?.value || "").trim();
                   const pendingImage = hasPendingAttachment() ? { ...state.pendingImage } : null;
 				          const topic = rawTopic || (pendingImage ? "Analyze the attached file." : "");
@@ -11159,7 +11177,8 @@ Style rules:
                   try {
                     attachmentSummary = await summarizeAttachmentWithToolModel({
                       topic,
-                      attachment: pendingImage
+                      attachment: pendingImage,
+                      roundId: roundChargeId
                     });
                   } catch (err) {
                     setStatusRight(`Attachment analysis skipped: ${summarizeRoundError(err)}`, true);
@@ -11173,7 +11192,8 @@ Style rules:
                         size: Number(pendingImage.size) || 0
                       }
                     : null,
-                  attachmentSummary
+                  attachmentSummary,
+                  roundId: roundChargeId
                 });
               const at = Date.now();
               const utc = new Date(at).toISOString();
@@ -11213,6 +11233,7 @@ Style rules:
 
 		        async function nextRound() {
 		          const last = state.rounds[state.rounds.length - 1];
+		          const roundChargeId = makeId("round");
 		          setNotice(null);
 		          if (last && isExternalProfileIntent(last.topic)) {
 		            setNotice(EXTERNAL_BROWSE_BLOCKED_QUESTION);
@@ -11255,7 +11276,7 @@ Style rules:
 				          render();
 
           try {
-	            const next = await runLoop();
+	            const next = await runLoop(roundChargeId);
               const at = Date.now();
               const utc = new Date(at).toISOString();
               const ctxMode = effectiveIOMode();
@@ -11292,6 +11313,7 @@ Style rules:
 
 	        async function refineRound() {
 	          const last = state.rounds[state.rounds.length - 1];
+	          const roundChargeId = makeId("round");
 	          setNotice(null);
 	          if (last && isExternalProfileIntent(last.topic)) {
 	            setNotice(EXTERNAL_BROWSE_BLOCKED_QUESTION);
@@ -11335,7 +11357,7 @@ Style rules:
 	          render();
 
           try {
-	            const next = await runRefineLoop();
+	            const next = await runRefineLoop(roundChargeId);
               const at = Date.now();
               const utc = new Date(at).toISOString();
               const ctxMode = effectiveIOMode();

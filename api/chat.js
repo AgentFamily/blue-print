@@ -63,6 +63,10 @@ const emailKey = (email) => `agentc:email_to_user:${String(email || "").trim().t
 const TRIAL_ID_COOKIE = "agentc_trial_id";
 const TRIAL_USED_COOKIE = "agentc_trial_used";
 const trialKey = (trialId) => `agentc:trial:${String(trialId || "").trim()}`;
+const ROUND_BATCH_COOKIE = "agentc_round_batch";
+const ROUND_ID_HEADER = "x-agentc-round-id";
+const roundBatchKey = (scope, roundId) =>
+  `agentc:round_batch:${String(scope || "").trim()}:${String(roundId || "").trim()}`;
 
 const truthyEnv = (value) => {
   const v = String(value || "").trim().toLowerCase();
@@ -112,6 +116,73 @@ const makeCookie = (name, value, { maxAgeSeconds, httpOnly = true, sameSite = "L
 const parseIntSafe = (value, fallback = 0) => {
   const n = parseInt(String(value ?? ""), 10);
   return Number.isFinite(n) ? n : fallback;
+};
+
+const normalizeRoundId = (value) => {
+  const raw = String(value || "").trim();
+  if (!raw || raw.length > 120) return "";
+  return /^[A-Za-z0-9._:-]+$/.test(raw) ? raw : "";
+};
+
+const roundBatchWindowSeconds = (() => {
+  const raw = firstEnv("AGENTC_ROUND_BATCH_WINDOW_SEC", "MK_ROUND_BATCH_WINDOW_SEC") || "120";
+  const n = parseInt(raw, 10);
+  return Number.isFinite(n) && n > 0 ? n : 120;
+})();
+
+const roundBatchMaxCalls = (() => {
+  const raw = firstEnv("AGENTC_ROUND_BATCH_MAX_CALLS", "MK_ROUND_BATCH_MAX_CALLS") || "6";
+  const n = parseInt(raw, 10);
+  return Number.isFinite(n) && n > 0 ? n : 6;
+})();
+
+const parseRoundBatchCookie = (raw) => {
+  const text = String(raw || "").trim();
+  if (!text) return null;
+  const [idRaw, countRaw, atRaw] = text.split("|");
+  const roundId = normalizeRoundId(idRaw);
+  const count = parseIntSafe(countRaw, 0);
+  const atMs = parseIntSafe(atRaw, 0);
+  if (!roundId || count <= 0 || atMs <= 0) return null;
+  return { roundId, count, atMs };
+};
+
+const shouldChargeRoundCall = async ({ scope = "", roundId = "", cookies = {}, res, secure = false }) => {
+  const id = normalizeRoundId(roundId);
+  if (!id) return true;
+  if (roundBatchMaxCalls <= 1) return true;
+
+  if (scope && kvConfigured()) {
+    try {
+      const key = roundBatchKey(scope, id);
+      await kvSetNX(key, "0", { exSeconds: roundBatchWindowSeconds }).catch(() => false);
+      const count = await kvIncrBy(key, 1);
+      if (count === 1) return true;
+      if (count > 1 && count <= roundBatchMaxCalls) return false;
+      return true;
+    } catch {
+      // Fall back to cookie strategy below.
+    }
+  }
+
+  const now = Date.now();
+  const prev = parseRoundBatchCookie(cookies[ROUND_BATCH_COOKIE]);
+  let nextCount = 1;
+  if (prev && prev.roundId === id && now - prev.atMs <= roundBatchWindowSeconds * 1000) {
+    nextCount = prev.count + 1;
+  }
+
+  appendSetCookie(
+    res,
+    makeCookie(ROUND_BATCH_COOKIE, `${id}|${nextCount}|${now}`, {
+      maxAgeSeconds: roundBatchWindowSeconds,
+      secure,
+    })
+  );
+
+  if (nextCount === 1) return true;
+  if (nextCount > 1 && nextCount <= roundBatchMaxCalls) return false;
+  return true;
 };
 
 const looksLikeOpenAIKey = (apiKey) => {
@@ -200,6 +271,7 @@ module.exports = async (req, res) => {
 
   const cookies = parseCookieHeader(req?.headers?.cookie);
   const isAdminCookie = String(cookies[ADMIN_COOKIE] || "") === "1";
+  const roundId = normalizeRoundId(req?.headers?.[ROUND_ID_HEADER]);
 
   const body = await readJsonBody(req);
   const messages = Array.isArray(body?.messages) ? body.messages : null;
@@ -323,7 +395,16 @@ module.exports = async (req, res) => {
         deny();
         return;
       }
-      await kvIncrBy(key, 1);
+      const shouldChargeTrial = await shouldChargeRoundCall({
+        scope: `trial:${id}`,
+        roundId,
+        cookies,
+        res,
+        secure,
+      });
+      if (shouldChargeTrial) {
+        await kvIncrBy(key, 1);
+      }
     } catch {
       // Fallback (no KV): enforce via an HttpOnly counter cookie (best-effort).
       const used = parseIntSafe(cookies[TRIAL_USED_COOKIE], 0);
@@ -331,15 +412,32 @@ module.exports = async (req, res) => {
         deny();
         return;
       }
-      appendSetCookie(res, makeCookie(TRIAL_USED_COOKIE, String(used + 1), { maxAgeSeconds: ttlSeconds, secure }));
+      const shouldChargeTrial = await shouldChargeRoundCall({
+        scope: "",
+        roundId,
+        cookies,
+        res,
+        secure,
+      });
+      if (shouldChargeTrial) {
+        appendSetCookie(res, makeCookie(TRIAL_USED_COOKIE, String(used + 1), { maxAgeSeconds: ttlSeconds, secure }));
+      }
     }
   }
 
-  // Token gating: charge 1 AgentC-oin per /api/chat call for Magic-signed-in users.
+  // Token gating: charge 1 AgentC-oin per execution round (multiple sub-calls can share one round id).
   let tokenCharged = false;
   let tokens = null;
   if (magicUserId && kvConfigured()) {
     try {
+      const secure = isSecureRequest(req);
+      const shouldChargeToken = await shouldChargeRoundCall({
+        scope: `user:${magicUserId}`,
+        roundId,
+        cookies,
+        res,
+        secure,
+      });
       const jwt = getMagicJwtFromRequest(req);
       const email = jwt ? magicUserEmailFromJwt(jwt) : "";
       if (email) {
@@ -350,9 +448,11 @@ module.exports = async (req, res) => {
         }
       }
 
-      const out = await spendTokens(magicUserId, 1);
-      tokenCharged = true;
-      tokens = out.tokens;
+      if (shouldChargeToken) {
+        const out = await spendTokens(magicUserId, 1);
+        tokenCharged = true;
+        tokens = out.tokens;
+      }
     } catch (err) {
       res.statusCode = err?.status || 500;
       res.setHeader("Content-Type", "application/json");
