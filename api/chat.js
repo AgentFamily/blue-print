@@ -67,6 +67,7 @@ const ROUND_BATCH_COOKIE = "agentc_round_batch";
 const ROUND_ID_HEADER = "x-agentc-round-id";
 const roundBatchKey = (scope, roundId) =>
   `agentc:round_batch:${String(scope || "").trim()}:${String(roundId || "").trim()}`;
+const gatewayBootstrapKey = (scope) => `agentc:gateway_bootstrap:${String(scope || "").trim()}`;
 
 const truthyEnv = (value) => {
   const v = String(value || "").trim().toLowerCase();
@@ -117,6 +118,12 @@ const parseIntSafe = (value, fallback = 0) => {
   const n = parseInt(String(value ?? ""), 10);
   return Number.isFinite(n) ? n : fallback;
 };
+
+const gatewayBootstrapLimit = (() => {
+  const raw = firstEnv("AGENTC_GATEWAY_BOOTSTRAP_TOKENS", "MK_GATEWAY_BOOTSTRAP_TOKENS") || "3";
+  const n = parseInt(raw, 10);
+  return Number.isFinite(n) && n >= 0 ? n : 3;
+})();
 
 const normalizeRoundId = (value) => {
   const raw = String(value || "").trim();
@@ -183,6 +190,21 @@ const shouldChargeRoundCall = async ({ scope = "", roundId = "", cookies = {}, r
   if (nextCount === 1) return true;
   if (nextCount > 1 && nextCount <= roundBatchMaxCalls) return false;
   return true;
+};
+
+const getGatewayBootstrapUsage = async (scope, { increment = false } = {}) => {
+  const id = String(scope || "").trim();
+  if (!id || !kvConfigured()) return null;
+  try {
+    const key = gatewayBootstrapKey(id);
+    await kvSetNX(key, "0").catch(() => false);
+    if (increment) {
+      return await kvIncrBy(key, 1);
+    }
+    return await kvGetInt(key, 0);
+  } catch {
+    return null;
+  }
 };
 
 const looksLikeOpenAIKey = (apiKey) => {
@@ -355,6 +377,9 @@ module.exports = async (req, res) => {
     : messages;
 
   const magicUserId = !isAdminCookie ? getMagicUserIdFromRequest(req) : "";
+  let trialGatewayBootstrapEligible = false;
+  let gatewayBootstrapScope = "";
+  let gatewayBootstrapUsage = null;
 
   // Free trial gating to protect server-provided OpenAI keys.
   // Applies only to non-admin and not Magic-signed-in requests.
@@ -368,6 +393,7 @@ module.exports = async (req, res) => {
     const secure = isSecureRequest(req);
     const ttlSeconds = 60 * 60 * 24 * 14;
     const trialId = String(cookies[TRIAL_ID_COOKIE] || "").trim();
+    trialGatewayBootstrapEligible = true;
 
     const deny = () => {
       res.statusCode = 402;
@@ -388,6 +414,7 @@ module.exports = async (req, res) => {
         id = crypto.randomBytes(16).toString("hex");
         appendSetCookie(res, makeCookie(TRIAL_ID_COOKIE, id, { maxAgeSeconds: ttlSeconds, secure }));
       }
+      gatewayBootstrapScope = `trial:${id}`;
       const key = trialKey(id);
       await kvSetNX(key, "0", { exSeconds: ttlSeconds }).catch(() => false);
       const used = await kvGetInt(key, 0);
@@ -403,7 +430,9 @@ module.exports = async (req, res) => {
         secure,
       });
       if (shouldChargeTrial) {
-        await kvIncrBy(key, 1);
+        gatewayBootstrapUsage = await kvIncrBy(key, 1);
+      } else {
+        gatewayBootstrapUsage = used;
       }
     } catch {
       // Fallback (no KV): enforce via an HttpOnly counter cookie (best-effort).
@@ -421,6 +450,9 @@ module.exports = async (req, res) => {
       });
       if (shouldChargeTrial) {
         appendSetCookie(res, makeCookie(TRIAL_USED_COOKIE, String(used + 1), { maxAgeSeconds: ttlSeconds, secure }));
+        gatewayBootstrapUsage = used + 1;
+      } else {
+        gatewayBootstrapUsage = used;
       }
     }
   }
@@ -431,8 +463,9 @@ module.exports = async (req, res) => {
   if (magicUserId && kvConfigured()) {
     try {
       const secure = isSecureRequest(req);
+      gatewayBootstrapScope = `user:${magicUserId}`;
       const shouldChargeToken = await shouldChargeRoundCall({
-        scope: `user:${magicUserId}`,
+        scope: gatewayBootstrapScope,
         roundId,
         cookies,
         res,
@@ -452,6 +485,9 @@ module.exports = async (req, res) => {
         const out = await spendTokens(magicUserId, 1);
         tokenCharged = true;
         tokens = out.tokens;
+        gatewayBootstrapUsage = await getGatewayBootstrapUsage(gatewayBootstrapScope, { increment: true });
+      } else {
+        gatewayBootstrapUsage = await getGatewayBootstrapUsage(gatewayBootstrapScope, { increment: false });
       }
     } catch (err) {
       res.statusCode = err?.status || 500;
@@ -469,7 +505,80 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // Preferred mode: use AI Gateway directly when configured.
+    // Bootstrap mode: route early trial/token calls via Vercel AI Gateway.
+    const shouldUseGatewayBootstrap =
+      Boolean(gatewayKey) &&
+      gatewayBootstrapLimit > 0 &&
+      (
+        trialGatewayBootstrapEligible ||
+        (Number.isFinite(gatewayBootstrapUsage) &&
+          gatewayBootstrapUsage > 0 &&
+          gatewayBootstrapUsage <= gatewayBootstrapLimit)
+      );
+
+    if (shouldUseGatewayBootstrap) {
+      try {
+        const gateway = await callChatCompletions({
+          provider: "gateway",
+          baseUrl: gatewayBaseUrl,
+          apiKey: gatewayKey,
+          model: gatewayModel,
+          messages: effectiveMessages,
+          temperature,
+        });
+
+        res.statusCode = 200;
+        res.setHeader("Content-Type", "application/json");
+        res.end(
+          JSON.stringify({
+            message: { role: "assistant", content: gateway.content },
+            gateway: { model: gatewayModel, content: gateway.content },
+            gateway_bootstrap: {
+              active: true,
+              limit: gatewayBootstrapLimit,
+              usage: gatewayBootstrapUsage,
+              scope: gatewayBootstrapScope || (trialGatewayBootstrapEligible ? "trial" : ""),
+            },
+            ...(tokens == null ? {} : { tokens }),
+          })
+        );
+        return;
+      } catch (gatewayErr) {
+        if (!openKey) throw gatewayErr;
+        const open = await callChatCompletions({
+          provider: "open",
+          baseUrl: openBaseUrl,
+          apiKey: openKey,
+          model: openModel,
+          messages: effectiveMessages,
+          temperature,
+        });
+
+        res.statusCode = 200;
+        res.setHeader("Content-Type", "application/json");
+        res.end(
+          JSON.stringify({
+            message: { role: "assistant", content: open.content },
+            open: { model: openModel, content: open.content },
+            gateway_error: {
+              error: gatewayErr?.message || "AI Gateway failed",
+              status: gatewayErr?.status,
+              provider: gatewayErr?.provider,
+              details: gatewayErr?.details,
+            },
+            gateway_bootstrap: {
+              active: true,
+              limit: gatewayBootstrapLimit,
+              usage: gatewayBootstrapUsage,
+              scope: gatewayBootstrapScope || (trialGatewayBootstrapEligible ? "trial" : ""),
+            },
+            ...(tokens == null ? {} : { tokens }),
+          })
+        );
+        return;
+      }
+    }
+
     // Optional: enable a two-step "OpenAI -> Gateway evaluator" flow via env `AI_GATEWAY_EVAL=1`.
 
     if (useGatewayEval && openKey && gatewayKey) {
@@ -538,30 +647,9 @@ module.exports = async (req, res) => {
       }
     }
 
-    if (gatewayKey) {
+    // Default mode after bootstrap: OpenAI first, Gateway fallback.
+    if (openKey) {
       try {
-        const gateway = await callChatCompletions({
-          provider: "gateway",
-          baseUrl: gatewayBaseUrl,
-          apiKey: gatewayKey,
-          model: gatewayModel,
-          messages: effectiveMessages,
-          temperature,
-        });
-
-        res.statusCode = 200;
-        res.setHeader("Content-Type", "application/json");
-        res.end(
-          JSON.stringify({
-            message: { role: "assistant", content: gateway.content },
-            gateway: { model: gatewayModel, content: gateway.content },
-            ...(tokens == null ? {} : { tokens }),
-          })
-        );
-        return;
-      } catch (gatewayErr) {
-        if (!openKey) throw gatewayErr;
-        // Fallback: if AI Gateway is down/misconfigured, still answer via OpenAI.
         const open = await callChatCompletions({
           provider: "open",
           baseUrl: openBaseUrl,
@@ -577,11 +665,32 @@ module.exports = async (req, res) => {
           JSON.stringify({
             message: { role: "assistant", content: open.content },
             open: { model: openModel, content: open.content },
-            gateway_error: {
-              error: gatewayErr?.message || "AI Gateway failed",
-              status: gatewayErr?.status,
-              provider: gatewayErr?.provider,
-              details: gatewayErr?.details,
+            ...(tokens == null ? {} : { tokens }),
+          })
+        );
+        return;
+      } catch (openErr) {
+        if (!gatewayKey) throw openErr;
+        const gateway = await callChatCompletions({
+          provider: "gateway",
+          baseUrl: gatewayBaseUrl,
+          apiKey: gatewayKey,
+          model: gatewayModel,
+          messages: effectiveMessages,
+          temperature,
+        });
+
+        res.statusCode = 200;
+        res.setHeader("Content-Type", "application/json");
+        res.end(
+          JSON.stringify({
+            message: { role: "assistant", content: gateway.content },
+            gateway: { model: gatewayModel, content: gateway.content },
+            open_error: {
+              error: openErr?.message || "OpenAI failed",
+              status: openErr?.status,
+              provider: openErr?.provider,
+              details: openErr?.details,
             },
             ...(tokens == null ? {} : { tokens }),
           })
@@ -590,25 +699,29 @@ module.exports = async (req, res) => {
       }
     }
 
-    // OpenAI-only fallback.
-    const open = await callChatCompletions({
-      provider: "open",
-      baseUrl: openBaseUrl,
-      apiKey: openKey,
-      model: openModel,
-      messages: effectiveMessages,
-      temperature,
-    });
+    if (gatewayKey) {
+      const gateway = await callChatCompletions({
+        provider: "gateway",
+        baseUrl: gatewayBaseUrl,
+        apiKey: gatewayKey,
+        model: gatewayModel,
+        messages: effectiveMessages,
+        temperature,
+      });
 
-    res.statusCode = 200;
-    res.setHeader("Content-Type", "application/json");
-    res.end(
-      JSON.stringify({
-        message: { role: "assistant", content: open.content },
-        open: { model: openModel },
-        ...(tokens == null ? {} : { tokens }),
-      })
-    );
+      res.statusCode = 200;
+      res.setHeader("Content-Type", "application/json");
+      res.end(
+        JSON.stringify({
+          message: { role: "assistant", content: gateway.content },
+          gateway: { model: gatewayModel, content: gateway.content },
+          ...(tokens == null ? {} : { tokens }),
+        })
+      );
+      return;
+    }
+
+    throw new Error("No upstream provider available");
   } catch (err) {
     if (tokenCharged && magicUserId) {
       try {
