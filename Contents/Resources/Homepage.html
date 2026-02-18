@@ -223,17 +223,76 @@
 	        flex: 1 0 auto;
 	      }
 
-      header {
+      .home-slide-shell {
         flex: 0 0 auto;
         position: sticky;
-        top: 0;
-        z-index: 40;
-        border-bottom: 1px solid rgba(15, 23, 42, 0.08);
-        background: var(--glass);
-        backdrop-filter: blur(18px);
-        -webkit-backdrop-filter: blur(18px);
-        box-shadow: 0 1px 0 rgba(255, 255, 255, 0.35), 0 12px 30px rgba(2, 6, 23, 0.06);
-        padding-top: env(safe-area-inset-top);
+        top: calc(env(safe-area-inset-top) + 8px);
+        z-index: 45;
+        padding-top: 8px;
+      }
+
+      .home-slide {
+        position: relative;
+      }
+
+      .home-slide > summary {
+        list-style: none;
+      }
+
+      .home-slide > summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .home-slide-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        border: 1px solid rgba(15, 23, 42, 0.12);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.84);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        padding: 8px 12px;
+        color: rgba(2, 6, 23, 0.86);
+        cursor: pointer;
+        box-shadow: 0 10px 24px rgba(2, 6, 23, 0.08);
+        user-select: none;
+      }
+
+      .home-slide-toggle img {
+        width: 24px;
+        height: 24px;
+        border-radius: 999px;
+        border: 1px solid rgba(15, 23, 42, 0.12);
+        box-shadow: 0 8px 16px rgba(2, 6, 23, 0.10);
+      }
+
+      .home-slide-label {
+        font-size: var(--fs-ui-small);
+        letter-spacing: 0.01em;
+      }
+
+      .home-slide-panel {
+        margin-top: 10px;
+        padding: 12px;
+        border-radius: var(--radius-md);
+        border: 1px solid rgba(15, 23, 42, 0.10);
+        background: rgba(255, 255, 255, 0.82);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        box-shadow: 0 12px 30px rgba(2, 6, 23, 0.08);
+      }
+
+      .home-slide-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .home-slide-row + .home-slide-row {
+        margin-top: 10px;
+        justify-content: flex-end;
       }
 
 	      .header-row {
@@ -525,13 +584,31 @@
       }
 
       .btn.icon {
-        padding: 8px 10px;
-        min-width: 42px;
+        padding: 6px 8px;
+        min-width: 30px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
         font-size: 16px;
         line-height: 1;
+        border: none;
+        background: transparent;
+        box-shadow: none;
+      }
+
+      .btn.icon:disabled,
+      .btn.icon:focus-visible {
+        border: none;
+        background: transparent;
+        box-shadow: none;
+        border-radius: 0;
+      }
+
+      .btn.icon:hover,
+      .btn.icon:active {
+        background: transparent;
+        box-shadow: none;
+        transform: none;
       }
 
 	      .btn.tiny {
@@ -964,9 +1041,9 @@
       }
 
       .answer-avatar.system {
-        color: rgba(2, 6, 23, 0.78);
-        font-size: 14px;
-        line-height: 1;
+        color: inherit;
+        font-size: inherit;
+        line-height: normal;
       }
 
       .answer-ident {
@@ -1397,12 +1474,9 @@
       }
 
       .voice-avatar.system {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        background: linear-gradient(135deg, rgba(15, 23, 42, 0.12), rgba(124, 58, 237, 0.12));
-        color: rgba(2, 6, 23, 0.78);
-        font-size: 18px;
+        background: transparent;
+        color: inherit;
+        font-size: inherit;
       }
 
       .voice-meta {
@@ -1555,12 +1629,9 @@
       }
 
       .preview-avatar.system {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        background: linear-gradient(135deg, rgba(15, 23, 42, 0.12), rgba(124, 58, 237, 0.12));
-        color: rgba(2, 6, 23, 0.78);
-        font-size: 16px;
+        background: transparent;
+        color: inherit;
+        font-size: inherit;
       }
 
       .preview-meta {
@@ -1628,7 +1699,7 @@
 	      .composer-actions {
 	        width: 100%;
 	        display: grid;
-	        grid-template-columns: 1fr auto;
+	        grid-template-columns: auto 1fr auto;
 	        gap: 10px;
 	        align-items: center;
 	      }
@@ -1636,6 +1707,40 @@
 	      .composer-actions .btn.primary {
 	        width: 100%;
 	      }
+
+      .composer-attachments {
+        margin-top: 8px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .composer-attachment {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid rgba(15, 23, 42, 0.12);
+        border-radius: 999px;
+        padding: 4px 8px;
+        background: rgba(255, 255, 255, 0.78);
+        box-shadow: 0 8px 18px rgba(2, 6, 23, 0.08);
+        min-width: 0;
+      }
+
+      .composer-attachment-name {
+        font-size: 12px;
+        color: rgba(2, 6, 23, 0.82);
+        max-width: min(48vw, 420px);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .composer-attachment-meta {
+        font-size: 11px;
+        color: rgba(100, 116, 139, 0.92);
+        white-space: nowrap;
+      }
 
 	      .status {
 	        margin-top: 8px;
@@ -1675,14 +1780,20 @@
         color: rgb(153, 27, 27);
       }
 
-      .notice {
-        padding: 14px 16px;
-        border-radius: var(--radius-md);
+	      .notice {
+	        padding: 14px 16px;
+	        border-radius: var(--radius-md);
         border: 1px dashed rgba(15, 23, 42, 0.18);
         background: rgba(255, 255, 255, 0.62);
         color: rgba(2, 6, 23, 0.86);
         font-size: 13px;
         line-height: 1.35;
+      }
+
+      .topic-attachment {
+        margin-top: 6px;
+        font-size: 12px;
+        color: rgba(100, 116, 139, 0.95);
       }
 
       .first-run-notice {
@@ -2940,9 +3051,15 @@
       </div>
     </section>
     <div class="app-root" id="appRoot">
-    <header>
-      <div class="wrap header-row">
-	        <div class="header-actions left">
+    <section class="home-slide-shell" aria-label="Home controls">
+      <div class="wrap">
+        <details class="home-slide" id="homeSlide">
+          <summary class="home-slide-toggle" aria-label="Home">
+            <img src="agentc_bubble.svg" alt="" aria-hidden="true" />
+            <span class="home-slide-label">Home</span>
+          </summary>
+          <div class="home-slide-panel">
+            <div class="home-slide-row">
           <button
             class="pill pill-btn"
             id="autoContextBtn"
@@ -3004,12 +3121,14 @@
 		          </button>
 		        </div>
 
-		        <div class="header-actions right">
+		        <div class="home-slide-row">
 		          <button class="btn" id="reloadBtn" type="button" title="Reload UI">Reload</button>
 		          <button class="btn" id="settingsBtn" type="button">Settings</button>
 		        </div>
+          </div>
+        </details>
       </div>
-    </header>
+    </section>
 
     <main class="wrap">
       <section id="firstRunNotice" class="first-run-notice" role="status" aria-live="polite" hidden>
@@ -3035,7 +3154,7 @@
               <div class="name">
                 <span class="sf-ultrathin">Agent</span><span class="sf-light">X</span>
               </div>
-              <div class="role">Creative Engineer</div>
+              <div class="role">Creative Coach</div>
               <span class="badge x">Innovative</span>
             </div>
           </div>
@@ -3046,7 +3165,7 @@
               <div class="name">
                 <span class="sf-ultrathin">Agent</span><span class="sf-light">C</span>
               </div>
-              <div class="role">Logical Engineer</div>
+              <div class="role">Life Coach</div>
               <span class="badge c">Systematic</span>
             </div>
           </div>
@@ -3061,7 +3180,7 @@
             <span id="roundControlsHint" aria-live="polite"></span>
           </div>
           <div class="header-actions">
-            <button class="btn icon" id="refineBtn" type="button" disabled title="Refine (AgentX ↔ AgentC)">🔁</button>
+            <button class="btn icon" id="refineBtn" type="button" disabled title="Refine (AgentX ↔ AgentC)">↻</button>
             <button class="btn primary" id="nextRoundBtn" type="button" disabled>Next Round</button>
             <button class="btn secondary" id="resetBtn" type="button" disabled>Reset</button>
           </div>
@@ -3074,15 +3193,24 @@
 
 	    <div class="composer" role="region" aria-label="Message input">
 	      <div class="wrap composer-inner">
-	        <form id="topicForm" autocomplete="off">
-	          <div class="composer-row">
-	            <textarea id="topicInput" placeholder="Ask anything (AgentX + AgentC + System)..." rows="1"></textarea>
-	            <div class="composer-actions">
-	              <button class="btn primary" id="startBtn" type="submit">Send</button>
-	              <button class="btn icon" id="composerMoreBtn" type="button" aria-expanded="false" aria-label="More options" title="More">⋯</button>
-	            </div>
-	          </div>
-	          <div class="composer-tools" aria-label="Modes and templates">
+		        <form id="topicForm" autocomplete="off">
+		          <div class="composer-row">
+		            <textarea id="topicInput" placeholder="Ask anything (AgentX + AgentC + System)..." rows="1"></textarea>
+		            <div class="composer-actions">
+		              <button class="btn icon" id="imageUploadBtn" type="button" aria-label="Attach image" title="Attach image for SmolVLM2">🖼️</button>
+		              <button class="btn primary" id="startBtn" type="submit">Send</button>
+		              <button class="btn icon" id="composerMoreBtn" type="button" aria-expanded="false" aria-label="More options" title="More">⋯</button>
+		            </div>
+		          </div>
+              <div class="composer-attachments" id="composerAttachments" hidden>
+                <div class="composer-attachment">
+                  <span class="composer-attachment-name" id="composerAttachmentName"></span>
+                  <span class="composer-attachment-meta" id="composerAttachmentMeta"></span>
+                  <button class="btn tiny secondary" id="clearAttachmentBtn" type="button">Remove</button>
+                </div>
+              </div>
+              <input id="imageUploadInput" type="file" accept="image/*" hidden />
+		          <div class="composer-tools" aria-label="Modes and templates">
 	            <select id="agentXModeQuickSelect" aria-label="Agent X mode">
 	              <option value="chat">Agent X · Chat</option>
 	              <option value="teach">Agent X · Teach</option>
@@ -3190,6 +3318,11 @@
               <label for="agentCModelInput">Agent C Model Override (optional)</label>
               <input id="agentCModelInput" type="text" placeholder="(blank = inherit System)" />
             </div>
+            <div class="field">
+              <label for="toolModelInput">Tool Model Override (optional)</label>
+              <input id="toolModelInput" type="text" placeholder="(blank = inherit System)" />
+              <div class="hint">Use <code>SmolVLM2-500M-Instruct (Q8_0)</code> for lightweight tool planning.</div>
+            </div>
             <div class="field full">
               <label>Detected Models</label>
               <div class="hint">Pick a model per speaker (selecting fills the matching override input).</div>
@@ -3204,7 +3337,7 @@
                   </div>
                 </div>
                 <div class="voice-card">
-                  <div class="voice-avatar system" aria-hidden="true">⚙️</div>
+                  <img class="voice-avatar system" src="system_avatar.png" alt="System" />
                   <div class="voice-meta">
                     <div class="voice-title">System</div>
                     <select id="modelsSelect" aria-label="Detected models for System">
@@ -3217,6 +3350,15 @@
                   <div class="voice-meta">
                     <div class="voice-title">Agent C</div>
                     <select id="modelsSelectC" aria-label="Detected models for Agent C">
+                      <option value="">(refresh to load)</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="voice-card">
+                  <img class="voice-avatar" src="agentc_bubble.svg" alt="Tool Planner" />
+                  <div class="voice-meta">
+                    <div class="voice-title">Tool Planner</div>
+                    <select id="modelsSelectTool" aria-label="Detected models for Tool Planner">
                       <option value="">(refresh to load)</option>
                     </select>
                   </div>
@@ -3286,7 +3428,7 @@
                   </div>
                 </div>
                 <div class="voice-card">
-                  <div class="voice-avatar system" aria-hidden="true">⚙️</div>
+                  <img class="voice-avatar system" src="system_avatar.png" alt="System" />
                   <div class="voice-meta">
                     <div class="voice-title">System</div>
                     <select id="systemLanguageSelect" aria-label="System language">
@@ -3356,7 +3498,7 @@
                   </div>
                 </div>
                 <div class="voice-card">
-                  <div class="voice-avatar system" aria-hidden="true">⚙️</div>
+                  <img class="voice-avatar system" src="system_avatar.png" alt="System" />
                   <div class="voice-meta">
                     <div class="voice-title">System</div>
                     <select id="systemModeSelect" aria-label="System mode">
@@ -3402,7 +3544,7 @@
                 <div class="preview-card system">
                   <div class="preview-head">
                     <div class="preview-left">
-                      <div class="preview-avatar system" aria-hidden="true">⚙️</div>
+                      <img class="preview-avatar system" src="system_avatar.png" alt="System" />
                       <div class="preview-meta">
                         <div class="preview-title">System</div>
                         <div class="preview-sub" id="previewLangSystem"></div>
@@ -3432,19 +3574,19 @@
             </div>
             <div class="field">
               <label for="agentXLabelInput">Agent X Display Role</label>
-              <input id="agentXLabelInput" type="text" placeholder="Creative Engineer" />
+              <input id="agentXLabelInput" type="text" placeholder="Creative Coach" />
             </div>
             <div class="field">
               <label for="agentCLabelInput">Agent C Display Role</label>
-              <input id="agentCLabelInput" type="text" placeholder="Logical Engineer" />
+              <input id="agentCLabelInput" type="text" placeholder="Life Coach" />
             </div>
             <div class="field full">
               <label for="agentXRoleInput">Agent X System Role</label>
-              <input id="agentXRoleInput" type="text" placeholder="You are Agent X, a creative, exploratory senior engineer." />
+              <input id="agentXRoleInput" type="text" placeholder="You are Agent X (Creative Coach / Spark) for MK. Return a hype line, 3 ideas, and one tiny starter." />
             </div>
 	            <div class="field full">
 	              <label for="agentCRoleInput">Agent C System Role</label>
-	              <input id="agentCRoleInput" type="text" placeholder="You are Agent C, a logical and skeptical senior engineer." />
+	              <input id="agentCRoleInput" type="text" placeholder="You are AgentC in Life Coach mode for MK. Build a capacity-fit plan and a stop-doing list." />
 	            </div>
 	            <div class="field full">
 	              <label>Response tuning (local)</label>
@@ -3611,7 +3753,7 @@
               <div class="lan-card" role="group" aria-label="LAN access">
                 <div class="lan-avatars" aria-hidden="true">
                   <img class="voice-avatar" src="agent101_bubble.svg" alt="" />
-                  <div class="voice-avatar system" aria-hidden="true">⚙️</div>
+                  <img class="voice-avatar system" src="system_avatar.png" alt="" />
                   <img class="voice-avatar" src="agentc_bubble.svg" alt="" />
                 </div>
                 <div class="lan-meta">
@@ -3666,6 +3808,11 @@
 	            <div class="v">
 	              <code id="effectiveAgentCModelCode"></code>
 	              <span class="hint" id="effectiveAgentCModelNote"></span>
+	            </div>
+	            <div class="k">Tool planner</div>
+	            <div class="v">
+	              <code id="effectiveToolModelCode"></code>
+	              <span class="hint" id="effectiveToolModelNote"></span>
 	            </div>
 	            <div class="k">Mode</div>
 	            <div class="v"><code id="effectiveIOModeCode"></code></div>
@@ -3947,6 +4094,7 @@
 		          modelOverride: "ollamaModelOverride",
 		          agentXModelOverride: "ollamaAgentXModelOverride",
 		          agentCModelOverride: "ollamaAgentCModelOverride",
+		          toolModelOverride: "ollamaToolModelOverride",
 		          autoModel: "ollamaAutoModelV2",
 		          options: "ollamaOptionsV2",
 		          autoContext: "debateAutoContextV1",
@@ -4073,10 +4221,87 @@
 	          `.trim()
 	        };
 
-		        const AGENT_X_ROLE = "You are Agent X, a creative, exploratory senior engineer.";
-		        const AGENT_C_ROLE = "You are Agent C, a logical and skeptical senior engineer.";
-	            const SYSTEM_ROLE =
-	              "You are the System, an orchestration layer that reviews Agent X and Agent C, reconciles differences, and produces a single helpful response for the user.";
+		        const AGENT_X_ROLE = `
+You are Agent X (Creative Coach / Spark) supporting MK.
+
+Purpose:
+- Motivation, reframes, bold options, confidence building.
+
+Output contract every turn:
+- Start with one short hype line.
+- Give exactly 3 ideas with a brief tradeoff or best-fit note for each.
+- End with one tiny starter step MK can do in 2-10 minutes.
+
+Guardrails:
+- Keep momentum high and detail light.
+- Never overwhelm MK with long frameworks.
+		        `.trim();
+		        const AGENT_C_ROLE = `
+You are AgentC in Life Coach mode for MK.
+
+Core focus areas (prioritize what MK needs now):
+- Clarity: values, goals, identity, boundaries.
+- Momentum: habits, systems, time blocking, focus.
+- Confidence: self-trust, decision quality, exposure practice.
+- Stability: routines, sleep/food/movement basics (non-medical).
+- Career and projects: scope, roadmaps, execution, communication.
+- Relationships: scripts, boundaries, repair.
+- Precedent work: evidence organization, calm strategy, burnout prevention.
+
+Coaching behaviors:
+- Offer 2-3 options with tradeoffs and who each option fits.
+- Convert vague goals into a definition of done.
+- If MK is stuck, reduce scope by 80% and propose a 10-minute starter.
+- If MK is anxious, give grounding + reframe + one controllable next step.
+- If MK is overworking, include recovery as performance-critical.
+
+Session templates:
+- Quick coaching: outcome, one blocker, one micro-action.
+- Deep coaching: outcome/why, patterns/triggers, system redesign, plan/accountability.
+
+Accountability defaults:
+- Daily Minimum: one tiny task that keeps the chain alive.
+- Weekly Win: one outcome that matters.
+- Track time spent, mood, and what moved the needle.
+
+Communication constraints:
+- Practical, warm, direct. Coach, do not lecture.
+- Ask at most one question unless MK explicitly requests a deep dive.
+		        `.trim();
+	            const SYSTEM_ROLE = `
+You are AgentC System, the judge/integrator and operating charter for MK.
+
+Identity and mission:
+- Help MK move from intention -> clarity -> action -> reflection while protecting energy and time.
+- Be practical, warm, and direct. Coach; do not lecture.
+
+Operating priorities in order:
+1) Safety
+2) Truthfulness
+3) MK autonomy
+4) Small steps that actually happen
+
+Coaching loop to apply:
+1) Clarify the outcome (what does "better" look like?)
+2) Diagnose blockers (time, emotions, skills, environment, relationships, money)
+3) Choose the smallest lever
+4) Design a micro-plan (today and this week)
+5) Set accountability (what to track + check-in trigger)
+6) Reflect and adjust
+
+Boundaries and safety:
+- Do not present medical/legal/financial guidance as professional instruction.
+- If MK shows crisis-level distress or self-harm intent, switch to crisis-support guidance immediately.
+
+Memory and continuity:
+- Treat MK's authorship/precedence work as high-stakes and evidence-driven.
+- Prefer timelines, exact dates, and documented artifacts in verification mode.
+
+Default output format:
+- Start with 1-2 sentences: "what I'm hearing."
+- Then 2-5 bullet actions max.
+- End with an A/B choice when useful.
+	            `.trim();
 
 			            const DEFAULT_PROFILE = {
 			              systemLanguage: "auto",
@@ -4088,8 +4313,8 @@
 			              agentXMode: "chat",
 			              agentCMode: "chat",
 			              style: 50,
-			              agentXLabel: "Creative Engineer",
-			              agentCLabel: "Logical Engineer",
+				              agentXLabel: "Creative Coach",
+				              agentCLabel: "Life Coach",
 			              agentXRole: AGENT_X_ROLE,
 			              agentCRole: AGENT_C_ROLE,
 			              tuning: {
@@ -4302,8 +4527,19 @@
 
               const MK_MODEL_LABEL = "MK";
               const MK_BASE_MODEL = "mk:latest";
+              const TOOL_SMOL_OPTION_LABEL = "SmolVLM2-500M-Instruct (Q8_0)";
+              const TOOL_SMOL_OPTION_VALUE = TOOL_SMOL_OPTION_LABEL;
+              const TOOL_SMOL_FALLBACK_ALIASES = [
+                "smolvlm2:500m-instruct-q8_0",
+                "smolvlm2-500m-instruct:q8_0",
+                "smolvlm2-500m-instruct:q8",
+                "hf.co/ggml-org/SmolVLM2-500M-Instruct-GGUF:Q8_0",
+                "hf.co/bartowski/HuggingFaceTB_SmolVLM2-500M-Instruct-GGUF:Q8_0"
+              ];
+              const IMAGE_UPLOAD_MAX_BYTES = 8 * 1024 * 1024;
+              const IMAGE_UPLOAD_MIME_ALLOW = new Set(["image/png", "image/jpeg", "image/webp", "image/gif", "image/jpg"]);
 
-			        const RECOMMENDED_MODELS = ["gemma3:1b", "gemma3:4b", "gemma3:12b"];
+		        const RECOMMENDED_MODELS = ["gemma3:1b", "gemma3:4b", "gemma3:12b"];
 
 			        const MAX_CONTEXT_ROUNDS = 12;
               const DEFAULT_VISIBLE_ROUNDS = 24;
@@ -5193,6 +5429,46 @@
 	          return resolved === MK_BASE_MODEL ? MK_MODEL_LABEL : resolved;
 	        }
 
+          function localModelNames(models) {
+            return (Array.isArray(models) ? models : [])
+              .filter((m) => !isRemoteModel(m))
+              .map((m) => String(m?.name || m?.model || "").trim())
+              .filter(Boolean);
+          }
+
+          function findSmolToolModelName(models) {
+            const names = localModelNames(models);
+            for (const alias of TOOL_SMOL_FALLBACK_ALIASES) {
+              const wanted = String(alias || "").trim().toLowerCase();
+              if (!wanted) continue;
+              const exact = names.find((n) => String(n || "").trim().toLowerCase() === wanted);
+              if (exact) return exact;
+            }
+            const fuzzy = names.find((n) => {
+              const lower = String(n || "").toLowerCase();
+              return lower.includes("smol") && lower.includes("vlm2") && lower.includes("500m") && /(q8(_0)?)/.test(lower);
+            });
+            return fuzzy || "";
+          }
+
+          async function resolveModelOverrideForAgent(agent, override) {
+            const raw = String(override || "").trim();
+            if (!raw) return "";
+            if (agent !== "tool") return resolveModelAlias(raw);
+
+            const normalized = raw.toLowerCase();
+            const isSmolPreset =
+              raw === TOOL_SMOL_OPTION_VALUE ||
+              raw === TOOL_SMOL_OPTION_LABEL ||
+              normalized === TOOL_SMOL_OPTION_LABEL.toLowerCase();
+            if (!isSmolPreset) return resolveModelAlias(raw);
+
+            const models = await listOllamaModels();
+            const installed = findSmolToolModelName(models);
+            if (installed) return installed;
+            throw new Error(`Tool model not found: ${TOOL_SMOL_OPTION_LABEL}. Download it or switch Tool Model to auto.`);
+          }
+
 	        function roundModelSummary(round) {
 	          const normalize = (name) => {
 	            const raw = String(name || "").trim();
@@ -5270,10 +5546,11 @@
 		            const state = {
 		              endpoint: initialEndpoint,
 		              endpointMode: storedEndpointMode,
-		              modelOverride: (localStorage.getItem(STORAGE.modelOverride) || "").trim(),
-		              agentXModelOverride: (localStorage.getItem(STORAGE.agentXModelOverride) || "").trim(),
-		              agentCModelOverride: (localStorage.getItem(STORAGE.agentCModelOverride) || "").trim(),
-		              options: DEFAULT_OPTIONS,
+			              modelOverride: (localStorage.getItem(STORAGE.modelOverride) || "").trim(),
+			              agentXModelOverride: (localStorage.getItem(STORAGE.agentXModelOverride) || "").trim(),
+			              agentCModelOverride: (localStorage.getItem(STORAGE.agentCModelOverride) || "").trim(),
+			              toolModelOverride: (localStorage.getItem(STORAGE.toolModelOverride) || "").trim(),
+			              options: DEFAULT_OPTIONS,
 		              autoContext: localStorage.getItem(STORAGE.autoContext) !== "false",
 		              autoModelName: (localStorage.getItem(STORAGE.autoModel) || "").trim() || null,
 		              onlineUrl: (storedOnlineUrl || DEFAULT_ONLINE_URL).trim(),
@@ -5284,8 +5561,9 @@
 		            sessionMemory: "",
 		            sessionTeachings: [],
 		            savedSessions: [],
-		            templateEditorId: null,
-		            pendingTeachContext: null,
+			            templateEditorId: null,
+			            pendingTeachContext: null,
+			            pendingImage: null,
 			              runUtc: "",
 			          topic: "",
 			          notice: null,
@@ -7109,36 +7387,62 @@ Style rules:
         }
 
 	        function agentGuidance(agent) {
-	          const v = clamp(Number(state.profile?.style ?? DEFAULT_PROFILE.style), 0, 100);
 	          const mode = effectiveModeFor(agent);
 	          const modeHint =
 	            mode === "teach"
-	              ? "Teach clearly with a small example."
+	              ? "Teach simply: explain why, then what, then the first doable step."
 	              : mode === "tdd"
-	              ? "Use TDD: tests first, then implementation steps."
+	              ? "Use a test-and-learn coaching experiment: hypothesis, tiny test, success signal."
 	              : mode === "bdd"
-	              ? "Use BDD: story + acceptance criteria + Given/When/Then."
+	              ? "Use behavior framing: trigger, behavior, reward, and one concrete scenario."
 	              : mode === "automate"
-	              ? "Include practical automation and workflows when helpful."
+	              ? "Include practical systems: reminders, templates, checklists, and calendar anchors."
 	              : "";
 	          if (agent === "x") {
-	            if (v >= 67) return ["Lean bold, creative, and practical.", modeHint].filter(Boolean).join(" ");
-	            if (v <= 33) return ["Lean systematic, concrete, and practical.", modeHint].filter(Boolean).join(" ");
-	            return ["Lean creative but grounded and practical.", modeHint].filter(Boolean).join(" ");
+	            return [
+	              "Creative coach contract: provide one hype line, 3 bold options, and one tiny 2-10 minute starter.",
+	              "Keep energy high and detail light.",
+	              modeHint
+	            ]
+	              .filter(Boolean)
+	              .join(" ");
 	          }
 
-	          if (v >= 67) return ["Lean skeptical and systematic, but explore alternatives when helpful.", modeHint].filter(Boolean).join(" ");
-	          if (v <= 33) return ["Lean skeptical, systematic, and reliability-focused.", modeHint].filter(Boolean).join(" ");
-	          return ["Lean skeptical and systematic.", modeHint].filter(Boolean).join(" ");
+	          return [
+	            "Planner coach contract: return a capacity-fit plan for today and this week, plus a short stop-doing list.",
+	            "Convert goals to definition-of-done and keep scope realistic.",
+	            modeHint
+	          ]
+	            .filter(Boolean)
+	            .join(" ");
 	        }
 
 	        function systemReflectionInstruction() {
 	          const mode = effectiveModeFor("system");
-	          if (mode === "automate") return "As System, synthesize both answers and propose concrete automation ideas (workflows, scripts, checks, UI tweaks). Keep it short and actionable.";
-	          if (mode === "tdd") return "As System, reconcile both answers into one TDD plan: key tests first, then implementation steps. Keep it concise and build-ready.";
-	          if (mode === "bdd") return "As System, reconcile both answers into one BDD plan: user story, acceptance criteria, Given/When/Then scenarios, then implementation outline.";
-	          if (mode === "teach") return "As System, reconcile both answers into one teaching explanation: key takeaways, what each agent got right, and a clear next step.";
-	          return "As System, reconcile both answers into one cohesive response with clear next steps. Keep it concise and avoid repetition.";
+	          const modeLine =
+	            mode === "automate"
+	              ? "Add one practical system artifact (checklist, script, or if/then rule)."
+	              : mode === "tdd"
+	              ? "Frame execution as a small experiment plan with measurable checks."
+	              : mode === "bdd"
+	              ? "Frame execution as behavior change with clear trigger and scenario."
+	              : mode === "teach"
+	              ? "Explain briefly why this recommended path works."
+	              : "";
+	          return [
+	            "As System (Judge/Integrator), reconcile Agent X and Agent C into one final path for MK.",
+	            "Handoff rule: for big-picture plus plan requests, use Agent X ideas first, then Agent C constraints, then your final recommendation.",
+	            "If MK is distressed or overwhelmed, System overrides: stabilize first, reduce scope by about 80%, and give one controllable next step.",
+	            "Required output sections in order:",
+	            "1) What I'm hearing (1-2 sentences).",
+	            "2) Final recommended path.",
+	            "3) Why this, not that (2-4 concise bullets).",
+	            "4) Next 10 minutes (2-5 actions; each action should fit in 2-10 minutes).",
+	            "Ask at most one question, and only if required.",
+	            modeLine
+	          ]
+	            .filter(Boolean)
+	            .join(" ");
 	        }
 
 	        function systemPrompt(roleLine, agent) {
@@ -7359,25 +7663,34 @@ Style rules:
 	        function modelOverrideForAgent(agent) {
 	          if (agent === "x") return String(state.agentXModelOverride || "").trim();
 	          if (agent === "c") return String(state.agentCModelOverride || "").trim();
+	          if (agent === "tool") return String(state.toolModelOverride || "").trim();
 	          return String(state.modelOverride || "").trim();
 	        }
 
 	        function effectiveModelOverrideForAgent(agent) {
 	          const own = modelOverrideForAgent(agent);
 	          if (own) return own;
-	          if (agent === "x" || agent === "c") return String(state.modelOverride || "").trim();
+	          if (agent === "x" || agent === "c" || agent === "tool") return String(state.modelOverride || "").trim();
 	          return "";
 	        }
 
 	        async function ensureModelForAgent(agent) {
 	          const override = effectiveModelOverrideForAgent(agent);
-	          if (override) return resolveModelAlias(override);
+	          if (override) return resolveModelOverrideForAgent(agent, override);
 	          return ensureModel();
 	        }
 
-	        async function ollamaChat({ system, user, temperature, format, agent = "system" }) {
+	        async function ollamaChat({ system, user, temperature, format, agent = "system", images = [] }) {
 	          const buildBody = async () => {
 	            const model = await ensureModelForAgent(agent);
+              const userMessage = { role: "user", content: user };
+              const imageList = Array.isArray(images)
+                ? images
+                    .map((v) => String(v || "").trim())
+                    .filter(Boolean)
+                    .slice(0, 3)
+                : [];
+              if (imageList.length) userMessage.images = imageList;
 	            const body = {
 	              model,
 	              stream: false,
@@ -7388,7 +7701,7 @@ Style rules:
               },
               messages: [
                 { role: "system", content: system },
-                { role: "user", content: user }
+                userMessage
               ]
             };
             if (typeof format === "string" && format.trim()) body.format = format.trim();
@@ -7415,16 +7728,44 @@ Style rules:
             return { content: String(content).trim() || "(No content returned)", model };
           };
 
-	          try {
-	            return await attempt();
-	          } catch (err) {
-	            const usingAuto = !effectiveModelOverrideForAgent(agent);
-	            if (usingAuto && looksLikeModelMissing(err?.message || err)) {
-	              try {
-	                localStorage.removeItem(STORAGE.autoModel);
-	              } catch {
-	                // ignore
+          try {
+            return await attempt();
+          } catch (err) {
+            const errMsg = String(err?.message || err || "");
+	            const modelMissing = looksLikeModelMissing(errMsg);
+	            if (modelMissing) {
+	              const ownOverride = modelOverrideForAgent(agent);
+	              if (ownOverride) {
+	                if (agent === "x") state.agentXModelOverride = "";
+	                else if (agent === "c") state.agentCModelOverride = "";
+	                else if (agent === "tool") state.toolModelOverride = "";
+	                else state.modelOverride = "";
+	                try {
+	                  if (agent === "x") localStorage.setItem(STORAGE.agentXModelOverride, "");
+	                  else if (agent === "c") localStorage.setItem(STORAGE.agentCModelOverride, "");
+	                  else if (agent === "tool") localStorage.setItem(STORAGE.toolModelOverride, "");
+	                  else localStorage.setItem(STORAGE.modelOverride, "");
+	                } catch {
+	                  // ignore
+	                }
+	                setStatusRight(
+	                  `${
+	                    agent === "x" ? "Agent X" : agent === "c" ? "Agent C" : agent === "tool" ? "Tool Planner" : "System"
+	                  } model override was unavailable and was reset.`,
+	                  true
+	                );
+	                render();
+	                return await attempt();
 	              }
+            }
+
+            const usingAuto = !effectiveModelOverrideForAgent(agent);
+            if (usingAuto && modelMissing) {
+              try {
+                localStorage.removeItem(STORAGE.autoModel);
+              } catch {
+                // ignore
+              }
               state.autoModelName = null;
               modelPromise = null;
               render();
@@ -7830,7 +8171,8 @@ Style rules:
             system: TOOL_PLANNER_SYSTEM,
             user: `${userContext}${historyBlock}\n\n${style}\nReturn tool actions if needed.`,
             temperature: 0.0,
-            format: "json"
+            format: "json",
+            agent: "tool"
           });
 
 	          let parsed = null;
@@ -7932,8 +8274,32 @@ Style rules:
 	            setStatusRight(`Tools ran: ${validated.actions.length} action${validated.actions.length === 1 ? "" : "s"}.`);
 	          }
 
-	          return { toolRuns, userContext: userContext + toolResultsToContext(toolRuns) };
-	        }
+		          return { toolRuns, userContext: userContext + toolResultsToContext(toolRuns) };
+		        }
+
+          async function summarizeImageWithToolModel({ topic, image }) {
+            if (!image || !image.b64) return "";
+            const prompt = [
+              "You are a local image analyst for MK.",
+              "Return concise visual facts from the uploaded image only.",
+              "Output exactly this format:",
+              "Summary: <1-2 short sentences>",
+              "Details:",
+              "- <up to 5 factual bullets>",
+              "",
+              `MK request context: ${String(topic || "").trim() || "(none provided)"}`,
+              `Image file: ${String(image.name || "image")}`
+            ].join("\n");
+            const res = await ollamaChat({
+              agent: "tool",
+              system:
+                "Describe what is visible with high precision. Do not invent unreadable text. Keep uncertain details marked as uncertain.",
+              user: prompt,
+              temperature: 0.1,
+              images: [image.b64]
+            });
+            return String(res?.content || "").trim();
+          }
 
 	        async function runSystemReflection({ baseContext, agentXText, agentCText }) {
 	          const sysUser = [
@@ -7951,10 +8317,96 @@ Style rules:
             temperature: agentTemperature("system")
           });
 
-          return { content: normalizeOutput(sys.content), model: sys.model };
-        }
+	          return { content: normalizeOutput(sys.content), model: sys.model };
+	        }
 
-	        async function runDebate(topic) {
+	        function summarizeRoundError(err) {
+	          const raw = String(err?.message || err || "unknown error");
+	          return clip(raw.replace(/\s+/g, " ").trim(), 180);
+	        }
+
+	        function unavailableAgentLine(agentName, err) {
+	          const msg = summarizeRoundError(err);
+	          return `${agentName} unavailable for this round (${msg}).`;
+	        }
+
+	        async function runSystemFallbackOnly({ baseContext, failureNotes }) {
+	          const fallbackUser = [
+	            String(baseContext || "").trim(),
+	            failureNotes ? `Pipeline status:\n${failureNotes}` : "",
+	            "Fallback mode: one-model response only so MK still gets a useful answer right now.",
+	            "Respond directly to MK with: (1) what you're hearing in 1-2 sentences, (2) 2-5 concrete actions, and (3) one next step that fits in 2-10 minutes."
+	          ]
+	            .filter(Boolean)
+	            .join("\n\n");
+
+	          const sys = await ollamaChat({
+	            agent: "system",
+	            system: systemPrompt(SYSTEM_ROLE, "system"),
+	            user: fallbackUser,
+	            temperature: agentTemperature("system")
+	          });
+	          return { content: normalizeOutput(sys.content), model: sys.model };
+	        }
+
+	        async function runTriadWithFallback({ baseContext, userForX, userForC }) {
+	          const [xResult, cResult] = await Promise.allSettled([
+	            ollamaChat({
+	              agent: "x",
+	              system: systemPrompt(state.profile.agentXRole || AGENT_X_ROLE, "x"),
+	              user: userForX,
+	              temperature: agentTemperature("x")
+	            }),
+	            ollamaChat({
+	              agent: "c",
+	              system: systemPrompt(state.profile.agentCRole || AGENT_C_ROLE, "c"),
+	              user: userForC,
+	              temperature: agentTemperature("c")
+	            })
+	          ]);
+
+	          const xOk = xResult.status === "fulfilled" ? xResult.value : null;
+	          const cOk = cResult.status === "fulfilled" ? cResult.value : null;
+	          const xErr = xResult.status === "rejected" ? xResult.reason : null;
+	          const cErr = cResult.status === "rejected" ? cResult.reason : null;
+
+	          const failureBits = [];
+	          if (xErr) failureBits.push(`Agent X: ${summarizeRoundError(xErr)}`);
+	          if (cErr) failureBits.push(`Agent C: ${summarizeRoundError(cErr)}`);
+
+	          let agentXText = xOk ? normalizeOutput(xOk.content) : "";
+	          let agentCText = cOk ? normalizeOutput(cOk.content) : "";
+	          if (!agentXText && xErr) agentXText = unavailableAgentLine("Agent X", xErr);
+	          if (!agentCText && cErr) agentCText = unavailableAgentLine("Agent C", cErr);
+
+	          let sys = null;
+	          if (!agentXText && !agentCText) {
+	            sys = await runSystemFallbackOnly({
+	              baseContext,
+	              failureNotes: failureBits.join("\n")
+	            });
+	            agentXText = "Agent X unavailable for this round.";
+	            agentCText = "Agent C unavailable for this round.";
+	          } else {
+	            sys = await runSystemReflection({
+	              baseContext,
+	              agentXText: agentXText || "Agent X unavailable for this round.",
+	              agentCText: agentCText || "Agent C unavailable for this round."
+	            });
+	          }
+
+	          return {
+	            modelX: xOk?.model || sys.model,
+	            modelC: cOk?.model || sys.model,
+	            modelSystem: sys.model,
+	            agentXText,
+	            agentCText,
+	            systemText: sys.content,
+	            degradedMessage: failureBits.length ? `Fallback used: ${failureBits.join(" | ")}` : ""
+	          };
+	        }
+
+	        async function runDebate(topic, { attachment = null, attachmentSummary = "" } = {}) {
 	          const prompt = String(topic || "").trim();
 	          if (!prompt) throw new Error("Enter a message.");
 
@@ -7964,13 +8416,20 @@ Style rules:
 	          if (state.rounds.length) {
 	            const recent = state.rounds.slice(-MAX_CONTEXT_ROUNDS);
 	            const offset = state.rounds.length - recent.length;
-	            const transcript = recent
-	              .map((r, idx) => {
+		            const transcript = recent
+		              .map((r, idx) => {
                 const n = offset + idx + 1;
                 const toolsLine = summarizeRoundToolsForContext(r);
                 const toolsBlock = toolsLine ? `${toolsLine}\n` : "";
+                const attachmentBlock =
+                  r.attachment && r.attachment.name
+                    ? `Attachment: ${clip(String(r.attachment.name || ""), 120)} (${formatBytes(r.attachment.size)})\n`
+                    : "";
                 const systemBlock = r.system ? `\n\nSystem:\n${clip(r.system, 700)}` : "";
-                return `Round ${n}\nMK: ${clip(r.topic, 420)}\n${toolsBlock}Agent X:\n${clip(r.agentX, 900)}\n\nAgent C:\n${clip(
+                return `Round ${n}\nMK: ${clip(r.topic, 420)}\n${attachmentBlock}${toolsBlock}Agent X:\n${clip(
+                  r.agentX,
+                  900
+                )}\n\nAgent C:\n${clip(
                   r.agentC,
                   900
                 )}${systemBlock}`;
@@ -7981,63 +8440,74 @@ Style rules:
               contextParts.push("Conversation so far:", transcript);
             } else {
               const last = recent[recent.length - 1];
-              contextParts.push(
-                `Previous MK message:\n${clip(last.topic, 900)}`,
-                `Agent X previous:\n${clip(last.agentX, 1200)}`,
-                `Agent C previous:\n${clip(last.agentC, 1200)}`
-              );
-              if (last.system) contextParts.push(`System previous:\n${clip(last.system, 1200)}`);
+		              contextParts.push(
+		                `Previous MK message:\n${clip(last.topic, 900)}`,
+		                `Agent X previous:\n${clip(last.agentX, 1200)}`,
+		                `Agent C previous:\n${clip(last.agentC, 1200)}`
+		              );
+                if (last.attachment && last.attachment.name) {
+                  contextParts.push(`Previous attachment:\n${last.attachment.name} (${formatBytes(last.attachment.size)})`);
+                }
+		              if (last.system) contextParts.push(`System previous:\n${clip(last.system, 1200)}`);
               const toolsLine = summarizeRoundToolsForContext(last);
               if (toolsLine) contextParts.push(toolsLine);
-            }
+		            }
 
-	            contextParts.push(`MK message: ${prompt}`);
-	            contextParts.push("Respond to MK’s message. Use the context above only if it helps.");
-	          } else {
-	            contextParts.push(`MK message: ${prompt}`);
-	          }
+		            contextParts.push(`MK message: ${prompt}`);
+              if (attachment && attachment.name) {
+                contextParts.push(
+                  `MK attached image: ${attachment.name} (${attachment.mime || "image"}, ${formatBytes(attachment.size)}).`
+                );
+              }
+              if (attachmentSummary) {
+                contextParts.push(`Image analysis from Tool model:\n${clip(String(attachmentSummary || "").trim(), 2600)}`);
+              }
+		            contextParts.push("Respond to MK’s message. Use the context above only if it helps.");
+		          } else {
+		            contextParts.push(`MK message: ${prompt}`);
+              if (attachment && attachment.name) {
+                contextParts.push(
+                  `MK attached image: ${attachment.name} (${attachment.mime || "image"}, ${formatBytes(attachment.size)}).`
+                );
+              }
+              if (attachmentSummary) {
+                contextParts.push(`Image analysis from Tool model:\n${clip(String(attachmentSummary || "").trim(), 2600)}`);
+              }
+		          }
 
 	          let userContext = contextParts.join("\n\n");
 	          const tools = await runToolsIfNeeded(userContext);
 	          userContext = tools.userContext;
 
 	          state.runUtc = new Date().toISOString();
-		          const [agentX, agentC] = await Promise.all([
-		            ollamaChat({
-		              agent: "x",
-		              system: systemPrompt(state.profile.agentXRole || AGENT_X_ROLE, "x"),
-	              user: `${userContext}\n\n${agentGuidance("x")}`,
-	              temperature: agentTemperature("x")
-	            }),
-	            ollamaChat({
-	              agent: "c",
-	              system: systemPrompt(state.profile.agentCRole || AGENT_C_ROLE, "c"),
-	              user: `${userContext}\n\n${agentGuidance("c")}`,
-	              temperature: agentTemperature("c")
-	            })
-	          ]);
-
-	          const agentXText = normalizeOutput(agentX.content);
-	          const agentCText = normalizeOutput(agentC.content);
-	          const sys = await runSystemReflection({ baseContext: userContext, agentXText, agentCText });
+	          const triad = await runTriadWithFallback({
+	            baseContext: userContext,
+	            userForX: `${userContext}\n\n${agentGuidance("x")}`,
+	            userForC: `${userContext}\n\n${agentGuidance("c")}`
+	          });
 	          const seals = await maybeSealTriplet({
-	            agentXText,
-	            agentCText,
-	            systemText: sys.content
+	            agentXText: triad.agentXText,
+	            agentCText: triad.agentCText,
+	            systemText: triad.systemText
 	          });
 
-		          return {
-		            topic: prompt,
-		            model: agentX.model,
-	            modelX: agentX.model,
-	            modelC: agentC.model,
-	            modelSystem: sys.model,
+			          return {
+			            topic: prompt,
+			            model: triad.modelX,
+	            modelX: triad.modelX,
+	            modelC: triad.modelC,
+		            modelSystem: triad.modelSystem,
 		            tools: tools.toolRuns,
-		            agentX: agentXText,
-		            agentC: agentCText,
-		            system: sys.content,
-		            ...seals
-		          };
+			            agentX: triad.agentXText,
+			            agentC: triad.agentCText,
+			            system: triad.systemText,
+                  attachment:
+                    attachment && attachment.name
+                      ? { name: attachment.name, mime: attachment.mime || "image", size: Number(attachment.size) || 0 }
+                      : null,
+			            degradedMessage: triad.degradedMessage,
+			            ...seals
+			          };
 	        }
 
 	        async function runLoop() {
@@ -8048,33 +8518,46 @@ Style rules:
 	          const authCtx = magicAuthContextForLLM(String(last.topic || ""));
 	          if (authCtx) contextParts.push(authCtx);
 	          contextParts.push(`MK latest message: ${last.topic}`);
+          if (last.attachment && last.attachment.name) {
+            contextParts.push(`MK latest attachment: ${last.attachment.name} (${formatBytes(last.attachment.size)})`);
+          }
 
-          if (state.autoContext) {
-            const recent = state.rounds.slice(-MAX_CONTEXT_ROUNDS);
-            const offset = state.rounds.length - recent.length;
-            const transcript = recent
-              .map((r, idx) => {
-                const n = offset + idx + 1;
-                const toolsLine = summarizeRoundToolsForContext(r);
-                const toolsBlock = toolsLine ? `${toolsLine}\n` : "";
-                const systemBlock = r.system ? `\n\nSystem:\n${clip(r.system, 700)}` : "";
-                return `Round ${n}\nMK: ${clip(r.topic, 420)}\n${toolsBlock}Agent X:\n${clip(r.agentX, 900)}\n\nAgent C:\n${clip(
-                  r.agentC,
-                  900
-                )}${systemBlock}`;
-              })
-              .join("\n\n");
+	          if (state.autoContext) {
+	            const recent = state.rounds.slice(-MAX_CONTEXT_ROUNDS);
+	            const offset = state.rounds.length - recent.length;
+	            const transcript = recent
+	              .map((r, idx) => {
+	                const n = offset + idx + 1;
+	                const toolsLine = summarizeRoundToolsForContext(r);
+	                const toolsBlock = toolsLine ? `${toolsLine}\n` : "";
+                  const attachmentBlock =
+                    r.attachment && r.attachment.name
+                      ? `Attachment: ${clip(String(r.attachment.name || ""), 120)} (${formatBytes(r.attachment.size)})\n`
+                      : "";
+	                const systemBlock = r.system ? `\n\nSystem:\n${clip(r.system, 700)}` : "";
+	                return `Round ${n}\nMK: ${clip(r.topic, 420)}\n${attachmentBlock}${toolsBlock}Agent X:\n${clip(
+                    r.agentX,
+                    900
+                  )}\n\nAgent C:\n${clip(
+	                  r.agentC,
+	                  900
+	                )}${systemBlock}`;
+	              })
+	              .join("\n\n");
 
             contextParts.push("Conversation so far:", transcript);
           } else {
-            contextParts.push(
-              `Previous MK message:\n${clip(last.topic, 900)}`,
-              `Agent X previous:\n${clip(last.agentX, 1200)}`,
-              `Agent C previous:\n${clip(last.agentC, 1200)}`
-            );
-            if (last.system) contextParts.push(`System previous:\n${clip(last.system, 1200)}`);
-            const toolsLine = summarizeRoundToolsForContext(last);
-            if (toolsLine) contextParts.push(toolsLine);
+	            contextParts.push(
+	              `Previous MK message:\n${clip(last.topic, 900)}`,
+	              `Agent X previous:\n${clip(last.agentX, 1200)}`,
+	              `Agent C previous:\n${clip(last.agentC, 1200)}`
+	            );
+              if (last.attachment && last.attachment.name) {
+                contextParts.push(`Previous attachment:\n${last.attachment.name} (${formatBytes(last.attachment.size)})`);
+              }
+	            if (last.system) contextParts.push(`System previous:\n${clip(last.system, 1200)}`);
+	            const toolsLine = summarizeRoundToolsForContext(last);
+	            if (toolsLine) contextParts.push(toolsLine);
           }
 
 	          contextParts.push("This is a continuation. Improve and extend the previous answers with at least one new useful detail, avoiding repetition.");
@@ -8084,40 +8567,28 @@ Style rules:
 	          context = tools.userContext;
 
 	          state.runUtc = new Date().toISOString();
-		          const [agentX, agentC] = await Promise.all([
-		            ollamaChat({
-		              agent: "x",
-		              system: systemPrompt(state.profile.agentXRole || AGENT_X_ROLE, "x"),
-	              user: `${context}\n\n${agentGuidance("x")}`,
-	              temperature: agentTemperature("x")
-	            }),
-	            ollamaChat({
-	              agent: "c",
-	              system: systemPrompt(state.profile.agentCRole || AGENT_C_ROLE, "c"),
-	              user: `${context}\n\n${agentGuidance("c")}`,
-	              temperature: agentTemperature("c")
-	            })
-	          ]);
-
-	          const agentXText = normalizeOutput(agentX.content);
-	          const agentCText = normalizeOutput(agentC.content);
-	          const sys = await runSystemReflection({ baseContext: context, agentXText, agentCText });
+	          const triad = await runTriadWithFallback({
+	            baseContext: context,
+	            userForX: `${context}\n\n${agentGuidance("x")}`,
+	            userForC: `${context}\n\n${agentGuidance("c")}`
+	          });
 	          const seals = await maybeSealTriplet({
-	            agentXText,
-	            agentCText,
-	            systemText: sys.content
+	            agentXText: triad.agentXText,
+	            agentCText: triad.agentCText,
+	            systemText: triad.systemText
 	          });
 
 		          return {
 		            topic: last.topic,
-		            model: agentX.model,
-	            modelX: agentX.model,
-	            modelC: agentC.model,
-		            modelSystem: sys.model,
+		            model: triad.modelX,
+	            modelX: triad.modelX,
+	            modelC: triad.modelC,
+		            modelSystem: triad.modelSystem,
 		            tools: tools.toolRuns,
-		            agentX: agentXText,
-		            agentC: agentCText,
-		            system: sys.content,
+		            agentX: triad.agentXText,
+		            agentC: triad.agentCText,
+		            system: triad.systemText,
+		            degradedMessage: triad.degradedMessage,
 		            ...seals
 		          };
 	        }
@@ -8126,33 +8597,46 @@ Style rules:
 	          const last = state.rounds[state.rounds.length - 1];
 	          if (!last) throw new Error("Start a conversation first.");
 
-          const contextParts = [`MK latest message: ${last.topic}`];
+	          const contextParts = [`MK latest message: ${last.topic}`];
+          if (last.attachment && last.attachment.name) {
+            contextParts.push(`MK latest attachment: ${last.attachment.name} (${formatBytes(last.attachment.size)})`);
+          }
 
-          if (state.autoContext) {
-            const recent = state.rounds.slice(-MAX_CONTEXT_ROUNDS);
-            const offset = state.rounds.length - recent.length;
-            const transcript = recent
-              .map((r, idx) => {
-                const n = offset + idx + 1;
-                const toolsLine = summarizeRoundToolsForContext(r);
-                const toolsBlock = toolsLine ? `${toolsLine}\n` : "";
-                const systemBlock = r.system ? `\n\nSystem:\n${clip(r.system, 700)}` : "";
-                return `Round ${n}\nMK: ${clip(r.topic, 420)}\n${toolsBlock}Agent X:\n${clip(r.agentX, 900)}\n\nAgent C:\n${clip(
-                  r.agentC,
-                  900
-                )}${systemBlock}`;
-              })
-              .join("\n\n");
-            contextParts.push("Conversation so far:", transcript);
-          } else {
-            contextParts.push(
-              `Previous MK message:\n${clip(last.topic, 900)}`,
-              `Agent X previous:\n${clip(last.agentX, 1200)}`,
-              `Agent C previous:\n${clip(last.agentC, 1200)}`
-            );
-            if (last.system) contextParts.push(`System previous:\n${clip(last.system, 1200)}`);
-            const toolsLine = summarizeRoundToolsForContext(last);
-            if (toolsLine) contextParts.push(toolsLine);
+	          if (state.autoContext) {
+	            const recent = state.rounds.slice(-MAX_CONTEXT_ROUNDS);
+	            const offset = state.rounds.length - recent.length;
+	            const transcript = recent
+	              .map((r, idx) => {
+	                const n = offset + idx + 1;
+	                const toolsLine = summarizeRoundToolsForContext(r);
+	                const toolsBlock = toolsLine ? `${toolsLine}\n` : "";
+                  const attachmentBlock =
+                    r.attachment && r.attachment.name
+                      ? `Attachment: ${clip(String(r.attachment.name || ""), 120)} (${formatBytes(r.attachment.size)})\n`
+                      : "";
+	                const systemBlock = r.system ? `\n\nSystem:\n${clip(r.system, 700)}` : "";
+	                return `Round ${n}\nMK: ${clip(r.topic, 420)}\n${attachmentBlock}${toolsBlock}Agent X:\n${clip(
+                    r.agentX,
+                    900
+                  )}\n\nAgent C:\n${clip(
+	                  r.agentC,
+	                  900
+	                )}${systemBlock}`;
+	              })
+	              .join("\n\n");
+	            contextParts.push("Conversation so far:", transcript);
+	          } else {
+	            contextParts.push(
+	              `Previous MK message:\n${clip(last.topic, 900)}`,
+	              `Agent X previous:\n${clip(last.agentX, 1200)}`,
+	              `Agent C previous:\n${clip(last.agentC, 1200)}`
+	            );
+              if (last.attachment && last.attachment.name) {
+                contextParts.push(`Previous attachment:\n${last.attachment.name} (${formatBytes(last.attachment.size)})`);
+              }
+	            if (last.system) contextParts.push(`System previous:\n${clip(last.system, 1200)}`);
+	            const toolsLine = summarizeRoundToolsForContext(last);
+	            if (toolsLine) contextParts.push(toolsLine);
           }
 
           contextParts.push(
@@ -8166,44 +8650,32 @@ Style rules:
 	          baseContext = tools.userContext;
 
 	          state.runUtc = new Date().toISOString();
-		          const [agentX, agentC] = await Promise.all([
-		            ollamaChat({
-		              agent: "x",
-		              system: systemPrompt(state.profile.agentXRole || AGENT_X_ROLE, "x"),
-	              user: `${baseContext}\n\nAgent C last message:\n${clip(last.agentC, 2200)}\n\nRespond to Agent C while addressing MK.\n\n${agentGuidance(
-	                "x"
-	              )}`,
-	              temperature: agentTemperature("x")
-	            }),
-	            ollamaChat({
-	              agent: "c",
-	              system: systemPrompt(state.profile.agentCRole || AGENT_C_ROLE, "c"),
-	              user: `${baseContext}\n\nAgent X last message:\n${clip(last.agentX, 2200)}\n\nRespond to Agent X while addressing MK.\n\n${agentGuidance(
-	                "c"
-	              )}`,
-	              temperature: agentTemperature("c")
-	            })
-	          ]);
-
-	          const agentXText = normalizeOutput(agentX.content);
-	          const agentCText = normalizeOutput(agentC.content);
-	          const sys = await runSystemReflection({ baseContext, agentXText, agentCText });
+	          const triad = await runTriadWithFallback({
+	            baseContext,
+	            userForX: `${baseContext}\n\nAgent C last message:\n${clip(last.agentC, 2200)}\n\nRespond to Agent C while addressing MK.\n\n${agentGuidance(
+	              "x"
+	            )}`,
+	            userForC: `${baseContext}\n\nAgent X last message:\n${clip(last.agentX, 2200)}\n\nRespond to Agent X while addressing MK.\n\n${agentGuidance(
+	              "c"
+	            )}`
+	          });
 	          const seals = await maybeSealTriplet({
-	            agentXText,
-	            agentCText,
-	            systemText: sys.content
+	            agentXText: triad.agentXText,
+	            agentCText: triad.agentCText,
+	            systemText: triad.systemText
 	          });
 
 		          return {
 		            topic: last.topic,
-		            model: agentX.model,
-	            modelX: agentX.model,
-	            modelC: agentC.model,
-		            modelSystem: sys.model,
+		            model: triad.modelX,
+	            modelX: triad.modelX,
+	            modelC: triad.modelC,
+		            modelSystem: triad.modelSystem,
 		            tools: tools.toolRuns,
-		            agentX: agentXText,
-		            agentC: agentCText,
-		            system: sys.content,
+		            agentX: triad.agentXText,
+		            agentC: triad.agentCText,
+		            system: triad.systemText,
+		            degradedMessage: triad.degradedMessage,
 		            ...seals
 		          };
 	        }
@@ -8483,8 +8955,9 @@ Style rules:
             } else {
               roundHint.textContent = "";
             }
-          }
-          updateComposerDisabled();
+	          }
+	          updateComposerDisabled();
+          renderPendingImage();
 
           // Settings summary (account/balance are runtime, not draft).
           try {
@@ -8610,16 +9083,23 @@ Style rules:
             roundEl.className = "round";
             roundEl.dataset.roundIndex = String(i);
 
-            const toolsJSON =
-              Array.isArray(round.tools) && round.tools.length ? escapeHTML(JSON.stringify(round.tools, null, 2)) : "";
-            const toolsSummary = summarizeToolRunsForUI(round.tools);
+	            const toolsJSON =
+	              Array.isArray(round.tools) && round.tools.length ? escapeHTML(JSON.stringify(round.tools, null, 2)) : "";
+	            const toolsSummary = summarizeToolRunsForUI(round.tools);
+            const attachmentLine =
+              round.attachment && round.attachment.name
+                ? `<div class="topic-attachment">Image: ${escapeHTML(round.attachment.name)} (${escapeHTML(
+                    formatBytes(round.attachment.size)
+                  )})</div>`
+                : "";
 
-            roundEl.innerHTML = `
-              <div class="round-meta">
-                <div class="left">
-                  <div class="kicker sf-thin">Round ${roundNum}</div>
-                  <div class="topic">${escapeHTML(round.topic)}</div>
-                </div>
+	            roundEl.innerHTML = `
+	              <div class="round-meta">
+	                <div class="left">
+	                  <div class="kicker sf-thin">Round ${roundNum}</div>
+	                  <div class="topic">${escapeHTML(round.topic)}</div>
+                    ${attachmentLine}
+	                </div>
 	                <div class="right">
 	                  <div>Model: ${escapeHTML(roundModelSummary(round))}</div>
 	                  <div>${escapeHTML(new Date(round.at).toLocaleString())}</div>
@@ -8663,7 +9143,7 @@ Style rules:
 	                <div class="answer system">
 		                  <div class="answer-head">
                         <div class="answer-who">
-                          <span class="answer-avatar system" aria-hidden="true">⚙️</span>
+                          <span class="answer-avatar system" aria-hidden="true"><img src="system_avatar.png" alt="" /></span>
                           <div class="answer-ident">
                             <div class="name"><span class="sf-ultrathin">System</span></div>
                             <div class="role">${escapeHTML(systemPanelRoleLabel())}</div>
@@ -8958,7 +9438,7 @@ Style rules:
           }
         }
 
-        async function refreshHealth() {
+	        async function refreshHealth() {
           try {
             const json = await fetchJSON("/health");
             const ok = Boolean(json && json.ok);
@@ -8978,18 +9458,100 @@ Style rules:
             el("healthText").textContent = "Down";
             el("subhead").textContent = `Ollama unreachable • ${contextLabel} • ${displayEndpoint()}`;
           }
-        }
+	        }
+
+          function formatBytes(n) {
+            const value = Number(n);
+            if (!Number.isFinite(value) || value <= 0) return "0 B";
+            if (value < 1024) return `${Math.round(value)} B`;
+            if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
+            return `${(value / (1024 * 1024)).toFixed(1)} MB`;
+          }
+
+          function hasPendingImage() {
+            return Boolean(state.pendingImage && state.pendingImage.b64);
+          }
+
+          function renderPendingImage() {
+            const wrap = el("composerAttachments");
+            const name = el("composerAttachmentName");
+            const meta = el("composerAttachmentMeta");
+            const uploadBtn = el("imageUploadBtn");
+            if (!wrap || !name || !meta) return;
+
+            const pending = state.pendingImage;
+            if (!pending || !pending.b64) {
+              wrap.hidden = true;
+              name.textContent = "";
+              meta.textContent = "";
+              if (uploadBtn) uploadBtn.setAttribute("aria-pressed", "false");
+              return;
+            }
+
+            wrap.hidden = false;
+            name.textContent = pending.name || "image";
+            meta.textContent = `${pending.mime || "image"} • ${formatBytes(pending.size)}`;
+            if (uploadBtn) uploadBtn.setAttribute("aria-pressed", "true");
+          }
+
+          function clearPendingImage({ keepStatus = false } = {}) {
+            state.pendingImage = null;
+            try {
+              const input = el("imageUploadInput");
+              if (input) input.value = "";
+            } catch {
+              // ignore
+            }
+            renderPendingImage();
+            updateComposerDisabled();
+            updateClarityHint();
+            if (!keepStatus) setStatusRight("");
+          }
+
+          async function setPendingImageFromFile(file) {
+            if (!file) return;
+            const mime = String(file.type || "").trim().toLowerCase();
+            if (!mime.startsWith("image/")) {
+              throw new Error("Please upload an image file.");
+            }
+            if (IMAGE_UPLOAD_MIME_ALLOW.size && !IMAGE_UPLOAD_MIME_ALLOW.has(mime)) {
+              throw new Error("Unsupported image type. Use PNG, JPG, WEBP, or GIF.");
+            }
+            const size = Number(file.size) || 0;
+            if (size <= 0) throw new Error("Selected image is empty.");
+            if (size > IMAGE_UPLOAD_MAX_BYTES) {
+              throw new Error(`Image is too large (${formatBytes(size)}). Max ${formatBytes(IMAGE_UPLOAD_MAX_BYTES)}.`);
+            }
+
+            const ab = await file.arrayBuffer();
+            const b64 = bytesToB64(new Uint8Array(ab));
+            state.pendingImage = {
+              name: String(file.name || "image").trim() || "image",
+              mime,
+              size,
+              b64
+            };
+            renderPendingImage();
+            updateComposerDisabled();
+            updateClarityHint();
+          }
 
 	        function updateClarityHint() {
 	          const node = el("clarityHint");
 	          const raw = String(el("topicInput")?.value || "");
 	          const text = raw.trim();
+            const hasImage = hasPendingImage();
 	          if (!node) return;
-	          if (!text) {
+	          if (!text && !hasImage) {
 	            node.textContent = "";
 	            node.classList.remove("show");
 	            return;
 	          }
+            if (!text && hasImage) {
+              node.textContent = "Image attached. Add one line about what you want extracted.";
+              node.classList.add("show");
+              return;
+            }
 
           const hints = [];
           if (text.length < 18) hints.push("Add a bit more detail (goal + constraints + desired output).");
@@ -9022,10 +9584,11 @@ Style rules:
 	          updateClarityHint();
 	        }
 
-        function updateComposerDisabled() {
-          const topic = el("topicInput")?.value?.trim() ?? "";
-          el("startBtn").disabled = state.loading || !topic;
-        }
+	        function updateComposerDisabled() {
+	          const topic = el("topicInput")?.value?.trim() ?? "";
+            const withImage = hasPendingImage();
+	          el("startBtn").disabled = state.loading || (!topic && !withImage);
+	        }
 
         function loadOptions() {
           try {
@@ -9272,18 +9835,26 @@ Style rules:
 	            const agentC = String(r.agentC || "").trimEnd();
 	            const system = String(r.system || "").trimEnd();
 	            if (!topic && !agentX && !agentC && !system) continue;
-	            out.push({
-	              topic,
-	              agentX,
-	              agentC,
-	              system,
+		            out.push({
+		              topic,
+		              agentX,
+		              agentC,
+		              system,
 	              model: String(r.model || "").trim(),
 	              modelX: String(r.modelX || r.model || "").trim(),
-	              modelC: String(r.modelC || r.model || "").trim(),
-	              modelSystem: String(r.modelSystem || r.model || "").trim(),
-	              tools: Array.isArray(r.tools) ? r.tools : [],
-	              at: typeof r.at === "number" ? r.at : null
-	            });
+		              modelC: String(r.modelC || r.model || "").trim(),
+		              modelSystem: String(r.modelSystem || r.model || "").trim(),
+		              tools: Array.isArray(r.tools) ? r.tools : [],
+                  attachment:
+                    r.attachment && typeof r.attachment === "object"
+                      ? {
+                          name: String(r.attachment.name || "").trim(),
+                          mime: String(r.attachment.mime || "image").trim() || "image",
+                          size: Math.max(0, Number(r.attachment.size) || 0)
+                        }
+                      : null,
+		              at: typeof r.at === "number" ? r.at : null
+		            });
 	          }
 	          return out.slice(0, 200);
 	        }
@@ -9350,14 +9921,17 @@ Style rules:
 	          const rounds = normalizeRoundsForPack(p.rounds).slice(-Math.max(0, Number(maxRounds) || 0));
 	          if (rounds.length) {
 	            lines.push("Transcript (most recent rounds):");
-	            rounds.forEach((r, idx) => {
-	              lines.push("");
-	              lines.push(`Round ${Math.max(1, rounds.length - rounds.length + idx + 1)}`);
-	              if (r.topic) lines.push(`MK: ${clip(r.topic, 600)}`);
-	              if (r.agentX) lines.push(`Agent X: ${clip(r.agentX, 800)}`);
-	              if (r.agentC) lines.push(`Agent C: ${clip(r.agentC, 800)}`);
-	              if (r.system) lines.push(`System: ${clip(r.system, 800)}`);
-	            });
+		            rounds.forEach((r, idx) => {
+		              lines.push("");
+		              lines.push(`Round ${Math.max(1, rounds.length - rounds.length + idx + 1)}`);
+		              if (r.topic) lines.push(`MK: ${clip(r.topic, 600)}`);
+                  if (r.attachment && r.attachment.name) {
+                    lines.push(`Attachment: ${clip(r.attachment.name, 180)} (${formatBytes(r.attachment.size)})`);
+                  }
+		              if (r.agentX) lines.push(`Agent X: ${clip(r.agentX, 800)}`);
+		              if (r.agentC) lines.push(`Agent C: ${clip(r.agentC, 800)}`);
+		              if (r.system) lines.push(`System: ${clip(r.system, 800)}`);
+		            });
 	          }
 	
 	          const text = lines.join("\n").trim();
@@ -9631,11 +10205,12 @@ Style rules:
           state.conversationRenderKey = "";
         }
 
-	        function collectSettingsDraft() {
+        function collectSettingsDraft() {
           const endpoint = normalizeEndpoint(el("endpointInput")?.value);
           const modelOverride = String(el("modelInput")?.value || "").trim();
           const agentXModelOverride = String(el("agentXModelInput")?.value || "").trim();
           const agentCModelOverride = String(el("agentCModelInput")?.value || "").trim();
+          const toolModelOverride = String(el("toolModelInput")?.value || "").trim();
           const onlineUrl = String(el("onlineUrlInput")?.value || "").trim();
 
           const numCtx = Number(el("numCtxInput")?.value) || DEFAULT_OPTIONS.numCtx;
@@ -9680,6 +10255,7 @@ Style rules:
             modelOverride,
             agentXModelOverride,
             agentCModelOverride,
+            toolModelOverride,
             onlineUrl,
             options: { numCtx, numPredict },
             toolsEnabled,
@@ -9717,11 +10293,13 @@ Style rules:
 	          const xNote = el("effectiveAgentXModelNote");
 	          const cCode = el("effectiveAgentCModelCode");
 	          const cNote = el("effectiveAgentCModelNote");
+	          const toolCode = el("effectiveToolModelCode");
+	          const toolNote = el("effectiveToolModelNote");
 	          const modeCode = el("effectiveIOModeCode");
 	          const toolsCode = el("effectiveToolsCode");
 	          const tuningCode = el("effectiveTuningCode");
 
-	          if (!endpointCode || !sysCode || !xCode || !cCode || !modeCode || !toolsCode || !tuningCode) return;
+	          if (!endpointCode || !sysCode || !xCode || !cCode || !toolCode || !modeCode || !toolsCode || !tuningCode) return;
 
           const draft = collectSettingsDraft();
 
@@ -9729,21 +10307,25 @@ Style rules:
           endpointCode.textContent = draft.endpoint ? draft.endpoint : "auto";
           endpointCode.title = endpointResolved;
 
-          const sysOverride = String(draft.modelOverride || "").trim();
-          const xOverride = String(draft.agentXModelOverride || "").trim();
-          const cOverride = String(draft.agentCModelOverride || "").trim();
-          const auto = String(state.autoModelName || "").trim();
+	          const sysOverride = String(draft.modelOverride || "").trim();
+	          const xOverride = String(draft.agentXModelOverride || "").trim();
+	          const cOverride = String(draft.agentCModelOverride || "").trim();
+	          const toolOverride = String(draft.toolModelOverride || "").trim();
+	          const auto = String(state.autoModelName || "").trim();
 
-          const sysEff = sysOverride || auto || "";
-          const xEff = xOverride || sysOverride || auto || "";
-          const cEff = cOverride || sysOverride || auto || "";
+	          const sysEff = sysOverride || auto || "";
+	          const xEff = xOverride || sysOverride || auto || "";
+	          const cEff = cOverride || sysOverride || auto || "";
+	          const toolEff = toolOverride || sysOverride || auto || "";
 
-          sysCode.textContent = sysEff ? displayModelLabel(sysEff) : "auto";
-          xCode.textContent = xEff ? displayModelLabel(xEff) : "auto";
-          cCode.textContent = cEff ? displayModelLabel(cEff) : "auto";
+	          sysCode.textContent = sysEff ? displayModelLabel(sysEff) : "auto";
+	          xCode.textContent = xEff ? displayModelLabel(xEff) : "auto";
+	          cCode.textContent = cEff ? displayModelLabel(cEff) : "auto";
+	          toolCode.textContent = toolEff ? (toolEff === TOOL_SMOL_OPTION_VALUE ? TOOL_SMOL_OPTION_LABEL : displayModelLabel(toolEff)) : "auto";
 
-          if (xNote) xNote.textContent = xOverride ? " (override)" : sysOverride ? " (inherits System)" : "";
-          if (cNote) cNote.textContent = cOverride ? " (override)" : sysOverride ? " (inherits System)" : "";
+	          if (xNote) xNote.textContent = xOverride ? " (override)" : sysOverride ? " (inherits System)" : "";
+	          if (cNote) cNote.textContent = cOverride ? " (override)" : sysOverride ? " (inherits System)" : "";
+	          if (toolNote) toolNote.textContent = toolOverride ? " (override)" : sysOverride ? " (inherits System)" : "";
 
           modeCode.textContent = draft.profile.ioMode === "local" ? "LOCAL" : draft.profile.ioMode === "online_aes" ? "ONLINE (AES)" : "ONLINE";
 
@@ -9772,6 +10354,7 @@ Style rules:
           state.modelOverride = draft.modelOverride;
           state.agentXModelOverride = draft.agentXModelOverride;
           state.agentCModelOverride = draft.agentCModelOverride;
+          state.toolModelOverride = draft.toolModelOverride;
           state.options = draft.options || { ...DEFAULT_OPTIONS };
           state.onlineUrl = (draft.onlineUrl || DEFAULT_ONLINE_URL).trim();
           state.toolsEnabled = Boolean(draft.toolsEnabled);
@@ -9802,6 +10385,7 @@ Style rules:
           localStorage.setItem(STORAGE.modelOverride, state.modelOverride);
           localStorage.setItem(STORAGE.agentXModelOverride, state.agentXModelOverride);
           localStorage.setItem(STORAGE.agentCModelOverride, state.agentCModelOverride);
+          localStorage.setItem(STORAGE.toolModelOverride, state.toolModelOverride);
           localStorage.setItem(STORAGE.options, JSON.stringify(state.options));
           localStorage.setItem(STORAGE.onlineUrl, state.onlineUrl);
           localStorage.setItem(STORAGE.toolsEnabled, state.toolsEnabled ? "true" : "false");
@@ -9847,12 +10431,13 @@ Style rules:
 		          }
 
 	          el("endpointInput").value = state.endpointMode === "auto" ? "" : state.endpoint;
-	          el("modelInput").value = state.modelOverride;
-	          el("agentXModelInput").value = state.agentXModelOverride;
-	          el("agentCModelInput").value = state.agentCModelOverride;
-	          el("onlineUrlInput").value = state.onlineUrl || DEFAULT_ONLINE_URL;
-	          el("numCtxInput").value = String(state.options.numCtx);
-	          el("numPredictInput").value = String(state.options.numPredict);
+          el("modelInput").value = state.modelOverride;
+          el("agentXModelInput").value = state.agentXModelOverride;
+          el("agentCModelInput").value = state.agentCModelOverride;
+          el("toolModelInput").value = state.toolModelOverride;
+          el("onlineUrlInput").value = state.onlineUrl || DEFAULT_ONLINE_URL;
+          el("numCtxInput").value = String(state.options.numCtx);
+          el("numPredictInput").value = String(state.options.numPredict);
 	          el("toolsEnabledInput").checked = state.toolsEnabled && toolsAvailable();
           el("toolsEnabledInput").disabled = !toolsAvailable();
           el("toolsAutoApproveInput").checked = state.toolsAutoApprove;
@@ -10140,6 +10725,8 @@ Style rules:
 	          state.modelOverride = "";
 	          state.agentXModelOverride = "";
 	          state.agentCModelOverride = "";
+	          state.toolModelOverride = "";
+            clearPendingImage({ keepStatus: true });
 	          state.autoModelName = null;
 	          state.options = { ...DEFAULT_OPTIONS };
 	          state.autoContext = true;
@@ -10211,10 +10798,14 @@ Style rules:
 	              if (id === "modelsSelect") return String(el("modelInput")?.value || state.modelOverride || "").trim();
 	              if (id === "modelsSelectX") return String(el("agentXModelInput")?.value || state.agentXModelOverride || "").trim();
 	              if (id === "modelsSelectC") return String(el("agentCModelInput")?.value || state.agentCModelOverride || "").trim();
+	              if (id === "modelsSelectTool") {
+                  const raw = String(el("toolModelInput")?.value || state.toolModelOverride || "").trim();
+                  return raw === TOOL_SMOL_OPTION_LABEL ? TOOL_SMOL_OPTION_VALUE : raw;
+                }
 	              return "";
 	            };
 
-	            const selectIds = ["modelsSelect", "modelsSelectX", "modelsSelectC"];
+	            const selectIds = ["modelsSelect", "modelsSelectX", "modelsSelectC", "modelsSelectTool"];
 	            for (const id of selectIds) {
 	              const select = el(id);
 	              if (!select) continue;
@@ -10224,6 +10815,13 @@ Style rules:
 	              placeholder.value = "";
 	              placeholder.textContent = `(found ${localModels.length})`;
 	              select.appendChild(placeholder);
+
+                if (id === "modelsSelectTool") {
+                  const smolOption = document.createElement("option");
+                  smolOption.value = TOOL_SMOL_OPTION_VALUE;
+                  smolOption.textContent = `${TOOL_SMOL_OPTION_LABEL}${findSmolToolModelName(localModels) ? " [installed]" : " (not installed)"}`;
+                  select.appendChild(smolOption);
+                }
 
 	              for (const m of localModels.slice(0, 50)) {
 	                const name = String(m?.name || m?.model || "").trim();
@@ -10252,13 +10850,15 @@ Style rules:
           }
         }
 
-			        async function startDebateFromUI() {
-			          await ensureEndpoint();
-			          const topic = el("topicInput").value.trim();
-			          if (!topic) return;
-		          setComposerMoreOpen(false);
-			          setNotice(null);
-			          const adminCmd = parseAdminCommand(topic);
+				        async function startDebateFromUI() {
+				          await ensureEndpoint();
+                  const rawTopic = String(el("topicInput")?.value || "").trim();
+                  const pendingImage = hasPendingImage() ? { ...state.pendingImage } : null;
+                  const topic = rawTopic || (pendingImage ? "Analyze the attached image." : "");
+				          if (!topic) return;
+			          setComposerMoreOpen(false);
+				          setNotice(null);
+				          const adminCmd = parseAdminCommand(topic);
 			          if (adminCmd != null) {
 			            if (hasMkAdmin()) {
 			              setNotice("MK admin is already enabled. Enter a message to continue.");
@@ -10345,12 +10945,34 @@ Style rules:
 		          setStatusRight("Running…");
 	          render();
 
-          try {
-	            const first = await runDebate(topic);
+	          try {
+                let attachmentSummary = "";
+                if (pendingImage && pendingImage.b64) {
+                  setStatusRight(`Analyzing image: ${pendingImage.name}…`);
+                  render();
+                  try {
+                    attachmentSummary = await summarizeImageWithToolModel({
+                      topic,
+                      image: pendingImage
+                    });
+                  } catch (err) {
+                    setStatusRight(`Image analysis skipped: ${summarizeRoundError(err)}`, true);
+                  }
+                }
+		            const first = await runDebate(topic, {
+                  attachment: pendingImage
+                    ? {
+                        name: pendingImage.name,
+                        mime: pendingImage.mime,
+                        size: Number(pendingImage.size) || 0
+                      }
+                    : null,
+                  attachmentSummary
+                });
               const at = Date.now();
               const utc = new Date(at).toISOString();
               const ctxMode = effectiveIOMode();
-	            state.rounds.push({
+		            state.rounds.push({
 	              topic: first.topic,
                 subject: subjectFromTopic(first.topic),
                 context: ctxMode === "local" ? "Local" : "Online",
@@ -10359,20 +10981,23 @@ Style rules:
 	              model: first.model,
 	              modelX: first.modelX || first.model,
 	              modelC: first.modelC || first.model,
-	              modelSystem: first.modelSystem || first.model,
-	              tools: first.tools || [],
-	              agentX: first.agentX,
-	              agentC: first.agentC,
-	              system: first.system,
-	              at
+		              modelSystem: first.modelSystem || first.model,
+		              tools: first.tools || [],
+                  attachment: first.attachment || null,
+		              agentX: first.agentX,
+		              agentC: first.agentC,
+		              system: first.system,
+		              at
             });
-            touchRounds();
-            saveHistory();
-            afterTaskPrivacyCleanup();
-            setStatusRight("");
+		            touchRounds();
+		            saveHistory();
+		            afterTaskPrivacyCleanup();
+                clearPendingImage({ keepStatus: true });
+		            if (first.degradedMessage) setStatusRight(first.degradedMessage, true);
+		            else setStatusRight("");
 	          } catch (err) {
 	            setStatusRight(String(err?.message || err), true);
-              afterTaskPrivacyCleanup();
+	              afterTaskPrivacyCleanup();
 	          } finally {
               state.forceScrollToBottomOnce = true;
 	            state.loading = false;
@@ -10438,13 +11063,14 @@ Style rules:
 	              system: next.system,
 	              at
             });
-            touchRounds();
-            saveHistory();
-            afterTaskPrivacyCleanup();
-            setStatusRight("");
+	            touchRounds();
+	            saveHistory();
+	            afterTaskPrivacyCleanup();
+	            if (next.degradedMessage) setStatusRight(next.degradedMessage, true);
+	            else setStatusRight("");
 	          } catch (err) {
 	            setStatusRight(String(err?.message || err), true);
-              afterTaskPrivacyCleanup();
+	              afterTaskPrivacyCleanup();
 	          } finally {
               state.forceScrollToBottomOnce = true;
 	            state.loading = false;
@@ -10511,13 +11137,14 @@ Style rules:
 	              system: next.system,
 	              at
             });
-            touchRounds();
-            saveHistory();
-            afterTaskPrivacyCleanup();
-            setStatusRight("");
+	            touchRounds();
+	            saveHistory();
+	            afterTaskPrivacyCleanup();
+	            if (next.degradedMessage) setStatusRight(next.degradedMessage, true);
+	            else setStatusRight("");
 	          } catch (err) {
 	            setStatusRight(String(err?.message || err), true);
-              afterTaskPrivacyCleanup();
+	              afterTaskPrivacyCleanup();
 	          } finally {
               state.forceScrollToBottomOnce = true;
 	            state.loading = false;
@@ -10532,9 +11159,10 @@ Style rules:
             state.historyExpanded = false;
             state.unseenRounds = 0;
             state.initialScrollDone = false;
-	          setNotice(null);
-	          saveHistory();
-	          afterTaskPrivacyCleanup();
+            clearPendingImage({ keepStatus: true });
+		          setNotice(null);
+		          saveHistory();
+		          afterTaskPrivacyCleanup();
 	          setStatusRight("");
 	          render();
 	        }
@@ -10820,14 +11448,15 @@ Style rules:
                 updateEffectiveSettingsSummaryFromDraft();
               });
               const emitDraft = () => bus.emit("settings:draftChanged");
-	              [
-	                "endpointInput",
-	                "modelInput",
-	                "agentXModelInput",
-	                "agentCModelInput",
-	                "ioOnlineSwitch",
-	                "sealAesInput",
-	                "tuningSystemInput",
+		              [
+		                "endpointInput",
+		                "modelInput",
+		                "agentXModelInput",
+		                "agentCModelInput",
+		                "toolModelInput",
+		                "ioOnlineSwitch",
+		                "sealAesInput",
+		                "tuningSystemInput",
 	                "tuningAgentXInput",
 	                "tuningAgentCInput",
 	                "toolsEnabledInput",
@@ -10867,13 +11496,40 @@ Style rules:
             localStorage.setItem(STORAGE.toolsEnabled, state.toolsEnabled ? "true" : "false");
             render();
           });
-          el("composerMoreBtn")?.addEventListener("click", () => {
-            const next = !document.documentElement.classList.contains("composer-more-open");
-            setComposerMoreOpen(next);
+	          el("composerMoreBtn")?.addEventListener("click", () => {
+	            const next = !document.documentElement.classList.contains("composer-more-open");
+	            setComposerMoreOpen(next);
+	          });
+          el("imageUploadBtn")?.addEventListener("click", () => {
+            try {
+              el("imageUploadInput")?.click();
+            } catch {
+              // ignore
+            }
           });
-          el("topicInput").addEventListener("input", autosizeTextarea);
-	          el("topicInput").addEventListener("keydown", (e) => {
-	            if (e.key === "Enter" && !e.shiftKey) {
+          el("clearAttachmentBtn")?.addEventListener("click", () => {
+            clearPendingImage({ keepStatus: true });
+          });
+          el("imageUploadInput")?.addEventListener("change", async (e) => {
+            try {
+              const file = e?.target?.files?.[0];
+              if (!file) return;
+              await setPendingImageFromFile(file);
+              setStatusRight("Image attached.");
+            } catch (err) {
+              setStatusRight(String(err?.message || err), true);
+              clearPendingImage({ keepStatus: true });
+            } finally {
+              try {
+                e.target.value = "";
+              } catch {
+                // ignore
+              }
+            }
+          });
+	          el("topicInput").addEventListener("input", autosizeTextarea);
+		          el("topicInput").addEventListener("keydown", (e) => {
+		            if (e.key === "Enter" && !e.shiftKey) {
 	              e.preventDefault();
 	              startDebateFromUI();
 	            }
@@ -11307,6 +11963,7 @@ Style rules:
 	          wireModelSelect("modelsSelect", "modelInput");
 	          wireModelSelect("modelsSelectX", "agentXModelInput");
 	          wireModelSelect("modelsSelectC", "agentCModelInput");
+	          wireModelSelect("modelsSelectTool", "toolModelInput");
 	          el("downloadModelBtn")?.addEventListener("click", () => pullOllamaModel(el("modelDownloadInput")?.value));
 	          el("modelDownloadInput")?.addEventListener("keydown", (e) => {
 	            if (e.key === "Enter") {

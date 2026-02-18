@@ -17,22 +17,35 @@ echo "Syncing UI + servers…"
 
 mkdir -p "$GLOBAL_BIN" "$GLOBAL_SITE"
 cp -f "$RES_DIR/Homepage.html" "$GLOBAL_SITE/Homepage.html"
-cp -f "$RES_DIR/emoji-palette.json" "$GLOBAL_SITE/emoji-palette.json"
 cp -f "$RES_DIR/dev_server.py" "$GLOBAL_BIN/dev_server.py"
 cp -f "$RES_DIR/ollama_proxy.py" "$GLOBAL_ROOT/ollama_proxy.py"
 chmod 755 "$GLOBAL_BIN/dev_server.py" "$GLOBAL_ROOT/ollama_proxy.py" || true
 
 mkdir -p "$CONTAINER_BIN" "$CONTAINER_SITE"
 cp -f "$RES_DIR/Homepage.html" "$CONTAINER_SITE/Homepage.html"
-cp -f "$RES_DIR/emoji-palette.json" "$CONTAINER_SITE/emoji-palette.json"
 cp -f "$RES_DIR/dev_server.py" "$CONTAINER_BIN/dev_server.py"
 cp -f "$RES_DIR/ollama_proxy.py" "$CONTAINER_ROOT/ollama_proxy.py"
 chmod 755 "$CONTAINER_BIN/dev_server.py" "$CONTAINER_ROOT/ollama_proxy.py" || true
+
+# Keep site assets in sync (icons, JSON palettes, and future UI image drops).
+typeset -a SITE_ASSETS=("$RES_DIR"/*.(png|svg|json))
+for asset in "${SITE_ASSETS[@]}"; do
+  [[ -f "$asset" ]] || continue
+  base="$(basename "$asset")"
+  cp -f "$asset" "$GLOBAL_SITE/$base"
+  cp -f "$asset" "$CONTAINER_SITE/$base"
+done
 
 echo "Updating app preferences…"
 defaults write Ai.AgentC "AgentC.serverHost" "localhost"
 defaults write Ai.AgentC "AgentC.serverPort" -int 8000
 defaults write Ai.AgentC "AgentC.ollamaUpstream" "http://localhost:11434"
+
+if [[ "${AGENTC_SYNC_CODESIGN:-0}" != "1" ]]; then
+  echo "Skipping app bundle codesign (set AGENTC_SYNC_CODESIGN=1 to enable)."
+  echo "Done."
+  exit 0
+fi
 
 echo "Re-signing app bundle…"
 strip_xattrs() {
@@ -55,8 +68,9 @@ for _ in {1..6}; do
   sleep 0.12
 done
 if [ "$signed" -ne 1 ]; then
-  echo "codesign failed"
-  exit 1
+  echo "codesign failed (non-fatal for runtime sync)"
+  echo "Done."
+  exit 0
 fi
 
 verified=0
@@ -69,8 +83,9 @@ for _ in {1..6}; do
   sleep 0.12
 done
 if [ "$verified" -ne 1 ]; then
-  codesign --verify --deep --strict "$APP_BUNDLE"
-  exit 1
+  echo "codesign verify failed (non-fatal for runtime sync)"
+  echo "Done."
+  exit 0
 fi
 
 echo "Done."

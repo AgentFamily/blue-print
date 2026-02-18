@@ -17,7 +17,7 @@ import threading
 import time
 import urllib.error
 import urllib.request
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
@@ -1392,7 +1392,7 @@ def build_handler(*, upstream: str, tool_token: str):
                 return
 
             # Static passthrough (best-effort) for local assets.
-            rel = self.path.lstrip("/").split("?", 1)[0]
+            rel = unquote(self.path.lstrip("/").split("?", 1)[0])
             if rel and not rel.startswith(".") and ".." not in rel:
                 candidate = (SITE_ROOT / rel).resolve()
                 if str(candidate).startswith(str(SITE_ROOT.resolve()) + os.sep) and candidate.is_file():

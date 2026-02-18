@@ -234,7 +234,7 @@ module.exports = async (req, res) => {
   }
 
   const openKey = firstEnv("open", "OPEN", "OPENAI_API_KEY", "OPEN_AI_API_KEY", "OPEN_API_KEY", "OPENAI_KEY", "OPENAI_APIKEY");
-  const gatewayKey = firstEnv("AI_GATEWAY_API_KEY", "AI_GATEWAY_KEY");
+  const gatewayKey = firstEnv("AI_GATEWAY_API_KEY", "AI_GATEWAY_KEY", "VERCEL_AI_GATEWAY_API_KEY");
 
   if (!messages || messages.length === 0) {
     res.statusCode = 400;
@@ -248,7 +248,10 @@ module.exports = async (req, res) => {
     res.setHeader("Content-Type", "application/json");
     res.end(
       JSON.stringify({
-        error: "Missing upstream API key (expected `open`/`OPENAI_API_KEY` and/or `AI_GATEWAY_API_KEY`)",
+        error:
+          "Missing upstream API key. Set `OPENAI_API_KEY` (or `open`) and/or `AI_GATEWAY_API_KEY` (Vercel AI Gateway).",
+        hint:
+          "Online deployments require an API key. If using Vercel AI Gateway, set `AI_GATEWAY_API_KEY` (or `VERCEL_AI_GATEWAY_API_KEY`).",
       })
     );
     return;
@@ -258,9 +261,9 @@ module.exports = async (req, res) => {
   const openModel = firstEnv("OPEN_MODEL", "OPENAI_MODEL") || "gpt-4o-mini";
 
   const gatewayBaseUrl =
-    firstEnv("AI_GATEWAY_BASE_URL") ||
+    firstEnv("AI_GATEWAY_BASE_URL", "VERCEL_AI_GATEWAY_BASE_URL") ||
     (looksLikeOpenAIKey(gatewayKey) ? "https://api.openai.com/v1" : "https://gateway.ai.vercel.com/v1");
-  const gatewayModelEnv = firstEnv("AI_GATEWAY_MODEL");
+  const gatewayModelEnv = firstEnv("AI_GATEWAY_MODEL", "VERCEL_AI_GATEWAY_MODEL");
   let gatewayModel = gatewayModelEnv || "gpt-4o-mini";
   if (!gatewayModelEnv && gatewayKey && !looksLikeOpenAIKey(gatewayKey) && !String(gatewayModel).includes("/")) {
     gatewayModel = `openai/${gatewayModel}`;
