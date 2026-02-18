@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "paragraphPurpose": {
+    "explain": ["🧠", "🔍"],
+    "implement": ["🛠️", "🔧"],
+    "refine": ["🔁", "✨"],
+    "constraints": ["✅", "⚠️", "🔒"],
+    "tradeoffs": ["⚖️", "🔀"],
+    "debug": ["🧪", "🧯"],
+    "question": ["❓"]
+  },
+  "domain": {
+    "architecture": ["🏗️", "🧱", "📦"],
+    "apis": ["🌐", "🔌", "🧩"],
+    "data": ["🗄️", "📊", "🧬"],
+    "performance": ["⚡", "⏱️", "🚀"],
+    "security": ["🔒", "🛡️", "🧷"],
+    "testing": ["🧪", "✅", "🔁"],
+    "observability": ["🔭", "📈", "🧾"],
+    "uiux": ["🎛️", "🎨", "🪟"],
+    "devops": ["⚙️", "🧰", "🚀"],
+    "risk": ["⚠️", "🧯"],
+    "collaboration": ["🤝", "🧠"],
+    "writing": ["✍️", "🔁"]
+  }
+}
+
