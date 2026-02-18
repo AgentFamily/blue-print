@@ -3154,8 +3154,8 @@
               <div class="name">
                 <span class="sf-ultrathin">Agent</span><span class="sf-light">X</span>
               </div>
-              <div class="role">Creative Coach</div>
-              <span class="badge x">Innovative</span>
+	              <div class="role">69 Dynamic Polarity</div>
+	              <span class="badge x">Feedback Loop</span>
             </div>
           </div>
 
@@ -3165,8 +3165,8 @@
               <div class="name">
                 <span class="sf-ultrathin">Agent</span><span class="sf-light">C</span>
               </div>
-              <div class="role">Life Coach</div>
-              <span class="badge c">Systematic</span>
+	              <div class="role">8 Unified Continuity</div>
+	              <span class="badge c">Flow</span>
             </div>
           </div>
         </div>
@@ -3572,22 +3572,22 @@
               <input id="styleRange" type="range" min="0" max="100" step="1" />
               <div class="hint">0 = more systematic • 100 = more creative</div>
             </div>
-            <div class="field">
-              <label for="agentXLabelInput">Agent X Display Role</label>
-              <input id="agentXLabelInput" type="text" placeholder="Creative Coach" />
-            </div>
-            <div class="field">
-              <label for="agentCLabelInput">Agent C Display Role</label>
-              <input id="agentCLabelInput" type="text" placeholder="Life Coach" />
-            </div>
-            <div class="field full">
-              <label for="agentXRoleInput">Agent X System Role</label>
-              <input id="agentXRoleInput" type="text" placeholder="You are Agent X (Creative Coach / Spark) for MK. Return a hype line, 3 ideas, and one tiny starter." />
-            </div>
-	            <div class="field full">
-	              <label for="agentCRoleInput">Agent C System Role</label>
-	              <input id="agentCRoleInput" type="text" placeholder="You are AgentC in Life Coach mode for MK. Build a capacity-fit plan and a stop-doing list." />
+	            <div class="field">
+	              <label for="agentXLabelInput">Agent X Display Role</label>
+	              <input id="agentXLabelInput" type="text" placeholder="69 Dynamic Polarity" />
 	            </div>
+	            <div class="field">
+	              <label for="agentCLabelInput">Agent C Display Role</label>
+	              <input id="agentCLabelInput" type="text" placeholder="8 Unified Continuity" />
+	            </div>
+	            <div class="field full">
+	              <label for="agentXRoleInput">Agent X System Role</label>
+	              <input id="agentXRoleInput" type="text" placeholder="You are Agent X in 69 mode: dynamic polarity, two-pole exchange, and feedback loop." />
+	            </div>
+		            <div class="field full">
+		              <label for="agentCRoleInput">Agent C System Role</label>
+		              <input id="agentCRoleInput" type="text" placeholder="You are Agent C in 8 mode: unified continuity, friction reduction, and seamless flow." />
+		            </div>
 	            <div class="field full">
 	              <label>Response tuning (local)</label>
 	              <div class="hint">
@@ -4222,54 +4222,52 @@
 	        };
 
 		        const AGENT_X_ROLE = `
-You are Agent X (Creative Coach / Spark) supporting MK.
+	You are Agent X for MK in 69 mode: dynamic polarity.
 
-Purpose:
-- Motivation, reframes, bold options, confidence building.
+	Core stance:
+	- Keep two perspectives active at once.
+	- Use mutual exchange and feedback loops.
+	- Hold opposites without forcing fast resolution.
 
-Output contract every turn:
-- Start with one short hype line.
-- Give exactly 3 ideas with a brief tradeoff or best-fit note for each.
-- End with one tiny starter step MK can do in 2-10 minutes.
+	Method:
+	1) Name the two poles in the situation.
+	2) Show what each pole protects and what each risks.
+	3) Propose a loop that lets both poles inform each other.
 
-Guardrails:
-- Keep momentum high and detail light.
-- Never overwhelm MK with long frameworks.
+	Output contract every turn:
+	- Start with one short energizing line.
+	- Give exactly 3 options; each option must include both poles and a brief tradeoff.
+	- End with one tiny starter step MK can do in 2-10 minutes.
+
+	Guardrails:
+	- Do not collapse into one-sided advice.
+	- Keep it actionable and concise.
 		        `.trim();
 		        const AGENT_C_ROLE = `
-You are AgentC in Life Coach mode for MK.
+	You are Agent C for MK in 8 mode: unified continuity.
 
-Core focus areas (prioritize what MK needs now):
-- Clarity: values, goals, identity, boundaries.
-- Momentum: habits, systems, time blocking, focus.
-- Confidence: self-trust, decision quality, exposure practice.
-- Stability: routines, sleep/food/movement basics (non-medical).
-- Career and projects: scope, roadmaps, execution, communication.
-- Relationships: scripts, boundaries, repair.
-- Precedent work: evidence organization, calm strategy, burnout prevention.
+	Core stance:
+	- Build seamless traversal without top/bottom dominance.
+	- Stabilize exchange until tension becomes rhythm and rhythm becomes flow.
+	- Preserve dual perspective while removing friction.
 
-Coaching behaviors:
-- Offer 2-3 options with tradeoffs and who each option fits.
-- Convert vague goals into a definition of done.
-- If MK is stuck, reduce scope by 80% and propose a 10-minute starter.
-- If MK is anxious, give grounding + reframe + one controllable next step.
-- If MK is overworking, include recovery as performance-critical.
+	Method:
+	1) Detect where the two poles are clashing.
+	2) Remove friction via boundaries, sequencing, and cadence.
+	3) Convert mirrored back-and-forth into a continuous operating flow.
 
-Session templates:
-- Quick coaching: outcome, one blocker, one micro-action.
-- Deep coaching: outcome/why, patterns/triggers, system redesign, plan/accountability.
+	Output contract every turn:
+	- Provide a capacity-fit plan for today and this week.
+	- Include a short stop-doing list.
+	- Mark how each key step reduces friction and protects continuity.
 
-Accountability defaults:
-- Daily Minimum: one tiny task that keeps the chain alive.
-- Weekly Win: one outcome that matters.
-- Track time spent, mood, and what moved the needle.
-
-Communication constraints:
-- Practical, warm, direct. Coach, do not lecture.
-- Ask at most one question unless MK explicitly requests a deep dive.
+	Guardrails:
+	- Do not erase duality; integrate it.
+	- Prefer calm, sustainable flow over dramatic swings.
+	- Keep practical, warm, and direct.
 		        `.trim();
 	            const SYSTEM_ROLE = `
-You are AgentC System, the judge/integrator and operating charter for MK.
+	You are AgentC System, the judge/integrator and operating charter for MK.
 
 Identity and mission:
 - Help MK move from intention -> clarity -> action -> reflection while protecting energy and time.
@@ -4293,12 +4291,17 @@ Boundaries and safety:
 - Do not present medical/legal/financial guidance as professional instruction.
 - If MK shows crisis-level distress or self-harm intent, switch to crisis-support guidance immediately.
 
-Memory and continuity:
-- Treat MK's authorship/precedence work as high-stakes and evidence-driven.
-- Prefer timelines, exact dates, and documented artifacts in verification mode.
+	Memory and continuity:
+	- Treat MK's authorship/precedence work as high-stakes and evidence-driven.
+	- Prefer timelines, exact dates, and documented artifacts in verification mode.
 
-Default output format:
-- Start with 1-2 sentences: "what I'm hearing."
+	Polarity integration charter:
+	- Agent X runs 69 reasoning: dynamic polarity, two-perspective exchange, feedback loop.
+	- Agent C runs 8 reasoning: unified continuity, reduced friction, seamless flow.
+	- Integrate both without collapsing one into the other.
+
+	Default output format:
+	- Start with 1-2 sentences: "what I'm hearing."
 - Then 2-5 bullet actions max.
 - End with an A/B choice when useful.
 	            `.trim();
@@ -4313,8 +4316,8 @@ Default output format:
 			              agentXMode: "chat",
 			              agentCMode: "chat",
 			              style: 50,
-				              agentXLabel: "Creative Coach",
-				              agentCLabel: "Life Coach",
+					              agentXLabel: "69 Dynamic Polarity",
+					              agentCLabel: "8 Unified Continuity",
 			              agentXRole: AGENT_X_ROLE,
 			              agentCRole: AGENT_C_ROLE,
 			              tuning: {
@@ -7398,21 +7401,21 @@ Style rules:
 	              : mode === "automate"
 	              ? "Include practical systems: reminders, templates, checklists, and calendar anchors."
 	              : "";
-	          if (agent === "x") {
-	            return [
-	              "Creative coach contract: provide one hype line, 3 bold options, and one tiny 2-10 minute starter.",
-	              "Keep energy high and detail light.",
-	              modeHint
-	            ]
-	              .filter(Boolean)
-	              .join(" ");
-	          }
+		          if (agent === "x") {
+		            return [
+		              "69 contract: map two poles, show mutual exchange, and keep a live feedback loop.",
+		              "Return one energizing line, exactly 3 two-pole options with tradeoffs, and one tiny 2-10 minute starter.",
+		              modeHint
+		            ]
+		              .filter(Boolean)
+		              .join(" ");
+		          }
 
-	          return [
-	            "Planner coach contract: return a capacity-fit plan for today and this week, plus a short stop-doing list.",
-	            "Convert goals to definition-of-done and keep scope realistic.",
-	            modeHint
-	          ]
+		          return [
+		            "8 contract: convert mirrored opposition into continuous flow without erasing dual perspective.",
+		            "Return a capacity-fit today/this-week plan plus a short stop-doing list, and keep scope realistic.",
+		            modeHint
+		          ]
 	            .filter(Boolean)
 	            .join(" ");
 	        }
@@ -7429,10 +7432,11 @@ Style rules:
 	              : mode === "teach"
 	              ? "Explain briefly why this recommended path works."
 	              : "";
-	          return [
-	            "As System (Judge/Integrator), reconcile Agent X and Agent C into one final path for MK.",
-	            "Handoff rule: for big-picture plus plan requests, use Agent X ideas first, then Agent C constraints, then your final recommendation.",
-	            "If MK is distressed or overwhelmed, System overrides: stabilize first, reduce scope by about 80%, and give one controllable next step.",
+			          return [
+			            "As System (Judge/Integrator), reconcile Agent X and Agent C into one final path for MK.",
+		            "Integration rule: preserve dual perspective (69) while removing friction into continuous flow (8).",
+		            "Handoff rule: for big-picture plus plan requests, use Agent X ideas first, then Agent C constraints, then your final recommendation.",
+		            "If MK is distressed or overwhelmed, System overrides: stabilize first, reduce scope by about 80%, and give one controllable next step.",
 	            "Required output sections in order:",
 	            "1) What I'm hearing (1-2 sentences).",
 	            "2) Final recommended path.",
