@@ -2431,6 +2431,42 @@
         min-height: 150px;
       }
 
+      .vault-entry-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .vault-entry-card {
+        border: 1px solid rgba(15, 23, 42, 0.12);
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.76);
+        padding: 10px 12px;
+      }
+
+      .vault-entry-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 6px;
+      }
+
+      .vault-entry-title {
+        font-size: 13px;
+        color: rgba(2, 6, 23, 0.88);
+      }
+
+      .vault-entry-sub {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .vault-entry-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
       .modal-body textarea:focus {
         border-color: rgba(79, 70, 229, 0.40);
         box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12);
@@ -3286,6 +3322,7 @@
 					          <button class="chip-btn" id="settingsTabAgents" type="button" role="tab" aria-controls="settingsAgents" aria-selected="false" tabindex="-1" data-settings-panel="settingsAgents">Agents</button>
 					          <button class="chip-btn" id="settingsTabModes" type="button" role="tab" aria-controls="settingsModes" aria-selected="false" tabindex="-1" data-settings-panel="settingsModes">Modes</button>
 					          <button class="chip-btn" id="settingsTabPrivacy" type="button" role="tab" aria-controls="settingsPrivacy" aria-selected="false" tabindex="-1" data-settings-panel="settingsPrivacy">Privacy</button>
+					          <button class="chip-btn" id="settingsTabVault" type="button" role="tab" aria-controls="settingsVault" aria-selected="false" tabindex="-1" data-settings-panel="settingsVault">Vault</button>
 					          <button class="chip-btn" id="settingsTabNetwork" type="button" role="tab" aria-controls="settingsNetwork" aria-selected="false" tabindex="-1" data-settings-panel="settingsNetwork">Network</button>
 					        </div>
 			
@@ -3735,8 +3772,8 @@
               <div class="template-row">
                 <button class="btn danger" id="clearLocalDataBtn" type="button">Clear Local Data</button>
               </div>
-	              <div class="hint">Clears history, profile, templates, and teachings from this device.</div>
-	            </div>
+		              <div class="hint">Clears history, profile, templates, teachings, and encrypted vault data from this device.</div>
+		            </div>
               <div class="field full">
                 <label for="adminCodeInput">Admin / promo code (optional)</label>
                 <div class="template-row">
@@ -3745,8 +3782,51 @@
                 </div>
                 <div class="hint">Validated server-side. This does not replace Magic Link sign-in.</div>
               </div>
-	          </div>
-	        </details>
+		          </div>
+		        </details>
+
+		        <details class="settings-section" id="settingsVault" role="tabpanel" aria-labelledby="settingsTabVault" hidden>
+		          <summary><span class="settings-summary-label">Vault (Encrypted Secrets)</span></summary>
+		          <div class="settings-grid">
+		            <div class="field full">
+		              <label>Vault Access</label>
+		              <div class="template-row">
+		                <input id="vaultPassphraseInput" type="password" placeholder="Vault passphrase" autocomplete="new-password" />
+		                <button class="btn secondary" id="vaultUnlockBtn" type="button">Unlock / Create</button>
+		                <button class="btn secondary" id="vaultLockBtn" type="button">Lock</button>
+		              </div>
+		              <div class="hint" id="vaultStatusText">Vault is locked.</div>
+		              <div class="hint">Secrets are encrypted locally with your passphrase (PBKDF2 + AES-GCM). Passphrase is session-only.</div>
+		            </div>
+		            <div class="field full" id="vaultEditorField" hidden>
+		              <label>Add or Edit Secret</label>
+		              <input id="vaultLabelInput" type="text" placeholder="Service / label (e.g. Stripe prod)" maxlength="120" />
+		              <div class="template-row">
+		                <select id="vaultTypeInput" aria-label="Vault entry type">
+		                  <option value="login">Username + Password</option>
+		                  <option value="api">API Key</option>
+		                  <option value="token">Token / Secret</option>
+		                </select>
+		                <input id="vaultUsernameInput" type="text" placeholder="Username / email (optional)" maxlength="200" />
+		              </div>
+		              <div class="template-row">
+		                <input id="vaultSecretInput" type="password" placeholder="Secret value" autocomplete="new-password" />
+		                <button class="btn tiny secondary" id="vaultRevealInputBtn" type="button">Show</button>
+		              </div>
+		              <textarea id="vaultNotesInput" placeholder="Notes (optional)" maxlength="600"></textarea>
+		              <input id="vaultEditIdInput" type="hidden" />
+		              <div class="template-row">
+		                <button class="btn secondary" id="vaultSaveEntryBtn" type="button">Save Secret</button>
+		                <button class="btn secondary" id="vaultClearEntryBtn" type="button">Clear</button>
+		              </div>
+		            </div>
+		            <div class="field full" id="vaultListField" hidden>
+		              <label>Stored Secrets</label>
+		              <div id="vaultEntryList" class="vault-entry-list"></div>
+		              <div class="hint">Secrets stay hidden by default. Use Copy or Reveal when needed.</div>
+		            </div>
+		          </div>
+		        </details>
 
 		        <details class="settings-section" id="settingsNetwork" role="tabpanel" aria-labelledby="settingsTabNetwork" hidden>
 	          <summary><span class="settings-summary-label">Network / LAN (Advanced)</span></summary>
@@ -4113,7 +4193,8 @@
 	          firstRunNoticeDismissed: "debateFirstRunNoticeDismissedV1",
             entryAccepted: "agentcEntryAcceptedV1",
             workspaceLabel: "agentcWorkspaceLabelV1",
-            runtimeGlitch: "agentcGlitchModeV1"
+            runtimeGlitch: "agentcGlitchModeV1",
+            vaultStore: "agentcVaultStoreV1"
 	        };
         const IS_HTTP_ORIGIN = ["http:", "https:"].includes(window.location.protocol);
         const IS_LOOPBACK_HOST = ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
@@ -4407,6 +4488,474 @@ Boundaries and safety:
 		              }
 		              return out;
 		            }
+
+                function b64ToBytes(value) {
+                  const raw = String(value || "").trim();
+                  if (!raw) return new Uint8Array(0);
+                  const binary = atob(raw);
+                  const out = new Uint8Array(binary.length);
+                  for (let i = 0; i < binary.length; i++) out[i] = binary.charCodeAt(i);
+                  return out;
+                }
+
+                const VAULT_STORE_VERSION = 1;
+                const VAULT_KDF_ITERATIONS = 210_000;
+                let vaultState = {
+                  unlocked: false,
+                  key: null,
+                  saltB64: "",
+                  iterations: VAULT_KDF_ITERATIONS,
+                  entries: []
+                };
+
+                function vaultWebCryptoAvailable() {
+                  return Boolean(window.crypto && window.crypto.subtle);
+                }
+
+                function normalizeVaultType(value) {
+                  const v = String(value || "").trim().toLowerCase();
+                  if (v === "login" || v === "api" || v === "token") return v;
+                  return "login";
+                }
+
+                function vaultTypeLabel(value) {
+                  const type = normalizeVaultType(value);
+                  if (type === "api") return "API Key";
+                  if (type === "token") return "Token / Secret";
+                  return "Username + Password";
+                }
+
+                function maskVaultSecret(value) {
+                  const secret = String(value || "");
+                  if (!secret) return "(empty)";
+                  if (secret.length <= 4) return "••••";
+                  return `${secret.slice(0, 2)}••••${secret.slice(-2)}`;
+                }
+
+                function normalizeVaultEntries(list) {
+                  if (!Array.isArray(list)) return [];
+                  const out = [];
+                  for (const item of list) {
+                    if (!item || typeof item !== "object") continue;
+                    const label = String(item.label || "").trim().slice(0, 120);
+                    const secret = String(item.secret ?? "");
+                    if (!label || !secret) continue;
+                    const username = String(item.username || "").trim().slice(0, 200);
+                    const notes = String(item.notes || "").trim().slice(0, 600);
+                    const type = normalizeVaultType(item.type);
+                    const createdAt = typeof item.createdAt === "number" ? item.createdAt : Date.now();
+                    const updatedAt = typeof item.updatedAt === "number" ? item.updatedAt : createdAt;
+                    out.push({
+                      id: String(item.id || makeId("vault")),
+                      type,
+                      label,
+                      username,
+                      secret,
+                      notes,
+                      createdAt,
+                      updatedAt
+                    });
+                  }
+                  out.sort((a, b) => b.updatedAt - a.updatedAt);
+                  return out.slice(0, 500);
+                }
+
+                function setVaultInputReveal(on) {
+                  const input = el("vaultSecretInput");
+                  const btn = el("vaultRevealInputBtn");
+                  if (!input) return;
+                  input.type = on ? "text" : "password";
+                  if (btn) btn.textContent = on ? "Hide" : "Show";
+                }
+
+                function clearVaultEditor({ keepStatus = false } = {}) {
+                  const idInput = el("vaultEditIdInput");
+                  const labelInput = el("vaultLabelInput");
+                  const typeInput = el("vaultTypeInput");
+                  const usernameInput = el("vaultUsernameInput");
+                  const secretInput = el("vaultSecretInput");
+                  const notesInput = el("vaultNotesInput");
+                  const saveBtn = el("vaultSaveEntryBtn");
+                  if (idInput) idInput.value = "";
+                  if (labelInput) labelInput.value = "";
+                  if (typeInput) typeInput.value = "login";
+                  if (usernameInput) usernameInput.value = "";
+                  if (secretInput) {
+                    secretInput.value = "";
+                    secretInput.placeholder = "Secret value";
+                  }
+                  if (notesInput) notesInput.value = "";
+                  if (saveBtn) saveBtn.textContent = "Save Secret";
+                  setVaultInputReveal(false);
+                  if (!keepStatus) setStatusRight("");
+                }
+
+                function readVaultStore() {
+                  let parsed = null;
+                  try {
+                    parsed = JSON.parse(String(localStorage.getItem(STORAGE.vaultStore) || ""));
+                  } catch {
+                    parsed = null;
+                  }
+                  if (!parsed || typeof parsed !== "object") return null;
+                  const kdf = parsed.kdf && typeof parsed.kdf === "object" ? parsed.kdf : null;
+                  const cipher = parsed.cipher && typeof parsed.cipher === "object" ? parsed.cipher : null;
+                  if (!kdf || !cipher) return null;
+                  const salt = String(kdf.salt || "").trim();
+                  const iv = String(cipher.iv || "").trim();
+                  const ciphertext = String(cipher.ciphertext || "").trim();
+                  const iterations = Number(kdf.iterations);
+                  if (!salt || !iv || !ciphertext || !Number.isFinite(iterations) || iterations < 10_000) return null;
+                  return {
+                    version: Number(parsed.version) || VAULT_STORE_VERSION,
+                    kdf: {
+                      alg: String(kdf.alg || "PBKDF2-SHA256"),
+                      iterations,
+                      salt
+                    },
+                    cipher: {
+                      alg: String(cipher.alg || "AES-GCM-256"),
+                      iv,
+                      ciphertext
+                    }
+                  };
+                }
+
+                async function deriveVaultKey(passphrase, saltBytes, iterations) {
+                  const pass = String(passphrase || "");
+                  if (!pass) throw new Error("Enter a vault passphrase.");
+                  if (!vaultWebCryptoAvailable()) throw new Error("Vault requires WebCrypto support.");
+                  const encoder = new TextEncoder();
+                  const baseKey = await window.crypto.subtle.importKey("raw", encoder.encode(pass), "PBKDF2", false, ["deriveKey"]);
+                  return window.crypto.subtle.deriveKey(
+                    { name: "PBKDF2", salt: saltBytes, iterations, hash: "SHA-256" },
+                    baseKey,
+                    { name: "AES-GCM", length: 256 },
+                    false,
+                    ["encrypt", "decrypt"]
+                  );
+                }
+
+                async function decryptVaultPayload(store, key) {
+                  const ivBytes = b64ToBytes(store?.cipher?.iv);
+                  const cipherBytes = b64ToBytes(store?.cipher?.ciphertext);
+                  const buf = await window.crypto.subtle.decrypt({ name: "AES-GCM", iv: ivBytes }, key, cipherBytes);
+                  const text = new TextDecoder().decode(buf);
+                  let parsed = null;
+                  try {
+                    parsed = JSON.parse(String(text || ""));
+                  } catch {
+                    parsed = null;
+                  }
+                  if (!parsed || typeof parsed !== "object") throw new Error("Vault data is unreadable.");
+                  return normalizeVaultEntries(parsed.entries);
+                }
+
+                async function persistVaultEntries(entries) {
+                  if (!vaultState.unlocked || !vaultState.key) throw new Error("Unlock the vault first.");
+                  const normalized = normalizeVaultEntries(entries);
+                  const iv = new Uint8Array(12);
+                  window.crypto.getRandomValues(iv);
+                  const payload = JSON.stringify({ entries: normalized, savedAt: Date.now() });
+                  const bytes = new TextEncoder().encode(payload);
+                  const encrypted = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv }, vaultState.key, bytes);
+                  const store = {
+                    version: VAULT_STORE_VERSION,
+                    kdf: {
+                      alg: "PBKDF2-SHA256",
+                      iterations: vaultState.iterations,
+                      salt: vaultState.saltB64
+                    },
+                    cipher: {
+                      alg: "AES-GCM-256",
+                      iv: bytesToB64(iv),
+                      ciphertext: bytesToB64(new Uint8Array(encrypted))
+                    },
+                    updatedAt: new Date().toISOString()
+                  };
+                  localStorage.setItem(STORAGE.vaultStore, JSON.stringify(store));
+                  vaultState.entries = normalized;
+                }
+
+                function lockVault({ keepStatus = false } = {}) {
+                  vaultState = {
+                    unlocked: false,
+                    key: null,
+                    saltB64: "",
+                    iterations: VAULT_KDF_ITERATIONS,
+                    entries: []
+                  };
+                  clearVaultEditor({ keepStatus: true });
+                  if (!keepStatus) setStatusRight("Vault locked.");
+                  renderVaultUi();
+                }
+
+                async function unlockVaultFromInput() {
+                  if (!vaultWebCryptoAvailable()) {
+                    setStatusRight("Vault is unavailable in this browser.", true);
+                    return;
+                  }
+                  const input = el("vaultPassphraseInput");
+                  const passphrase = String(input?.value || "");
+                  if (!passphrase) {
+                    setStatusRight("Enter a vault passphrase.", true);
+                    input?.focus?.();
+                    return;
+                  }
+
+                  setStatusRight("Unlocking vault…");
+                  try {
+                    const rawStore = String(localStorage.getItem(STORAGE.vaultStore) || "").trim();
+                    const existing = readVaultStore();
+                    if (!existing && rawStore) throw new Error("Vault data appears corrupted.");
+                    if (!existing) {
+                      const salt = new Uint8Array(16);
+                      window.crypto.getRandomValues(salt);
+                      const key = await deriveVaultKey(passphrase, salt, VAULT_KDF_ITERATIONS);
+                      vaultState = {
+                        unlocked: true,
+                        key,
+                        saltB64: bytesToB64(salt),
+                        iterations: VAULT_KDF_ITERATIONS,
+                        entries: []
+                      };
+                      await persistVaultEntries([]);
+                      setStatusRight("Vault created and unlocked.");
+                    } else {
+                      const salt = b64ToBytes(existing.kdf.salt);
+                      const iterations = parseInt(String(existing.kdf.iterations || VAULT_KDF_ITERATIONS), 10);
+                      const key = await deriveVaultKey(passphrase, salt, iterations);
+                      const entries = await decryptVaultPayload(existing, key);
+                      vaultState = {
+                        unlocked: true,
+                        key,
+                        saltB64: existing.kdf.salt,
+                        iterations,
+                        entries
+                      };
+                      setStatusRight(`Vault unlocked (${entries.length} secret${entries.length === 1 ? "" : "s"}).`);
+                    }
+                    if (input) input.value = "";
+                    clearVaultEditor({ keepStatus: true });
+                    renderVaultUi();
+                  } catch {
+                    setStatusRight("Vault unlock failed. Check passphrase.", true);
+                  }
+                }
+
+                function renderVaultUi() {
+                  const status = el("vaultStatusText");
+                  const unlockBtn = el("vaultUnlockBtn");
+                  const lockBtn = el("vaultLockBtn");
+                  const passInput = el("vaultPassphraseInput");
+                  const editorField = el("vaultEditorField");
+                  const listField = el("vaultListField");
+                  const list = el("vaultEntryList");
+                  if (!status || !unlockBtn || !lockBtn || !editorField || !listField || !list) return;
+
+                  const available = vaultWebCryptoAvailable();
+                  if (!available) {
+                    status.textContent = "Vault unavailable: this browser does not support WebCrypto.";
+                    unlockBtn.disabled = true;
+                    lockBtn.disabled = true;
+                    if (passInput) passInput.disabled = true;
+                    editorField.hidden = true;
+                    listField.hidden = true;
+                    list.innerHTML = "";
+                    return;
+                  }
+
+                  unlockBtn.disabled = false;
+                  lockBtn.disabled = !vaultState.unlocked;
+                  if (passInput) passInput.disabled = false;
+
+                  if (!vaultState.unlocked) {
+                    status.textContent = "Vault is locked.";
+                    editorField.hidden = true;
+                    listField.hidden = true;
+                    list.innerHTML = "";
+                    return;
+                  }
+
+                  status.textContent = `Vault unlocked • ${vaultState.entries.length} secret${vaultState.entries.length === 1 ? "" : "s"}.`;
+                  editorField.hidden = false;
+                  listField.hidden = false;
+
+                  if (!vaultState.entries.length) {
+                    list.innerHTML = `<div class="hint">No secrets stored yet.</div>`;
+                    return;
+                  }
+
+                  list.innerHTML = vaultState.entries
+                    .map((entry) => {
+                      const who = entry.username ? ` • ${escapeHTML(entry.username)}` : "";
+                      const notes = entry.notes ? `<div class="vault-entry-sub">${escapeHTML(entry.notes)}</div>` : "";
+                      return `
+                        <div class="vault-entry-card">
+                          <div class="vault-entry-head">
+                            <div>
+                              <div class="vault-entry-title">${escapeHTML(entry.label)}</div>
+                              <div class="vault-entry-sub">${escapeHTML(vaultTypeLabel(entry.type))}${who} • ${escapeHTML(maskVaultSecret(entry.secret))}</div>
+                            </div>
+                            <div class="vault-entry-actions">
+                              <button class="btn tiny secondary" data-vault-action="edit" data-vault-id="${escapeHTML(entry.id)}" type="button">Edit</button>
+                              <button class="btn tiny secondary" data-vault-action="copy-user" data-vault-id="${escapeHTML(entry.id)}" type="button">Copy User</button>
+                              <button class="btn tiny secondary" data-vault-action="copy-secret" data-vault-id="${escapeHTML(entry.id)}" type="button">Copy Secret</button>
+                              <button class="btn tiny danger" data-vault-action="delete" data-vault-id="${escapeHTML(entry.id)}" type="button">Delete</button>
+                            </div>
+                          </div>
+                          ${notes}
+                        </div>
+                      `;
+                    })
+                    .join("");
+                }
+
+                function findVaultEntryById(entryId) {
+                  const id = String(entryId || "").trim();
+                  if (!id) return null;
+                  return vaultState.entries.find((entry) => entry && entry.id === id) || null;
+                }
+
+                function editVaultEntry(entryId) {
+                  const entry = findVaultEntryById(entryId);
+                  if (!entry) return;
+                  const idInput = el("vaultEditIdInput");
+                  const labelInput = el("vaultLabelInput");
+                  const typeInput = el("vaultTypeInput");
+                  const usernameInput = el("vaultUsernameInput");
+                  const secretInput = el("vaultSecretInput");
+                  const notesInput = el("vaultNotesInput");
+                  const saveBtn = el("vaultSaveEntryBtn");
+                  if (idInput) idInput.value = entry.id;
+                  if (labelInput) labelInput.value = entry.label;
+                  if (typeInput) typeInput.value = normalizeVaultType(entry.type);
+                  if (usernameInput) usernameInput.value = entry.username || "";
+                  if (secretInput) {
+                    secretInput.value = "";
+                    secretInput.placeholder = "Leave blank to keep current secret";
+                  }
+                  if (notesInput) notesInput.value = entry.notes || "";
+                  if (saveBtn) saveBtn.textContent = "Update Secret";
+                  setVaultInputReveal(false);
+                  labelInput?.focus?.();
+                }
+
+                async function saveVaultEntryFromEditor() {
+                  if (!vaultState.unlocked) {
+                    setStatusRight("Unlock the vault first.", true);
+                    return;
+                  }
+                  const id = String(el("vaultEditIdInput")?.value || "").trim();
+                  const label = String(el("vaultLabelInput")?.value || "").trim();
+                  const type = normalizeVaultType(el("vaultTypeInput")?.value || "login");
+                  const username = String(el("vaultUsernameInput")?.value || "").trim();
+                  const secretRaw = String(el("vaultSecretInput")?.value || "");
+                  const notes = String(el("vaultNotesInput")?.value || "").trim();
+
+                  if (!label) {
+                    setStatusRight("Vault label is required.", true);
+                    el("vaultLabelInput")?.focus?.();
+                    return;
+                  }
+
+                  const list = Array.isArray(vaultState.entries) ? vaultState.entries.slice() : [];
+                  const index = id ? list.findIndex((entry) => String(entry?.id || "") === id) : -1;
+                  if (id && index < 0) {
+                    setStatusRight("Vault entry not found.", true);
+                    return;
+                  }
+
+                  const now = Date.now();
+                  const current = index >= 0 ? list[index] : null;
+                  const nextSecret = secretRaw || String(current?.secret || "");
+                  if (!nextSecret) {
+                    setStatusRight("Secret value is required.", true);
+                    el("vaultSecretInput")?.focus?.();
+                    return;
+                  }
+
+                  const nextEntry = {
+                    id: current?.id || makeId("vault"),
+                    type,
+                    label,
+                    username,
+                    secret: nextSecret,
+                    notes,
+                    createdAt: current?.createdAt || now,
+                    updatedAt: now
+                  };
+
+                  if (index >= 0) list[index] = nextEntry;
+                  else list.unshift(nextEntry);
+
+                  try {
+                    await persistVaultEntries(list);
+                    clearVaultEditor({ keepStatus: true });
+                    renderVaultUi();
+                    setStatusRight(index >= 0 ? "Vault entry updated." : "Vault entry saved.");
+                  } catch (err) {
+                    setStatusRight(String(err?.message || err) || "Could not save vault entry.", true);
+                  }
+                }
+
+                async function deleteVaultEntry(entryId) {
+                  const entry = findVaultEntryById(entryId);
+                  if (!entry) return;
+                  const ok = await openConfirmModal({
+                    title: "Delete vault entry?",
+                    message: `Delete “${entry.label}” from the encrypted vault?`,
+                    confirmText: "Delete",
+                    cancelText: "Cancel",
+                    danger: true
+                  });
+                  if (!ok) return;
+                  const next = (vaultState.entries || []).filter((item) => String(item?.id || "") !== String(entry.id));
+                  try {
+                    await persistVaultEntries(next);
+                    if (String(el("vaultEditIdInput")?.value || "") === String(entry.id)) clearVaultEditor({ keepStatus: true });
+                    renderVaultUi();
+                    setStatusRight("Vault entry deleted.");
+                  } catch (err) {
+                    setStatusRight(String(err?.message || err) || "Could not delete vault entry.", true);
+                  }
+                }
+
+                async function copyVaultField(value, label) {
+                  const text = String(value || "");
+                  if (!text) {
+                    setStatusRight(`${label} is empty.`, true);
+                    return;
+                  }
+                  const ok = await copyText(text);
+                  setStatusRight(ok ? `${label} copied.` : `Could not copy ${label.toLowerCase()}.`, !ok);
+                  if (ok) armClipboardClear(CLIPBOARD_CLEAR_DELAY_MS);
+                }
+
+                async function onVaultListClick(event) {
+                  const btn = event?.target?.closest?.("button[data-vault-action][data-vault-id]");
+                  if (!btn) return;
+                  const action = String(btn.getAttribute("data-vault-action") || "").trim();
+                  const entryId = String(btn.getAttribute("data-vault-id") || "").trim();
+                  if (!action || !entryId) return;
+                  const entry = findVaultEntryById(entryId);
+                  if (!entry) return;
+                  if (action === "edit") {
+                    editVaultEntry(entryId);
+                    return;
+                  }
+                  if (action === "copy-user") {
+                    await copyVaultField(entry.username, "Username");
+                    return;
+                  }
+                  if (action === "copy-secret") {
+                    await copyVaultField(entry.secret, "Secret");
+                    return;
+                  }
+                  if (action === "delete") {
+                    await deleteVaultEntry(entryId);
+                  }
+                }
 
 		            async function armAesSealFromPassphrase(passphrase) {
 		              const pass = String(passphrase || "");
@@ -10661,11 +11210,12 @@ Style rules:
           const selected = state.templateEditorId && state.profile.templates?.some((t) => t.id === state.templateEditorId)
             ? state.templateEditorId
             : firstTemplate;
-          if (templatesSelect) templatesSelect.value = selected;
-	          setTemplateEditorFromId(selected);
-		          refreshTeachingsPre();
-		          renderVoicePreviewFromDraft();
-		            updateEffectiveSettingsSummaryFromDraft();
+		          if (templatesSelect) templatesSelect.value = selected;
+		          setTemplateEditorFromId(selected);
+			          refreshTeachingsPre();
+                renderVaultUi();
+			          renderVoicePreviewFromDraft();
+			            updateEffectiveSettingsSummaryFromDraft();
 		
 		          try {
 		            // Restore last Settings category (“window”) on open.
@@ -10876,23 +11426,24 @@ Style rules:
         }
 
 	        async function clearLocalData() {
-            const ok = await openConfirmModal({
-              title: "Clear local data?",
-              message:
-                "This removes: history, profile, templates, teachings, and saved sessions.\n\nThis cannot be undone.",
-              confirmText: "Clear Local Data",
-              cancelText: "Cancel",
-              danger: true
-            });
+	            const ok = await openConfirmModal({
+	              title: "Clear local data?",
+	              message:
+	                "This removes: history, profile, templates, teachings, saved sessions, and encrypted vault data.\n\nThis cannot be undone.",
+	              confirmText: "Clear Local Data",
+	              cancelText: "Cancel",
+	              danger: true
+	            });
             if (!ok) return;
 
 	          try {
 	            for (const key of Object.values(STORAGE)) {
 	              try {
 	                localStorage.removeItem(key);
-              } catch {
-                // ignore
-              }
+	          } catch {
+	            // ignore
+	          }
+            lockVault({ keepStatus: true });
               try {
                 sessionStorage.removeItem(key);
               } catch {
@@ -11418,6 +11969,7 @@ Style rules:
 	          updatePrivacyLight();
 	          refreshTemplateSelects();
 	          refreshTeachingsPre();
+            renderVaultUi();
 	          // First-run notice: non-blocking and shown only once (persisted in localStorage).
 	          maybeShowFirstRunNotice();
 
@@ -11460,7 +12012,7 @@ Style rules:
 		            }
 				          });
 					          const SETTINGS_ACTIVE_PANEL_KEY = "mkSettingsActivePanelV1";
-				          const SETTINGS_PANEL_IDS = ["settingsAll", "settingsModels", "settingsAgents", "settingsModes", "settingsPrivacy", "settingsNetwork"];
+					          const SETTINGS_PANEL_IDS = ["settingsAll", "settingsModels", "settingsAgents", "settingsModes", "settingsPrivacy", "settingsVault", "settingsNetwork"];
 				
 				          const getActiveSettingsPanel = () => {
 				            try {
@@ -11868,10 +12420,25 @@ Style rules:
               // ignore
             }
           });
-          el("saveTemplateBtn").addEventListener("click", saveTemplateFromEditor);
-	          el("deleteTemplateBtn").addEventListener("click", deleteTemplateFromEditor);
-	          el("clearTeachingsBtn").addEventListener("click", clearTeachings);
-	          el("clearLocalDataBtn").addEventListener("click", clearLocalData);
+	          el("saveTemplateBtn").addEventListener("click", saveTemplateFromEditor);
+		          el("deleteTemplateBtn").addEventListener("click", deleteTemplateFromEditor);
+		          el("clearTeachingsBtn").addEventListener("click", clearTeachings);
+		          el("clearLocalDataBtn").addEventListener("click", clearLocalData);
+              el("vaultUnlockBtn")?.addEventListener("click", unlockVaultFromInput);
+              el("vaultLockBtn")?.addEventListener("click", () => lockVault());
+              el("vaultSaveEntryBtn")?.addEventListener("click", saveVaultEntryFromEditor);
+              el("vaultClearEntryBtn")?.addEventListener("click", () => clearVaultEditor());
+              el("vaultRevealInputBtn")?.addEventListener("click", () => {
+                const input = el("vaultSecretInput");
+                const show = String(input?.type || "password") === "password";
+                setVaultInputReveal(show);
+              });
+              el("vaultPassphraseInput")?.addEventListener("keydown", (e) => {
+                if (e.key !== "Enter") return;
+                e.preventDefault();
+                unlockVaultFromInput();
+              });
+              el("vaultEntryList")?.addEventListener("click", onVaultListClick);
             el("adminCodeApplyBtn")?.addEventListener("click", async () => {
               const input = el("adminCodeInput");
               const code = String(input?.value || "").trim();
