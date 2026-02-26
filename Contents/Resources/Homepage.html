@@ -542,6 +542,92 @@
         gap: 6px;
       }
 
+      .chat-card {
+        margin: 24px 0;
+      }
+
+      .chat-shell {
+        display: grid;
+        gap: 10px;
+      }
+
+      .chat-log {
+        border: 1px solid rgba(126, 207, 255, 0.26);
+        border-radius: 10px;
+        background: rgba(4, 22, 40, 0.72);
+        min-height: 180px;
+        max-height: 360px;
+        overflow: auto;
+        padding: 10px;
+        display: grid;
+        gap: 8px;
+      }
+
+      .chat-empty {
+        color: var(--text-dim);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.76rem;
+      }
+
+      .chat-msg {
+        border: 1px solid rgba(126, 207, 255, 0.22);
+        border-radius: 10px;
+        background: rgba(4, 22, 40, 0.58);
+        padding: 8px 9px;
+        display: grid;
+        gap: 4px;
+      }
+
+      .chat-msg.user {
+        border-color: rgba(74, 240, 191, 0.34);
+      }
+
+      .chat-msg.assistant {
+        border-color: rgba(125, 228, 255, 0.32);
+      }
+
+      .chat-msg-head {
+        color: var(--accent);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.68rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .chat-msg-body {
+        white-space: pre-wrap;
+        word-break: break-word;
+        line-height: 1.45;
+      }
+
+      .chat-composer {
+        display: grid;
+        gap: 8px;
+      }
+
+      .chat-composer label {
+        color: var(--text-dim);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.76rem;
+      }
+
+      .chat-composer textarea {
+        min-height: 96px;
+        resize: vertical;
+      }
+
+      .chat-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .chat-status {
+        color: var(--accent);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.75rem;
+      }
+
       .warn::before {
         background: var(--warn);
         box-shadow: 0 0 0 4px rgba(255, 224, 125, 0.2);
@@ -789,6 +875,24 @@
                     <div id="vault_list_wrap" hidden>
                       <div class="vault-list" id="vault_list"></div>
                     </div>
+                  </div>
+                </section>
+
+                <section id="assistant-chat" class="blueprint-card chat-card">
+                  <h3>Chat Assistant</h3>
+                  <div class="chat-shell">
+                    <div class="chat-log" id="chat_log" aria-live="polite">
+                      <div class="chat-empty">Type a prompt below and click Send.</div>
+                    </div>
+                    <div class="chat-composer">
+                      <label for="chat_input">Prompt</label>
+                      <textarea id="chat_input" placeholder="Ask the assistant anything..." autocomplete="off"></textarea>
+                      <div class="chat-actions">
+                        <button id="chat_send_btn">Send</button>
+                        <button id="chat_clear_btn">Clear Chat</button>
+                      </div>
+                    </div>
+                    <div class="chat-status" id="chat_status">Ready.</div>
                   </div>
                 </section>
 
@@ -1483,6 +1587,206 @@
       }
 
       initVault();
+
+      const chatState = {
+        loading: false,
+        messages: [],
+        model: "",
+        modelChecked: false
+      };
+
+      function chatEl(id) {
+        return document.getElementById(id);
+      }
+
+      function chatStatus(text, isError) {
+        const node = chatEl("chat_status");
+        if (!node) return;
+        node.textContent = String(text || "");
+        node.style.color = isError ? "#ffb0b0" : "var(--accent)";
+      }
+
+      function chatMessagesForApi() {
+        const history = Array.isArray(chatState.messages) ? chatState.messages.slice(-12) : [];
+        const clean = history
+          .map((msg) => ({
+            role: msg.role === "assistant" ? "assistant" : "user",
+            content: String(msg.content || "").trim()
+          }))
+          .filter((msg) => msg.content);
+        return [
+          {
+            role: "system",
+            content: "You are a concise assistant. Return direct answers."
+          },
+          ...clean
+        ];
+      }
+
+      function renderChat() {
+        const log = chatEl("chat_log");
+        if (!log) return;
+        const list = Array.isArray(chatState.messages) ? chatState.messages : [];
+        if (!list.length) {
+          log.innerHTML = `<div class="chat-empty">Type a prompt below and click Send.</div>`;
+        } else {
+          log.innerHTML = list
+            .map((msg) => {
+              const role = msg.role === "assistant" ? "assistant" : "user";
+              const label = role === "assistant" ? "Assistant" : "You";
+              return `
+                <div class="chat-msg ${role}">
+                  <div class="chat-msg-head">${label}</div>
+                  <div class="chat-msg-body">${escapeHtml(String(msg.content || ""))}</div>
+                </div>
+              `;
+            })
+            .join("");
+        }
+
+        const sendBtn = chatEl("chat_send_btn");
+        const clearBtn = chatEl("chat_clear_btn");
+        const input = chatEl("chat_input");
+        if (sendBtn) sendBtn.disabled = chatState.loading;
+        if (clearBtn) clearBtn.disabled = chatState.loading || !list.length;
+        if (input) input.disabled = chatState.loading;
+
+        log.scrollTop = log.scrollHeight;
+      }
+
+      function appendChatMessage(role, content) {
+        const text = String(content || "").trim();
+        if (!text) return;
+        chatState.messages.push({ role: role === "assistant" ? "assistant" : "user", content: text });
+        if (chatState.messages.length > 40) {
+          chatState.messages = chatState.messages.slice(-40);
+        }
+      }
+
+      async function readApiError(res) {
+        let payload = null;
+        try {
+          payload = await res.json();
+        } catch {
+          payload = null;
+        }
+        const direct = String(payload?.error || "").trim();
+        if (direct) return direct;
+        const nested = String(payload?.details?.error?.message || payload?.details?.message || "").trim();
+        if (nested) return nested;
+        return `Request failed (${res.status})`;
+      }
+
+      async function refreshChatModel(options) {
+        const quiet = Boolean(options && options.quiet);
+        try {
+          const res = await fetch("/api/tags", { cache: "no-store" });
+          if (!res.ok) throw new Error(await readApiError(res));
+          const data = await res.json();
+          const models = Array.isArray(data?.models) ? data.models : [];
+          const next = models
+            .map((item) => String(item?.name || item?.model || "").trim())
+            .find(Boolean) || "";
+          chatState.model = next;
+          chatState.modelChecked = true;
+          if (!quiet && next) chatStatus(`Model ready: ${next}`, false);
+          if (!quiet && !next) chatStatus("No model available. Download or configure one first.", true);
+          return next;
+        } catch (err) {
+          chatState.model = "";
+          chatState.modelChecked = true;
+          if (!quiet) chatStatus(String(err?.message || err || "Could not load models."), true);
+          return "";
+        }
+      }
+
+      async function callChatApi() {
+        if (!chatState.modelChecked) await refreshChatModel({ quiet: true });
+        const payload = {
+          messages: chatMessagesForApi(),
+          options: { temperature: 0.2 }
+        };
+        if (chatState.model) payload.model = chatState.model;
+
+        let res = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok) return res;
+
+        const firstError = await readApiError(res);
+        if (/model is required/i.test(firstError)) {
+          const model = await refreshChatModel({ quiet: true });
+          if (model) {
+            payload.model = model;
+            res = await fetch("/api/chat", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload)
+            });
+            if (res.ok) return res;
+          }
+        }
+
+        throw new Error(firstError);
+      }
+
+      async function sendChatPrompt() {
+        if (chatState.loading) return;
+        const input = chatEl("chat_input");
+        const prompt = String(input?.value || "").trim();
+        if (!prompt) {
+          chatStatus("Enter a prompt first.", true);
+          input?.focus?.();
+          return;
+        }
+
+        appendChatMessage("user", prompt);
+        if (input) input.value = "";
+        chatState.loading = true;
+        chatStatus("Thinking...", false);
+        renderChat();
+
+        try {
+          const res = await callChatApi();
+          const data = await res.json();
+          const answer = String(data?.message?.content || "").trim();
+          if (!answer) throw new Error("Assistant returned an empty response.");
+          appendChatMessage("assistant", answer);
+          chatStatus("Done.", false);
+        } catch (err) {
+          const message = String(err?.message || err || "Chat request failed.");
+          appendChatMessage("assistant", `Error: ${message}`);
+          chatStatus(message, true);
+        } finally {
+          chatState.loading = false;
+          renderChat();
+        }
+      }
+
+      function clearChat() {
+        if (chatState.loading) return;
+        chatState.messages = [];
+        chatStatus("Cleared.", false);
+        renderChat();
+      }
+
+      function initChat() {
+        chatEl("chat_send_btn")?.addEventListener("click", sendChatPrompt);
+        chatEl("chat_clear_btn")?.addEventListener("click", clearChat);
+        chatEl("chat_input")?.addEventListener("keydown", (event) => {
+          if (event.key === "Enter" && !event.shiftKey) {
+            event.preventDefault();
+            sendChatPrompt();
+          }
+        });
+        renderChat();
+        refreshChatModel({ quiet: true }).catch(() => {});
+      }
+
+      initChat();
 
       function escapeHtml(s){ return (s+'').replace(/[&<>"']/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c];}); }
     </script>
