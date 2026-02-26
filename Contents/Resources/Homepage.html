@@ -1031,6 +1031,7 @@
                     <div class="browser-row">
                       <select id="browser_mode_select" class="browser-mode" aria-label="Browser mode">
                         <option value="smart">Smart (Auto fallback)</option>
+                        <option value="safari">Safari (Native WebKit)</option>
                         <option value="live">Live (Iframe)</option>
                         <option value="reader">Reader (Always works)</option>
                       </select>
@@ -2736,7 +2737,7 @@
 
       function browserSelectedMode() {
         const raw = String(browserEl("browser_mode_select")?.value || "smart").trim().toLowerCase();
-        if (raw === "live" || raw === "reader") return raw;
+        if (raw === "live" || raw === "reader" || raw === "safari") return raw;
         return "smart";
       }
 
@@ -2766,7 +2767,7 @@
 
       function browserRequestedMode(forcedMode) {
         const req = String(forcedMode || "").trim().toLowerCase();
-        if (req === "live" || req === "reader") return req;
+        if (req === "live" || req === "reader" || req === "safari") return req;
         return browserSelectedMode();
       }
 
@@ -2935,6 +2936,26 @@
         browserRemember(url);
 
         const requestedMode = browserRequestedMode(forcedMode);
+        if (requestedMode === "safari") {
+          if (!fromHistory) {
+            const entry = { url, mode: "safari" };
+            if (replace && browserState.index >= 0) {
+              browserState.history[browserState.index] = entry;
+            } else {
+              const next = browserState.history.slice(0, browserState.index + 1);
+              next.push(entry);
+              browserState.history = next;
+              browserState.index = next.length - 1;
+            }
+          }
+          if (navToken !== browserState.navToken) return false;
+          browserState.currentMode = "safari";
+          browserState.loading = false;
+          browserRenderNav();
+          await browserOpenSafari(url);
+          return true;
+        }
+
         let mode = requestedMode;
         let reason = "";
         let readerBase = browserState.endpointBase || chatState.apiBase || "";
@@ -3061,7 +3082,7 @@
             return "smart";
           }
         })();
-        if (modeSelect) modeSelect.value = savedMode === "live" || savedMode === "reader" ? savedMode : "smart";
+        if (modeSelect) modeSelect.value = savedMode === "live" || savedMode === "reader" || savedMode === "safari" ? savedMode : "smart";
 
         const startUrl = normalizeBrowserUrl(savedUrl) || "https://chatgpt.com";
         if (input) input.value = startUrl;
