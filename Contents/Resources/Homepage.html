@@ -1039,6 +1039,7 @@
                       </label>
                       <button id="browser_open_btn" type="button">Open</button>
                       <button id="browser_reader_btn" type="button">Open Reader</button>
+                      <button id="browser_safari_btn" type="button">Open Safari</button>
                       <button id="browser_external_btn" type="button">Open External</button>
                       <button id="browser_use_url_btn" type="button">Use URL in Prompt</button>
                     </div>
@@ -1490,6 +1491,7 @@
         clearVaultForm();
         renderVault();
         vaultStatus("Vault is locked.", false);
+        syncChatLlmUi();
       }
 
       async function unlockVault() {
@@ -1544,6 +1546,8 @@
           if (input) input.value = "";
           clearVaultForm();
           renderVault();
+          syncChatLlmUi();
+          diagnoseChatTransport({ quiet: true }).catch(() => {});
         } catch (err) {
           vaultStatus(String(err?.message || "Unlock failed. Check passphrase."), true);
         }
@@ -1750,6 +1754,50 @@
 
       initVault();
 
+      function vaultOpenAiEntryScore(entry) {
+        if (!entry || typeof entry !== "object") return -1;
+        const secret = String(entry.secret || "").trim();
+        if (!secret) return -1;
+        const type = normalizeVaultType(entry.type);
+        const search = `${String(entry.label || "")} ${String(entry.notes || "")} ${String(entry.username || "")}`.toLowerCase();
+
+        let score = 0;
+        if (type === "api") score += 10;
+        if (type === "token") score += 6;
+        if (/openai|chatgpt|gpt|gateway|api key|assistant/i.test(search)) score += 12;
+        if (/ollama|local only|local llm/i.test(search)) score -= 9;
+        if (/^sk-(proj-)?/i.test(secret)) score += 25;
+        if (/^[a-z0-9._-]{20,}$/i.test(secret)) score += 3;
+        return score;
+      }
+
+      function bestVaultOpenAiEntry() {
+        if (!vaultState.unlocked || !Array.isArray(vaultState.entries)) return null;
+        let best = null;
+        let bestScore = -1;
+        const list = vaultState.entries.slice().sort((a, b) => Number(b?.updatedAt || 0) - Number(a?.updatedAt || 0));
+        for (const entry of list) {
+          const score = vaultOpenAiEntryScore(entry);
+          if (score <= bestScore) continue;
+          bestScore = score;
+          best = entry;
+        }
+        if (bestScore < 8) return null;
+        return best;
+      }
+
+      function activeVaultOpenAiKey() {
+        const entry = bestVaultOpenAiEntry();
+        if (!entry) return "";
+        return String(entry.secret || "").trim();
+      }
+
+      function chatAuthSourceLabel(mode) {
+        const m = normalizeProviderMode(mode);
+        if (m === "local") return "Key: local mode";
+        return activeVaultOpenAiKey() ? "Key: vault" : "Key: server env";
+      }
+
       const CHAT_LLM_PROVIDER_KEY = "atlasChatLlmProviderV1";
       const CHAT_LLM_LOCAL_MODEL_KEY = "atlasChatLocalModelV1";
       const CHAT_LLM_API_MODEL_KEY = "atlasChatApiModelV1";
@@ -1818,7 +1866,7 @@
       function modeSummaryLabel() {
         const mode = currentProviderMode();
         const modeLabel = mode === "local" ? "Local" : mode === "api" ? "API" : "Auto";
-        return `${modeLabel} • ${activeModelNameForMode(mode)}`;
+        return `${modeLabel} • ${activeModelNameForMode(mode)} • ${chatAuthSourceLabel(mode)}`;
       }
 
       function persistChatLlmPrefs() {
@@ -1933,8 +1981,28 @@
         return chatState.apiBase || "current origin";
       }
 
+      function shouldAttachVaultKeyForPath(safePath) {
+        const mode = currentProviderMode();
+        if (mode === "local") return false;
+        const pathOnly = String(safePath || "").split("?", 1)[0];
+        if (mode !== "api" && (pathOnly === "/api/tags" || pathOnly === "/api/version")) return false;
+        return pathOnly.startsWith("/api/");
+      }
+
+      function withChatAuthHeaders(safePath, init) {
+        const next = { ...(init || {}) };
+        const headers = new Headers(next.headers || {});
+        if (shouldAttachVaultKeyForPath(safePath)) {
+          const vaultKey = activeVaultOpenAiKey();
+          if (vaultKey) headers.set("X-AgentC-OpenAI-Key", vaultKey);
+        }
+        next.headers = headers;
+        return next;
+      }
+
       async function fetchChatApi(path, init) {
         const safePath = String(path || "").startsWith("/") ? String(path) : `/${String(path || "")}`;
+        const reqInit = withChatAuthHeaders(safePath, init);
         const orderedBases = chatState.apiBase
           ? [chatState.apiBase, ...chatApiBases().filter((base) => base !== chatState.apiBase)]
           : chatApiBases();
@@ -1943,7 +2011,7 @@
         for (const base of orderedBases) {
           const url = base ? `${base}${safePath}` : safePath;
           try {
-            const res = await fetch(url, init);
+            const res = await fetch(url, reqInit);
             const ct = String(res.headers?.get?.("content-type") || "").toLowerCase();
             if (res.status === 404 || res.status === 405 || res.status === 501) {
               lastErr = new Error(`${url} returned HTTP ${res.status}`);
@@ -2491,7 +2559,7 @@
             const version = String(versionBody?.json?.version || "").trim().toLowerCase();
             const okFlag = Boolean(versionBody?.json?.ok);
             if (!(okFlag && (version === "open" || version === "gateway"))) {
-              throw new Error("API mode selected, but OpenAI/Gateway is not configured. Add OPENAI key or switch to Local.");
+              throw new Error("API mode selected, but OpenAI/Gateway is not configured. Unlock Vault with your OpenAI key, or switch to Local.");
             }
           } else {
             await refreshChatModel({ quiet: true });
@@ -2506,7 +2574,16 @@
         } catch (err) {
           chatState.apiReady = false;
           syncChatLlmUi();
-          if (!quiet) chatStatus(String(err?.message || err || "API unavailable."), true);
+          let message = String(err?.message || err || "API unavailable.");
+          if (mode === "api") {
+            const compact = compactError(message).toLowerCase();
+            if (compact.includes("returned http 404") || compact.includes("did not return api json")) {
+              message = "API mode endpoint not found. Run the local dev server and unlock Vault with your OpenAI key.";
+            } else if (!activeVaultOpenAiKey() && compact.includes("could not reach")) {
+              message = "API mode needs a reachable local API server and an OpenAI key (unlock Vault).";
+            }
+          }
+          if (!quiet) chatStatus(message, true);
           return false;
         }
       }
@@ -2633,7 +2710,8 @@
         loading: false,
         currentMode: "live",
         navToken: 0,
-        expectedSrc: ""
+        expectedSrc: "",
+        endpointBase: ""
       };
 
       function browserEl(id) {
@@ -2692,13 +2770,63 @@
         return browserSelectedMode();
       }
 
-      function browserReaderSrc(url) {
-        return `/browser/read?url=${encodeURIComponent(url)}`;
+      function browserEndpointCandidates() {
+        const out = [];
+        if (browserState.endpointBase || browserState.endpointBase === "") out.push(browserState.endpointBase);
+        if (chatState.apiBase || chatState.apiBase === "") out.push(chatState.apiBase);
+        for (const base of chatApiBases()) out.push(base);
+        const filtered = out.filter((base) => {
+          if (base === "") return true;
+          return /^https?:\/\//i.test(String(base || ""));
+        });
+        return Array.from(new Set(filtered));
+      }
+
+      function browserUrlForBase(base, routePath) {
+        const safePath = String(routePath || "").startsWith("/") ? String(routePath) : `/${String(routePath || "")}`;
+        return base ? `${base}${safePath}` : safePath;
+      }
+
+      async function browserFetchApi(routePath, options) {
+        const expectJson = Boolean(options?.expectJson);
+        const candidates = browserEndpointCandidates();
+        const init = {
+          method: String(options?.method || "GET").toUpperCase(),
+          cache: "no-store"
+        };
+
+        let lastErr = null;
+        for (const base of candidates) {
+          const url = browserUrlForBase(base, routePath);
+          try {
+            const res = await fetch(url, init);
+            const ct = String(res.headers?.get?.("content-type") || "").toLowerCase();
+            if (res.status === 404 || res.status === 405 || res.status === 501) {
+              lastErr = new Error(`${url} returned HTTP ${res.status}`);
+              continue;
+            }
+            if (expectJson && !ct.includes("application/json")) {
+              lastErr = new Error(`${url} did not return JSON`);
+              continue;
+            }
+            browserState.endpointBase = base;
+            return { res, base, url };
+          } catch (err) {
+            lastErr = err;
+          }
+        }
+
+        throw new Error(String(lastErr?.message || lastErr || "Browser endpoint unavailable."));
+      }
+
+      function browserReaderSrc(url, base) {
+        const route = `/browser/read?url=${encodeURIComponent(url)}`;
+        return browserUrlForBase(base || browserState.endpointBase || "", route);
       }
 
       async function browserProbe(url) {
         const endpoint = `/browser/probe?url=${encodeURIComponent(url)}`;
-        const resp = await fetch(endpoint, { method: "GET", cache: "no-store" });
+        const { res: resp, base } = await browserFetchApi(endpoint, { method: "GET", expectJson: true });
         if (!resp.ok) {
           throw new Error(`Probe failed (${resp.status}).`);
         }
@@ -2706,7 +2834,27 @@
         if (!data || data.ok === false) {
           throw new Error(String(data?.error || "Probe failed."));
         }
-        return data;
+        return { data, base };
+      }
+
+      async function browserOpenSafari(url) {
+        const target = normalizeBrowserUrl(url || browserCurrentUrl());
+        if (!target) {
+          browserStatus("Enter a valid URL first (e.g. https://chatgpt.com).", true);
+          return false;
+        }
+        const route = `/browser/open?target=safari&url=${encodeURIComponent(target)}`;
+        try {
+          const { res } = await browserFetchApi(route, { method: "GET", expectJson: true });
+          const body = await readResponseBody(res);
+          if (!res.ok) throw new Error(responseErrorText(res, body));
+          browserStatus("Opened in Safari.", false);
+          return true;
+        } catch (err) {
+          browserStatus("Safari bridge unavailable. Opened external browser.", false);
+          browserOpenExternal(target);
+          return false;
+        }
       }
 
       function browserCurrentEntry() {
@@ -2789,12 +2937,15 @@
         const requestedMode = browserRequestedMode(forcedMode);
         let mode = requestedMode;
         let reason = "";
+        let readerBase = browserState.endpointBase || chatState.apiBase || "";
 
         if (requestedMode === "smart") {
           browserStatus("Smart mode is checking compatibility...", false);
           try {
-            const probe = await browserProbe(url);
+            const probeResult = await browserProbe(url);
             if (navToken !== browserState.navToken) return false;
+            const probe = probeResult?.data || {};
+            readerBase = probeResult?.base || readerBase;
             if (probe.frame_allowed === false) {
               mode = "reader";
               reason = String(probe.reason || "Site blocks iframe embedding.");
@@ -2807,6 +2958,9 @@
           }
         } else if (requestedMode === "reader") {
           mode = "reader";
+          if (!readerBase && (location.protocol === "http:" || location.protocol === "https:")) {
+            readerBase = "";
+          }
         } else {
           mode = "live";
         }
@@ -2825,7 +2979,7 @@
           }
         }
 
-        const targetSrc = mode === "reader" ? browserReaderSrc(url) : url;
+        const targetSrc = mode === "reader" ? browserReaderSrc(url, readerBase) : url;
         browserState.currentMode = mode;
         browserState.expectedSrc = targetSrc;
         frame.src = targetSrc;
@@ -2837,9 +2991,9 @@
             browserStatus("Opening in Reader mode.", false);
           }
         } else if (requestedMode === "smart" && reason) {
-          browserStatus(`Smart mode stayed Live (${reason}). If blank, click Open Reader.`, false);
+          browserStatus(`Smart mode stayed Live (${reason}). If blank, click Open Reader or Open Safari.`, false);
         } else {
-          browserStatus("Loading live page... If blank, click Open Reader or Open External.", false);
+          browserStatus("Loading live page... If blank, click Open Reader, Open Safari, or Open External.", false);
         }
         return true;
       }
@@ -2925,6 +3079,7 @@
 
         browserEl("browser_open_btn")?.addEventListener("click", () => { void browserNavigate(String(input?.value || "")); });
         browserEl("browser_reader_btn")?.addEventListener("click", () => { void browserNavigate(String(input?.value || ""), { mode: "reader" }); });
+        browserEl("browser_safari_btn")?.addEventListener("click", () => { void browserOpenSafari(String(input?.value || "")); });
         browserEl("browser_back_btn")?.addEventListener("click", browserBack);
         browserEl("browser_forward_btn")?.addEventListener("click", browserForward);
         browserEl("browser_reload_btn")?.addEventListener("click", browserReload);
@@ -2948,6 +3103,25 @@
           browserRenderNav();
           const mode = browserState.currentMode || "live";
           if (mode === "reader") {
+            let readerText = "";
+            try {
+              readerText = String(frame.contentDocument?.body?.textContent || "").trim().toLowerCase();
+            } catch {
+              readerText = "";
+            }
+            if (/^not found\b/i.test(readerText)) {
+              const bases = browserEndpointCandidates();
+              const nextBase = bases.find((base) => base !== browserState.endpointBase);
+              const current = browserCurrentUrl();
+              if (nextBase !== undefined && current) {
+                browserState.endpointBase = nextBase;
+                browserStatus("Reader endpoint missing on this origin. Trying local server...", false);
+                void browserNavigate(current, { replace: true, mode: "reader" });
+                return;
+              }
+              browserStatus("Reader endpoint not found. Use Open Safari or Open External.", true);
+              return;
+            }
             browserStatus("Loaded in Reader mode.", false);
           } else {
             let stayedBlank = false;
@@ -2969,7 +3143,7 @@
                 return;
               }
             }
-            browserStatus("Loaded in live panel. If blank, click Open Reader.", false);
+            browserStatus("Loaded in live panel. If blank, click Open Reader or Open Safari.", false);
           }
         });
         frame?.addEventListener("error", () => {
@@ -2983,7 +3157,7 @@
               return;
             }
           }
-          browserStatus("Could not load page in panel. Try Open External.", true);
+          browserStatus("Could not load page in panel. Try Open Safari or Open External.", true);
         });
 
         browserRenderNav();

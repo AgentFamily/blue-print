@@ -332,6 +332,21 @@ def _browser_probe(url: str, timeout_s: float = 10.0) -> Dict[str, Any]:
     }
 
 
+def _open_url_external(url: str, target: str = "default") -> Tuple[bool, str]:
+    target_norm = str(target or "default").strip().lower()
+    cmd: list[str]
+    if target_norm == "safari":
+        cmd = ["open", "-a", "Safari", str(url)]
+    else:
+        cmd = ["open", str(url)]
+    try:
+        subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, close_fds=True)
+        label = "Safari" if target_norm == "safari" else "default browser"
+        return True, f"Opened in {label}."
+    except Exception as e:
+        return False, f"Could not open URL: {e}"
+
+
 def _reader_extract_title(html_text: str) -> str:
     m = re.search(r"<title[^>]*>([\s\S]*?)</title>", html_text or "", re.IGNORECASE)
     if not m:
@@ -1183,7 +1198,7 @@ def _set_cors_headers(handler: http.server.BaseHTTPRequestHandler) -> None:
         return
     handler.send_header("Access-Control-Allow-Origin", allowed)
     handler.send_header("Vary", "Origin")
-    handler.send_header("Access-Control-Allow-Headers", "Content-Type, Accept, X-MK-Tool-Token")
+    handler.send_header("Access-Control-Allow-Headers", "Content-Type, Accept, X-MK-Tool-Token, X-AgentC-OpenAI-Key")
     handler.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
     handler.send_header("Access-Control-Max-Age", "600")
 
@@ -1685,6 +1700,42 @@ def build_handler(*, upstream: str, tool_token: str):
                 status, final_url, content_type, raw_html = _reader_fetch(target_url)
                 html = _reader_render_html(target_url, status, final_url, content_type, raw_html)
                 _text_response(self, 200, html, "text/html; charset=utf-8")
+                return
+
+            if path == "/browser/open":
+                client_host = ""
+                try:
+                    client_host = str(self.client_address[0] if self.client_address else "")
+                except Exception:
+                    client_host = ""
+                if not _is_loopback_addr(client_host):
+                    _json_response(self, 403, {"ok": False, "error": "Browser open is only available from localhost."})
+                    return
+
+                params = parse_qs(parsed.query or "")
+                raw_url = ""
+                target = "default"
+                try:
+                    raw_url = str((params.get("url") or [""])[0] or "").strip()
+                except Exception:
+                    raw_url = ""
+                try:
+                    target = str((params.get("target") or ["default"])[0] or "default").strip().lower()
+                except Exception:
+                    target = "default"
+                if target not in {"default", "safari"}:
+                    target = "default"
+
+                target_url = _normalize_browser_url(raw_url)
+                if not target_url:
+                    _json_response(self, 400, {"ok": False, "error": "Invalid URL. Use http(s) URL."})
+                    return
+
+                ok, message = _open_url_external(target_url, target=target)
+                if not ok:
+                    _json_response(self, 500, {"ok": False, "error": message})
+                    return
+                _json_response(self, 200, {"ok": True, "message": message, "target": target, "url": target_url})
                 return
 
             if self.path == "/server/info":
