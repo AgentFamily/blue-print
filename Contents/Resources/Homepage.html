@@ -616,6 +616,33 @@
         resize: vertical;
       }
 
+      .chat-llm-grid {
+        display: grid;
+        grid-template-columns: 1fr 1.2fr;
+        gap: 8px;
+      }
+
+      .chat-llm-grid label {
+        display: grid;
+        gap: 6px;
+      }
+
+      .chat-llm-grid select,
+      .chat-llm-grid input {
+        border: 1px solid rgba(126, 207, 255, 0.28);
+        border-radius: 10px;
+        background: rgba(4, 21, 40, 0.72);
+        color: var(--text-main);
+        padding: 9px 10px;
+        font-family: "IBM Plex Mono", monospace;
+      }
+
+      .chat-llm-hint {
+        color: var(--text-dim);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.72rem;
+      }
+
       .chat-actions {
         display: flex;
         gap: 8px;
@@ -713,6 +740,10 @@
         }
 
         .vault-row.inline {
+          grid-template-columns: 1fr;
+        }
+
+        .chat-llm-grid {
           grid-template-columns: 1fr;
         }
       }
@@ -885,6 +916,28 @@
                       <div class="chat-empty">Type a prompt below and click Send.</div>
                     </div>
                     <div class="chat-composer">
+                      <div class="chat-llm-grid">
+                        <label for="chat_provider_select">LLM Source
+                          <select id="chat_provider_select">
+                            <option value="auto">Auto</option>
+                            <option value="local">Local (Ollama)</option>
+                            <option value="api">API (OpenAI/Gateway)</option>
+                          </select>
+                        </label>
+                        <label for="chat_model_input">Model
+                          <input id="chat_model_input" type="text" list="chat_model_suggestions" placeholder="Model name" autocomplete="off" />
+                        </label>
+                      </div>
+                      <datalist id="chat_model_suggestions">
+                        <option value="gemma3:1b"></option>
+                        <option value="gemma3:4b"></option>
+                        <option value="llama3.2:3b"></option>
+                        <option value="mistral:7b"></option>
+                        <option value="qwen2.5:7b"></option>
+                        <option value="gpt-4o-mini"></option>
+                        <option value="gpt-4.1-mini"></option>
+                      </datalist>
+                      <div class="chat-llm-hint" id="chat_llm_hint">Source: Auto</div>
                       <label for="chat_input">Prompt</label>
                       <textarea id="chat_input" placeholder="Ask the assistant anything..." autocomplete="off"></textarea>
                       <div class="chat-actions">
@@ -1589,13 +1642,20 @@
 
       initVault();
 
+      const CHAT_LLM_PROVIDER_KEY = "atlasChatLlmProviderV1";
+      const CHAT_LLM_LOCAL_MODEL_KEY = "atlasChatLocalModelV1";
+      const CHAT_LLM_API_MODEL_KEY = "atlasChatApiModelV1";
+
       const chatState = {
         loading: false,
         messages: [],
         model: "",
         modelChecked: false,
         apiBase: "",
-        apiReady: false
+        apiReady: false,
+        providerMode: "auto",
+        localModel: "",
+        apiModel: "gpt-4o-mini"
       };
 
       function chatEl(id) {
@@ -1607,6 +1667,122 @@
         if (!node) return;
         node.textContent = String(text || "");
         node.style.color = isError ? "#ffb0b0" : "var(--accent)";
+      }
+
+      function normalizeProviderMode(value) {
+        const v = String(value || "").trim().toLowerCase();
+        if (v === "local" || v === "api") return v;
+        return "auto";
+      }
+
+      function currentProviderMode() {
+        return normalizeProviderMode(chatState.providerMode);
+      }
+
+      function looksLikeLocalModel(value) {
+        const v = String(value || "").trim().toLowerCase();
+        if (!v) return false;
+        if (v.includes(":")) return true;
+        return /(gemma|llama|mistral|qwen|phi|mixtral|deepseek)/i.test(v);
+      }
+
+      function localModelName() {
+        const preferred = String(chatState.localModel || "").trim();
+        if (preferred) return preferred;
+        const discovered = String(chatState.model || "").trim();
+        if (looksLikeLocalModel(discovered)) return discovered;
+        return "gemma3:1b";
+      }
+
+      function apiModelName() {
+        const preferred = String(chatState.apiModel || "").trim();
+        return preferred || "gpt-4o-mini";
+      }
+
+      function activeModelNameForMode(mode) {
+        const selectedMode = normalizeProviderMode(mode);
+        if (selectedMode === "local") return localModelName();
+        if (selectedMode === "api") return apiModelName();
+        const discovered = String(chatState.model || "").trim();
+        return discovered || "auto";
+      }
+
+      function modeSummaryLabel() {
+        const mode = currentProviderMode();
+        const modeLabel = mode === "local" ? "Local" : mode === "api" ? "API" : "Auto";
+        return `${modeLabel} • ${activeModelNameForMode(mode)}`;
+      }
+
+      function persistChatLlmPrefs() {
+        try {
+          localStorage.setItem(CHAT_LLM_PROVIDER_KEY, currentProviderMode());
+          localStorage.setItem(CHAT_LLM_LOCAL_MODEL_KEY, String(chatState.localModel || "").trim());
+          localStorage.setItem(CHAT_LLM_API_MODEL_KEY, String(chatState.apiModel || "").trim());
+        } catch {
+          // ignore
+        }
+      }
+
+      function syncChatLlmUi() {
+        const mode = currentProviderMode();
+        const provider = chatEl("chat_provider_select");
+        const modelInput = chatEl("chat_model_input");
+        const hint = chatEl("chat_llm_hint");
+
+        if (provider) provider.value = mode;
+        if (modelInput) {
+          if (mode === "local") {
+            modelInput.value = String(chatState.localModel || "").trim();
+            modelInput.placeholder = "e.g. gemma3:1b";
+          } else if (mode === "api") {
+            modelInput.value = String(chatState.apiModel || "").trim();
+            modelInput.placeholder = "e.g. gpt-4o-mini";
+          } else {
+            modelInput.value = "";
+            modelInput.placeholder = "Auto-detected";
+          }
+        }
+
+        if (hint) {
+          const detail = mode === "local"
+            ? "Uses local Ollama model only."
+            : mode === "api"
+              ? "Uses OpenAI/Gateway route only."
+              : "Auto fallback: API chat -> local generate -> prompt.";
+          hint.textContent = `Source: ${modeSummaryLabel()} | ${detail}`;
+        }
+      }
+
+      function applyChatLlmPrefsFromUi() {
+        const mode = normalizeProviderMode(chatEl("chat_provider_select")?.value);
+        const modelInput = String(chatEl("chat_model_input")?.value || "").trim();
+        chatState.providerMode = mode;
+
+        if (mode === "local") chatState.localModel = modelInput;
+        else if (mode === "api") chatState.apiModel = modelInput;
+
+        persistChatLlmPrefs();
+        syncChatLlmUi();
+      }
+
+      function loadChatLlmPrefs() {
+        try {
+          chatState.providerMode = normalizeProviderMode(localStorage.getItem(CHAT_LLM_PROVIDER_KEY));
+        } catch {
+          chatState.providerMode = "auto";
+        }
+
+        try {
+          chatState.localModel = String(localStorage.getItem(CHAT_LLM_LOCAL_MODEL_KEY) || "").trim();
+        } catch {
+          chatState.localModel = "";
+        }
+
+        try {
+          chatState.apiModel = String(localStorage.getItem(CHAT_LLM_API_MODEL_KEY) || "").trim() || "gpt-4o-mini";
+        } catch {
+          chatState.apiModel = "gpt-4o-mini";
+        }
       }
 
       function chatMessagesForApi() {
@@ -1752,10 +1928,14 @@
         const fillBtn = chatEl("chat_fill_form_btn");
         const clearBtn = chatEl("chat_clear_btn");
         const input = chatEl("chat_input");
+        const provider = chatEl("chat_provider_select");
+        const modelInput = chatEl("chat_model_input");
         if (sendBtn) sendBtn.disabled = chatState.loading;
         if (fillBtn) fillBtn.disabled = chatState.loading;
         if (clearBtn) clearBtn.disabled = chatState.loading || !list.length;
         if (input) input.disabled = chatState.loading;
+        if (provider) provider.disabled = chatState.loading;
+        if (modelInput) modelInput.disabled = chatState.loading;
 
         log.scrollTop = log.scrollHeight;
       }
@@ -1967,7 +2147,8 @@
       }
 
       async function requestEodDraft(prompt) {
-        if (!chatState.modelChecked) await refreshChatModel({ quiet: true });
+        const mode = currentProviderMode();
+        if (!chatState.modelChecked && mode !== "api") await refreshChatModel({ quiet: true });
         const current = collectEOD();
         const sourcePrompt = resolveFormSourceText(prompt);
         const strictPrompt = [
@@ -1983,47 +2164,63 @@
 
         const errors = [];
 
-        const chatPayload = {
-          messages: [
-            { role: "system", content: "You output only JSON objects." },
-            { role: "user", content: strictPrompt }
-          ],
-          options: { temperature: 0.1 },
-          stream: false
-        };
-        if (chatState.model) chatPayload.model = chatState.model;
-
-        try {
-          const text = await callApiAndExtract("/api/chat", chatPayload);
-          const parsed = parseJsonObjectFromText(text);
-          if (parsed) return normalizeEodDraft(parsed);
-          errors.push("Could not parse JSON from /api/chat.");
-        } catch (err) {
-          errors.push(`/api/chat: ${compactError(err?.message || err)}`);
-        }
-
-        if (chatState.model) {
+        if (mode === "local") {
           try {
             const text = await callApiAndExtract("/api/generate", {
-              model: chatState.model,
+              model: localModelName(),
               prompt: strictPrompt,
               stream: false
             });
             const parsed = parseJsonObjectFromText(text);
             if (parsed) return normalizeEodDraft(parsed);
-            errors.push("Could not parse JSON from /api/generate.");
+            errors.push("Could not parse JSON from local generate.");
           } catch (err) {
-            errors.push(`/api/generate: ${compactError(err?.message || err)}`);
+            errors.push(`/api/generate(local): ${compactError(err?.message || err)}`);
           }
-        }
+        } else {
+          const chatPayload = {
+            messages: [
+              { role: "system", content: "You output only JSON objects." },
+              { role: "user", content: strictPrompt }
+            ],
+            options: { temperature: 0.1 },
+            stream: false
+          };
+          if (mode === "api") chatPayload.model = apiModelName();
+          else if (chatState.model) chatPayload.model = chatState.model;
 
-        try {
-          const text = await callApiAndExtract("/api/prompt", { prompt: strictPrompt });
-          const parsed = parseJsonObjectFromText(text);
-          if (parsed) return normalizeEodDraft(parsed);
-          errors.push("Could not parse JSON from /api/prompt.");
-        } catch (err) {
-          errors.push(`/api/prompt: ${compactError(err?.message || err)}`);
+          try {
+            const text = await callApiAndExtract("/api/chat", chatPayload);
+            const parsed = parseJsonObjectFromText(text);
+            if (parsed) return normalizeEodDraft(parsed);
+            errors.push("Could not parse JSON from /api/chat.");
+          } catch (err) {
+            errors.push(`/api/chat: ${compactError(err?.message || err)}`);
+          }
+
+          if (mode !== "api" && chatState.model) {
+            try {
+              const text = await callApiAndExtract("/api/generate", {
+                model: chatState.model,
+                prompt: strictPrompt,
+                stream: false
+              });
+              const parsed = parseJsonObjectFromText(text);
+              if (parsed) return normalizeEodDraft(parsed);
+              errors.push("Could not parse JSON from /api/generate.");
+            } catch (err) {
+              errors.push(`/api/generate: ${compactError(err?.message || err)}`);
+            }
+          }
+
+          try {
+            const text = await callApiAndExtract("/api/prompt", { prompt: strictPrompt });
+            const parsed = parseJsonObjectFromText(text);
+            if (parsed) return normalizeEodDraft(parsed);
+            errors.push("Could not parse JSON from /api/prompt.");
+          } catch (err) {
+            errors.push(`/api/prompt: ${compactError(err?.message || err)}`);
+          }
         }
 
         const fallback = deriveEodDraftFromPrompt(sourcePrompt, current);
@@ -2045,12 +2242,14 @@
             .find(Boolean) || "";
           chatState.model = next;
           chatState.modelChecked = true;
+          syncChatLlmUi();
           if (!quiet && next) chatStatus(`Model ready: ${next}`, false);
           if (!quiet && !next) chatStatus("No model available. Download or configure one first.", true);
           return next;
         } catch (err) {
           chatState.model = "";
           chatState.modelChecked = true;
+          syncChatLlmUi();
           if (!quiet) chatStatus(String(err?.message || err || "Could not load models."), true);
           return "";
         }
@@ -2069,7 +2268,59 @@
         return answer;
       }
 
+      function buildLocalConversationPrompt() {
+        const lines = (Array.isArray(chatState.messages) ? chatState.messages.slice(-12) : [])
+          .map((msg) => {
+            const role = String(msg?.role || "") === "assistant" ? "Assistant" : "User";
+            const text = String(msg?.content || "").trim();
+            if (!text) return "";
+            return `${role}: ${text}`;
+          })
+          .filter(Boolean);
+        return [
+          "You are a concise assistant. Continue the conversation.",
+          ...lines,
+          "Assistant:"
+        ].join("\n");
+      }
+
       async function resolveAssistantReply(prompt) {
+        const mode = currentProviderMode();
+        const errors = [];
+
+        if (mode === "local") {
+          try {
+            return await callApiAndExtract("/api/generate", {
+              model: localModelName(),
+              prompt: buildLocalConversationPrompt(),
+              stream: false
+            });
+          } catch (err) {
+            throw new Error(`/api/generate(local): ${compactError(err?.message || err)}`);
+          }
+        }
+
+        if (mode === "api") {
+          try {
+            return await callApiAndExtract("/api/chat", {
+              model: apiModelName(),
+              messages: chatMessagesForApi(),
+              options: { temperature: 0.2 },
+              stream: false
+            });
+          } catch (err) {
+            errors.push(`/api/chat(api): ${compactError(err?.message || err)}`);
+          }
+
+          try {
+            return await callApiAndExtract("/api/prompt", { prompt: String(prompt || "").trim() });
+          } catch (err) {
+            errors.push(`/api/prompt(api): ${compactError(err?.message || err)}`);
+          }
+
+          throw new Error(errors.join(" | "));
+        }
+
         if (!chatState.modelChecked) await refreshChatModel({ quiet: true });
         const historyPayload = {
           messages: chatMessagesForApi(),
@@ -2077,8 +2328,6 @@
           stream: false
         };
         if (chatState.model) historyPayload.model = chatState.model;
-
-        const errors = [];
 
         try {
           return await callApiAndExtract("/api/chat", historyPayload);
@@ -2102,7 +2351,7 @@
           try {
             return await callApiAndExtract("/api/generate", {
               model: chatState.model,
-              prompt: String(prompt || "").trim(),
+              prompt: buildLocalConversationPrompt(),
               stream: false
             });
           } catch (err) {
@@ -2121,19 +2370,34 @@
 
       async function diagnoseChatTransport(options) {
         const quiet = Boolean(options && options.quiet);
+        const mode = currentProviderMode();
         try {
           const res = await fetchChatApi("/health", { cache: "no-store" });
           const body = await readResponseBody(res);
           if (!res.ok) throw new Error(responseErrorText(res, body));
-          const model = await refreshChatModel({ quiet: true });
+
+          if (mode === "api") {
+            const versionRes = await fetchChatApi("/api/version", { cache: "no-store" });
+            const versionBody = await readResponseBody(versionRes);
+            if (!versionRes.ok) throw new Error(responseErrorText(versionRes, versionBody));
+            const version = String(versionBody?.json?.version || "").trim().toLowerCase();
+            const okFlag = Boolean(versionBody?.json?.ok);
+            if (!(okFlag && (version === "open" || version === "gateway"))) {
+              throw new Error("API mode selected, but OpenAI/Gateway is not configured. Add OPENAI key or switch to Local.");
+            }
+          } else {
+            await refreshChatModel({ quiet: true });
+          }
+
           chatState.apiReady = true;
+          syncChatLlmUi();
           if (!quiet) {
-            const suffix = model ? ` | model ${model}` : "";
-            chatStatus(`Connected via ${apiBaseLabel()}${suffix}`, false);
+            chatStatus(`Connected via ${apiBaseLabel()} | ${modeSummaryLabel()}`, false);
           }
           return true;
         } catch (err) {
           chatState.apiReady = false;
+          syncChatLlmUi();
           if (!quiet) chatStatus(String(err?.message || err || "API unavailable."), true);
           return false;
         }
@@ -2141,6 +2405,7 @@
 
       async function sendChatPrompt() {
         if (chatState.loading) return;
+        applyChatLlmPrefsFromUi();
         const input = chatEl("chat_input");
         const prompt = String(input?.value || "").trim();
         if (!prompt) {
@@ -2164,14 +2429,14 @@
               const draft = await requestEodDraft(prompt);
               applyEodDraft(draft);
               appendChatMessage("assistant", "End-of-Day form updated.");
-              chatStatus(`Done + form filled via ${apiBaseLabel()}.`, false);
+              chatStatus(`Done + form filled via ${apiBaseLabel()} | ${modeSummaryLabel()}.`, false);
             } catch (fillErr) {
               const fillMessage = String(fillErr?.message || fillErr || "Form update failed.");
               appendChatMessage("assistant", `Form update failed: ${fillMessage}`);
               chatStatus(fillMessage, true);
             }
           } else {
-            chatStatus(`Done via ${apiBaseLabel()}.`, false);
+            chatStatus(`Done via ${apiBaseLabel()} | ${modeSummaryLabel()}.`, false);
           }
         } catch (err) {
           const message = String(err?.message || err || "Chat request failed.");
@@ -2185,6 +2450,7 @@
 
       async function fillFormFromPrompt() {
         if (chatState.loading) return;
+        applyChatLlmPrefsFromUi();
         const input = chatEl("chat_input");
         const prompt = String(input?.value || "").trim();
         if (!prompt) {
@@ -2203,7 +2469,7 @@
           const draft = await requestEodDraft(prompt);
           applyEodDraft(draft);
           appendChatMessage("assistant", "Form updated.");
-          chatStatus(`Form filled via ${apiBaseLabel()}.`, false);
+          chatStatus(`Form filled via ${apiBaseLabel()} | ${modeSummaryLabel()}.`, false);
         } catch (err) {
           const message = String(err?.message || err || "Form fill failed.");
           appendChatMessage("assistant", `Error: ${message}`);
@@ -2222,9 +2488,23 @@
       }
 
       function initChat() {
+        loadChatLlmPrefs();
+        syncChatLlmUi();
         chatEl("chat_send_btn")?.addEventListener("click", sendChatPrompt);
         chatEl("chat_fill_form_btn")?.addEventListener("click", fillFormFromPrompt);
         chatEl("chat_clear_btn")?.addEventListener("click", clearChat);
+        chatEl("chat_provider_select")?.addEventListener("change", () => {
+          applyChatLlmPrefsFromUi();
+          diagnoseChatTransport({ quiet: false }).catch(() => {});
+        });
+        const modelInput = chatEl("chat_model_input");
+        modelInput?.addEventListener("change", applyChatLlmPrefsFromUi);
+        modelInput?.addEventListener("blur", applyChatLlmPrefsFromUi);
+        modelInput?.addEventListener("keydown", (event) => {
+          if (event.key !== "Enter") return;
+          event.preventDefault();
+          applyChatLlmPrefsFromUi();
+        });
         chatEl("chat_input")?.addEventListener("keydown", (event) => {
           if (event.key === "Enter" && !event.shiftKey) {
             event.preventDefault();
