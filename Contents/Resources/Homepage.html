@@ -1794,6 +1794,32 @@
         return null;
       }
 
+      function isFormCommandText(text) {
+        const t = String(text || "").trim().toLowerCase();
+        if (!t) return false;
+        const hasFormRef = /(end[- ]?of[- ]?day|eod|form)/i.test(t);
+        const hasAction = /(add|fill|put|save|insert|apply|update)/i.test(t);
+        return hasFormRef && hasAction;
+      }
+
+      function resolveFormSourceText(prompt) {
+        const current = String(prompt || "").replace(/^\[Fill Form\]\s*/i, "").trim();
+        if (!isFormCommandText(current)) return current;
+
+        const userMessages = (Array.isArray(chatState.messages) ? chatState.messages : [])
+          .filter((msg) => String(msg?.role || "") === "user")
+          .map((msg) => String(msg?.content || "").replace(/^\[Fill Form\]\s*/i, "").trim())
+          .filter(Boolean);
+
+        for (let i = userMessages.length - 1; i >= 0; i -= 1) {
+          const candidate = userMessages[i];
+          if (!candidate || candidate === current) continue;
+          if (isFormCommandText(candidate)) continue;
+          return candidate;
+        }
+        return current;
+      }
+
       function normalizeEodTasks(values) {
         const allowed = ["Deployments", "DNS Updates", "Content Updates", "Other"];
         const picked = new Set();
@@ -1836,6 +1862,82 @@
         return out;
       }
 
+      function hasEodDraftContent(draft) {
+        const d = draft && typeof draft === "object" ? draft : {};
+        return Boolean(
+          String(d.fullname || "").trim() ||
+          String(d.email || "").trim() ||
+          (Array.isArray(d.completed) && d.completed.length) ||
+          String(d.completed_details || "").trim() ||
+          String(d.pending || "").trim() ||
+          String(d.hours || "").trim() ||
+          String(d.signoff || "").trim() ||
+          String(d.summary || "").trim()
+        );
+      }
+
+      function inferTasksFromText(text) {
+        const src = String(text || "").toLowerCase();
+        const out = [];
+        if (/(deploy|release|ship|launch)/i.test(src)) out.push("Deployments");
+        if (/(dns|domain|nameserver|name\s*server)/i.test(src)) out.push("DNS Updates");
+        if (/(content|copy|blog|page|seo|article|website update)/i.test(src)) out.push("Content Updates");
+        if (/(other|misc|support|ticket|cleanup|research|meeting)/i.test(src)) out.push("Other");
+        return normalizeEodTasks(out);
+      }
+
+      function deriveEodDraftFromPrompt(prompt, current) {
+        const source = String(prompt || "").trim();
+        const curr = normalizeEodDraft(current || {});
+        const out = {
+          fullname: "",
+          email: "",
+          completed: [],
+          completed_details: "",
+          pending: "",
+          hours: "",
+          signoff: "",
+          summary: ""
+        };
+
+        const emailMatch = source.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
+        if (emailMatch) out.email = emailMatch[0];
+
+        const hoursMatch = source.match(/(\d+(?:\.\d+)?)\s*(?:hours?|hrs?)/i);
+        if (hoursMatch) out.hours = String(Math.max(0, Number(hoursMatch[1])));
+
+        const tasks = inferTasksFromText(source);
+        if (tasks.length) out.completed = tasks;
+
+        const signoffMatch = source.match(/(?:sign[\s-]*off|signed by|signed|by)\s*:?\s*([a-z][a-z\s.'-]{1,80})$/i);
+        if (signoffMatch) out.signoff = signoffMatch[1].trim();
+
+        if (/(pending|awaiting|blocked|waiting|approval|need client)/i.test(source)) {
+          out.pending = source;
+        }
+
+        if (tasks.length || /(finished|completed|done|updated|fixed|worked on)/i.test(source)) {
+          out.completed_details = source;
+        }
+
+        if (!out.summary && source && !isFormCommandText(source)) {
+          out.summary = source;
+        }
+
+        if (!out.signoff && out.fullname) out.signoff = out.fullname;
+
+        const normalized = normalizeEodDraft(out);
+        if (!hasEodDraftContent(normalized)) {
+          const fallback = {
+            ...curr,
+            summary: curr.summary || source
+          };
+          const cleaned = normalizeEodDraft(fallback);
+          return hasEodDraftContent(cleaned) ? cleaned : normalized;
+        }
+        return normalized;
+      }
+
       function setFieldIfPresent(id, value) {
         const node = document.getElementById(id);
         if (!node) return;
@@ -1855,6 +1957,9 @@
 
         if (Array.isArray(draft.completed) && draft.completed.length) {
           const selected = new Set(draft.completed);
+          document.querySelectorAll('input[name="eod_tasks"]:checked').forEach((box) => {
+            selected.add(String(box.value || ""));
+          });
           document.querySelectorAll('input[name="eod_tasks"]').forEach((box) => {
             box.checked = selected.has(String(box.value || ""));
           });
@@ -1864,6 +1969,7 @@
       async function requestEodDraft(prompt) {
         if (!chatState.modelChecked) await refreshChatModel({ quiet: true });
         const current = collectEOD();
+        const sourcePrompt = resolveFormSourceText(prompt);
         const strictPrompt = [
           "Fill the End-of-Day form using the user request.",
           "Return ONLY valid JSON (no markdown) with keys:",
@@ -1871,7 +1977,7 @@
           'completed must be an array using only: ["Deployments","DNS Updates","Content Updates","Other"]',
           "Use empty strings or [] for unknown fields.",
           "",
-          `User request: ${String(prompt || "").trim()}`,
+          `User request: ${String(sourcePrompt || "").trim()}`,
           `Current form state: ${JSON.stringify(current)}`
         ].join("\n");
 
@@ -1919,6 +2025,9 @@
         } catch (err) {
           errors.push(`/api/prompt: ${compactError(err?.message || err)}`);
         }
+
+        const fallback = deriveEodDraftFromPrompt(sourcePrompt, current);
+        if (hasEodDraftContent(fallback)) return fallback;
 
         throw new Error(errors.join(" | "));
       }
@@ -2050,7 +2159,20 @@
           await diagnoseChatTransport({ quiet: true });
           const answer = await resolveAssistantReply(prompt);
           appendChatMessage("assistant", answer);
-          chatStatus(`Done via ${apiBaseLabel()}.`, false);
+          if (isFormCommandText(prompt)) {
+            try {
+              const draft = await requestEodDraft(prompt);
+              applyEodDraft(draft);
+              appendChatMessage("assistant", "End-of-Day form updated.");
+              chatStatus(`Done + form filled via ${apiBaseLabel()}.`, false);
+            } catch (fillErr) {
+              const fillMessage = String(fillErr?.message || fillErr || "Form update failed.");
+              appendChatMessage("assistant", `Form update failed: ${fillMessage}`);
+              chatStatus(fillMessage, true);
+            }
+          } else {
+            chatStatus(`Done via ${apiBaseLabel()}.`, false);
+          }
         } catch (err) {
           const message = String(err?.message || err || "Chat request failed.");
           appendChatMessage("assistant", `Error: ${message}`);
