@@ -63,6 +63,17 @@ def _open_api_key() -> str:
     return _first_env("open", "OPEN", "OPENAI_API_KEY", "OPEN_AI_API_KEY", "OPEN_API_KEY", "OPENAI_KEY", "OPENAI_APIKEY")
 
 
+def _open_api_key_from_header(handler: http.server.BaseHTTPRequestHandler) -> str:
+    try:
+        return str(handler.headers.get("X-AgentC-OpenAI-Key") or "").strip()
+    except Exception:
+        return ""
+
+
+def _effective_open_api_key(handler: http.server.BaseHTTPRequestHandler) -> str:
+    return _open_api_key_from_header(handler) or _open_api_key()
+
+
 def _gateway_api_key() -> str:
     return _first_env("AI_GATEWAY_API_KEY", "AI_GATEWAY_KEY")
 
@@ -130,11 +141,11 @@ def _extract_chat_content(payload: Any) -> str:
     return str(content or "")
 
 
-def _handle_gateway_chat(handler: http.server.BaseHTTPRequestHandler, body: bytes) -> None:
-    open_key = _open_api_key()
+def _handle_gateway_chat(handler: http.server.BaseHTTPRequestHandler, body: bytes, open_key: str = "") -> None:
+    open_key = str(open_key or _effective_open_api_key(handler)).strip()
     gateway_key = _gateway_api_key()
     if not open_key:
-        _json_response(handler, 500, {"error": "Missing OpenAI key env (expected `open` or `OPENAI_API_KEY`)."})
+        _json_response(handler, 500, {"error": "Missing OpenAI key (set `open`/`OPENAI_API_KEY` or send `X-AgentC-OpenAI-Key`)."})
         return
     if not gateway_key:
         _json_response(handler, 500, {"error": "Missing AI_GATEWAY_API_KEY."})
@@ -242,10 +253,10 @@ def _handle_gateway_chat(handler: http.server.BaseHTTPRequestHandler, body: byte
     )
 
 
-def _handle_open_chat(handler: http.server.BaseHTTPRequestHandler, body: bytes) -> None:
-    open_key = _open_api_key()
+def _handle_open_chat(handler: http.server.BaseHTTPRequestHandler, body: bytes, open_key: str = "") -> None:
+    open_key = str(open_key or _effective_open_api_key(handler)).strip()
     if not open_key:
-        _json_response(handler, 500, {"error": "Missing OpenAI key env (expected `open` or `OPENAI_API_KEY`)."})
+        _json_response(handler, 500, {"error": "Missing OpenAI key (set `open`/`OPENAI_API_KEY` or send `X-AgentC-OpenAI-Key`)."})
         return
 
     try:
@@ -318,11 +329,11 @@ def _handle_gateway_tags(handler: http.server.BaseHTTPRequestHandler) -> None:
     )
 
 
-def _handle_gateway_prompt(handler: http.server.BaseHTTPRequestHandler, body: bytes) -> None:
-    open_key = _open_api_key()
+def _handle_gateway_prompt(handler: http.server.BaseHTTPRequestHandler, body: bytes, open_key: str = "") -> None:
+    open_key = str(open_key or _effective_open_api_key(handler)).strip()
     gateway_key = _gateway_api_key()
     if not open_key:
-        _json_response(handler, 500, {"error": "Missing OpenAI key env (expected `open` or `OPENAI_API_KEY`)."})
+        _json_response(handler, 500, {"error": "Missing OpenAI key (set `open`/`OPENAI_API_KEY` or send `X-AgentC-OpenAI-Key`)."})
         return
     if not gateway_key:
         _json_response(handler, 500, {"error": "Missing AI_GATEWAY_API_KEY."})
@@ -415,10 +426,10 @@ def _handle_gateway_prompt(handler: http.server.BaseHTTPRequestHandler, body: by
     _json_response(handler, 200, {"text": gateway_text, "open_text": open_text})
 
 
-def _handle_open_prompt(handler: http.server.BaseHTTPRequestHandler, body: bytes) -> None:
-    open_key = _open_api_key()
+def _handle_open_prompt(handler: http.server.BaseHTTPRequestHandler, body: bytes, open_key: str = "") -> None:
+    open_key = str(open_key or _effective_open_api_key(handler)).strip()
     if not open_key:
-        _json_response(handler, 500, {"error": "Missing OpenAI key env (expected `open` or `OPENAI_API_KEY`)."})
+        _json_response(handler, 500, {"error": "Missing OpenAI key (set `open`/`OPENAI_API_KEY` or send `X-AgentC-OpenAI-Key`)."})
         return
 
     try:
@@ -1372,11 +1383,11 @@ def build_handler(*, upstream: str, tool_token: str):
                 _json_response(self, 200, {"ok": True, "prefs": _read_agentc_defaults()})
                 return
 
-            if path == "/api/tags" and _open_api_key():
+            if path == "/api/tags" and _effective_open_api_key(self):
                 _handle_gateway_tags(self)
                 return
 
-            if path == "/api/version" and _open_api_key():
+            if path == "/api/version" and _effective_open_api_key(self):
                 mode = "gateway" if _gateway_api_key() else "open"
                 _json_response(self, 200, {"ok": True, "version": mode})
                 return
@@ -1479,21 +1490,23 @@ def build_handler(*, upstream: str, tool_token: str):
                 _handle_tool(self, tool_token, tool_name, body)
                 return
 
-            if path == "/api/chat" and _open_api_key():
+            open_key_for_request = _effective_open_api_key(self)
+
+            if path == "/api/chat" and open_key_for_request:
                 if _gateway_api_key():
-                    _handle_gateway_chat(self, body)
+                    _handle_gateway_chat(self, body, open_key=open_key_for_request)
                 else:
-                    _handle_open_chat(self, body)
+                    _handle_open_chat(self, body, open_key=open_key_for_request)
                 return
 
-            if path == "/api/prompt" and _open_api_key():
+            if path == "/api/prompt" and open_key_for_request:
                 if _gateway_api_key():
-                    _handle_gateway_prompt(self, body)
+                    _handle_gateway_prompt(self, body, open_key=open_key_for_request)
                 else:
-                    _handle_open_prompt(self, body)
+                    _handle_open_prompt(self, body, open_key=open_key_for_request)
                 return
 
-            if path == "/api/pull" and _open_api_key():
+            if path == "/api/pull" and open_key_for_request:
                 _json_response(self, 400, {"error": "Model pull is not supported in cloud mode."})
                 return
 

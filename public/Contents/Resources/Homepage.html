@@ -2431,15 +2431,46 @@
         min-height: 150px;
       }
 
-      .modal-body textarea:focus {
-        border-color: rgba(79, 70, 229, 0.40);
-        box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12);
-      }
+	      .modal-body textarea:focus {
+	        border-color: rgba(79, 70, 229, 0.40);
+	        box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12);
+	      }
 
-      .modal-foot {
-        padding: 12px 16px 14px;
-        border-top: 1px solid rgba(15, 23, 42, 0.10);
-        display: flex;
+        #appsModal .modal-body {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        #appsModal .apps-links {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+
+        #appsModal .apps-links .btn {
+          min-height: 34px;
+        }
+
+        #appsModal .apps-frame-wrap {
+          border: 1px solid rgba(15, 23, 42, 0.14);
+          border-radius: 14px;
+          overflow: hidden;
+          min-height: 52vh;
+          background: rgba(255, 255, 255, 0.7);
+        }
+
+        #appsModal .apps-frame {
+          width: 100%;
+          height: min(64vh, 760px);
+          border: 0;
+          background: #fff;
+        }
+
+	      .modal-foot {
+	        padding: 12px 16px 14px;
+	        border-top: 1px solid rgba(15, 23, 42, 0.10);
+	        display: flex;
         justify-content: flex-end;
         gap: 10px;
       }
@@ -3115,15 +3146,19 @@
 		            <span class="dot download" aria-hidden="true"></span>
 		            <span>Download</span>
 		          </button>
-		          <button class="pill pill-btn" id="changelogBtn" type="button" title="Changelog">
-		            <span class="dot changelog" aria-hidden="true"></span>
-		            <span>Changelog</span>
-		          </button>
-		          <button class="pill pill-btn" id="aiRealtorBtn" type="button" title="Open AI Realtor">
-		            <span class="dot context" aria-hidden="true"></span>
-		            <span>AI Realtor</span>
-		          </button>
-		        </div>
+			          <button class="pill pill-btn" id="changelogBtn" type="button" title="Changelog">
+			            <span class="dot changelog" aria-hidden="true"></span>
+			            <span>Changelog</span>
+			          </button>
+			          <button class="pill pill-btn" id="aiRealtorBtn" type="button" title="Open AI Realtor">
+			            <span class="dot context" aria-hidden="true"></span>
+			            <span>AI Realtor</span>
+			          </button>
+                <button class="pill pill-btn" id="appsBtn" type="button" title="Open apps in panel">
+                  <span class="dot context" aria-hidden="true"></span>
+                  <span>Apps</span>
+                </button>
+			        </div>
 
 		        <div class="home-slide-row">
 		          <button class="btn" id="reloadBtn" type="button" title="Reload UI">Reload</button>
@@ -3287,6 +3322,9 @@
 					          <button class="chip-btn" id="settingsTabModes" type="button" role="tab" aria-controls="settingsModes" aria-selected="false" tabindex="-1" data-settings-panel="settingsModes">Modes</button>
 					          <button class="chip-btn" id="settingsTabPrivacy" type="button" role="tab" aria-controls="settingsPrivacy" aria-selected="false" tabindex="-1" data-settings-panel="settingsPrivacy">Privacy</button>
 					          <button class="chip-btn" id="settingsTabNetwork" type="button" role="tab" aria-controls="settingsNetwork" aria-selected="false" tabindex="-1" data-settings-panel="settingsNetwork">Network</button>
+                          <button class="chip-btn" id="settingsTabAccounts" type="button" role="tab" aria-controls="settingsAccounts" aria-selected="false" tabindex="-1" data-settings-panel="settingsAccounts">Accounts</button>
+                          <button class="chip-btn" id="settingsTabPipelines" type="button" role="tab" aria-controls="settingsPipelines" aria-selected="false" tabindex="-1" data-settings-panel="settingsPipelines">Pipelines</button>
+                          <button class="chip-btn" id="settingsTabVault" type="button" role="tab" aria-controls="settingsVault" aria-selected="false" tabindex="-1" data-settings-panel="settingsVault">Vault</button>
 					        </div>
 			
 				        <div class="settings-viewport" id="settingsViewport" role="presentation">
@@ -3749,6 +3787,27 @@
 	        </details>
 
 		        <details class="settings-section" id="settingsNetwork" role="tabpanel" aria-labelledby="settingsTabNetwork" hidden>
+                        <!-- Accounts panel -->
+                        <details class="settings-section" id="settingsAccounts" role="tabpanel" aria-labelledby="settingsTabAccounts" hidden>
+                          <summary><span class="settings-summary-label">Connected Accounts</span></summary>
+                          <div class="settings-grid" id="accountsPanel">
+                            <div class="hint">Loading…</div>
+                          </div>
+                        </details>
+                        <!-- Pipelines panel -->
+                        <details class="settings-section" id="settingsPipelines" role="tabpanel" aria-labelledby="settingsTabPipelines" hidden>
+                          <summary><span class="settings-summary-label">Pipelines</span></summary>
+                          <div class="settings-grid" id="pipelinesPanel">
+                            <div class="hint">Loading…</div>
+                          </div>
+                        </details>
+                        <!-- Vault panel -->
+                        <details class="settings-section" id="settingsVault" role="tabpanel" aria-labelledby="settingsTabVault" hidden>
+                          <summary><span class="settings-summary-label">Vault</span></summary>
+                          <div class="settings-grid" id="vaultPanel">
+                            <div class="hint">Loading…</div>
+                          </div>
+                        </details>
 	          <summary><span class="settings-summary-label">Network / LAN (Advanced)</span></summary>
 	          <div class="settings-grid">
 	            <div class="field full" id="lanAccessField">
@@ -3996,12 +4055,39 @@
 	      </div>
 	    </dialog>
 
-		    <dialog id="coinsStoreModal" aria-label="C-oin Store">
-		      <div class="modal-head">
-		        <strong>C-oin Store</strong>
-		        <button class="btn" id="closeCoinsStoreBtn" type="button">Close</button>
-		      </div>
-		      <div class="modal-body">
+	      <dialog id="appsModal" aria-label="Apps">
+	        <div class="modal-head">
+	          <strong>Apps</strong>
+          <button class="btn" id="closeAppsBtn" type="button">Close</button>
+        </div>
+        <div class="modal-body">
+          <div class="field full">
+            <label for="appsUrlInput">URL</label>
+            <div class="template-row">
+              <input id="appsUrlInput" type="text" placeholder="https://chatgpt.com" autocomplete="off" />
+              <button class="btn secondary" id="appsLoadBtn" type="button">Open in Panel</button>
+              <button class="btn secondary" id="appsOpenExternalBtn" type="button">Open External</button>
+            </div>
+          </div>
+          <div class="apps-links" aria-label="Quick app links">
+            <button class="btn tiny secondary" data-apps-url="https://chatgpt.com" type="button">ChatGPT</button>
+            <button class="btn tiny secondary" data-apps-url="https://platform.openai.com" type="button">OpenAI Platform</button>
+            <button class="btn tiny secondary" data-apps-url="https://github.com" type="button">GitHub</button>
+            <button class="btn tiny secondary" data-apps-url="https://vercel.com/dashboard" type="button">Vercel</button>
+          </div>
+          <div class="hint" id="appsStatusText">Some sites block in-app framing. If blank, use Open External.</div>
+          <div class="apps-frame-wrap">
+            <iframe id="appsFrame" class="apps-frame" loading="lazy" referrerpolicy="no-referrer"></iframe>
+          </div>
+        </div>
+      </dialog>
+
+	    <dialog id="coinsStoreModal" aria-label="C-oin Store">
+	      <div class="modal-head">
+	        <strong>C-oin Store</strong>
+	        <button class="btn" id="closeCoinsStoreBtn" type="button">Close</button>
+	      </div>
+	      <div class="modal-body">
 		        <div class="coins-store-meta">
 		          <div>
 		            Account <code id="coinsStoreAccount">—</code>
@@ -4091,6 +4177,7 @@
     </dialog>
 
 		    <script src="app_core.js?v=r2026-01-27h"></script>
+                    <script src="settings_panels.js"></script>
 		    <script>
 		      (async () => {
 		        const STORAGE = {
@@ -7046,13 +7133,90 @@ Boundaries and safety:
 	            return openExternalUrl("https://theagentfamily.com/");
 	          }
 
-	          function openTheAgentFamilyGit() {
-	            return openExternalUrl("https://github.com/AgentFamily/the-agent-family");
-	          }
+		          function openTheAgentFamilyGit() {
+		            return openExternalUrl("https://github.com/AgentFamily/the-agent-family");
+		          }
 
-	          function openAiRealtor() {
-	            return openExternalUrl("https://AiRealtor.UK");
-	          }
+		          function openAiRealtor() {
+		            return openExternalUrl("https://AiRealtor.UK");
+		          }
+
+	              const APPS_LAST_URL_KEY = "agentcAppsLastUrlV1";
+
+              function normalizeAppsUrl(raw) {
+                const text = String(raw || "").trim();
+                if (!text) return "";
+                if (/^https?:\/\//i.test(text)) return text;
+                if (/^\/\//.test(text)) return `https:${text}`;
+                if (/^[a-z0-9.-]+\.[a-z]{2,}(\/.*)?$/i.test(text)) return `https://${text}`;
+                return "";
+              }
+
+              function setAppsStatus(message, isError = false) {
+                const node = el("appsStatusText");
+                if (!node) return;
+                node.textContent = String(message || "");
+                node.style.color = isError ? "rgba(185,28,28,0.94)" : "var(--muted)";
+              }
+
+              function readAppsUrlFromInput() {
+                return String(el("appsUrlInput")?.value || "").trim();
+              }
+
+              function openAppsExternalFromInput() {
+                const url = normalizeAppsUrl(readAppsUrlFromInput());
+                if (!url) {
+                  setAppsStatus("Enter a valid URL (e.g. https://chatgpt.com).", true);
+                  return;
+                }
+                try {
+                  localStorage.setItem(APPS_LAST_URL_KEY, url);
+                } catch {
+                  // ignore
+                }
+                const ok = openExternalUrl(url);
+                setAppsStatus(ok ? "Opened in external browser." : "Could not open external browser.", !ok);
+              }
+
+              function loadAppsFrameFromInput() {
+                const frame = el("appsFrame");
+                const input = el("appsUrlInput");
+                if (!frame || !input) return;
+                const url = normalizeAppsUrl(input.value);
+                if (!url) {
+                  setAppsStatus("Enter a valid URL (e.g. https://chatgpt.com).", true);
+                  return;
+                }
+                try {
+                  localStorage.setItem(APPS_LAST_URL_KEY, url);
+                } catch {
+                  // ignore
+                }
+                frame.src = url;
+                setAppsStatus("Loading app… If blank, the site blocks iframe embedding.");
+              }
+
+              function openAppsModal() {
+                openDialogById("appsModal");
+                const input = el("appsUrlInput");
+                if (!input) return;
+                const saved = (() => {
+                  try {
+                    return String(localStorage.getItem(APPS_LAST_URL_KEY) || "");
+                  } catch {
+                    return "";
+                  }
+                })();
+                if (!String(input.value || "").trim()) {
+                  input.value = normalizeAppsUrl(saved) || "https://chatgpt.com";
+                }
+                try {
+                  input.focus();
+                  input.select();
+                } catch {
+                  // ignore
+                }
+              }
 
 		        function magicAuthContextForLLM(prompt) {
 		          const snap = getMagicAuthSnapshot();
@@ -7527,12 +7691,29 @@ Style rules:
           return typeof q === "string" && q.toUpperCase().includes("Q4");
         }
 
-        function modelSize(model) {
-          return typeof model?.size === "number" ? model.size : Number.POSITIVE_INFINITY;
+	        function modelSize(model) {
+	          return typeof model?.size === "number" ? model.size : Number.POSITIVE_INFINITY;
+	        }
+
+        function shouldAttachVaultOpenAiHeader(path) {
+          const key = String(path || "").split("?", 1)[0];
+          if (!key) return false;
+          return key === "/api/chat" || key === "/api/prompt" || key === "/api/tags" || key === "/api/version";
         }
 
-        async function fetchJSON(path, init) {
-          const url = `${state.endpoint}${path}`;
+        function readVaultOpenAiKey() {
+          try {
+            if (typeof window.getVaultOpenAIKey === "function") {
+              return String(window.getVaultOpenAIKey() || "").trim();
+            }
+          } catch {
+            // ignore
+          }
+          return "";
+        }
+
+	        async function fetchJSON(path, init) {
+	          const url = `${state.endpoint}${path}`;
           const shouldAttachAuth = (() => {
             if (!String(path || "").startsWith("/api/")) return false;
             try {
@@ -7544,11 +7725,15 @@ Style rules:
           })();
 
           const headers = new Headers(init?.headers || {});
-          if (shouldAttachAuth) {
-            const snap = getMagicAuthSnapshot();
-            const jwt = String(snap?.jwt || "").trim();
-            if (jwt) headers.set("Authorization", `Bearer ${jwt}`);
-          }
+	          if (shouldAttachAuth) {
+	            const snap = getMagicAuthSnapshot();
+	            const jwt = String(snap?.jwt || "").trim();
+	            if (jwt) headers.set("Authorization", `Bearer ${jwt}`);
+            if (shouldAttachVaultOpenAiHeader(path) && !headers.has("X-AgentC-OpenAI-Key")) {
+              const key = readVaultOpenAiKey();
+              if (key) headers.set("X-AgentC-OpenAI-Key", key);
+            }
+	          }
 
           const res = await fetch(url, { cache: "no-store", ...init, headers });
           const text = await res.text();
@@ -11460,7 +11645,17 @@ Style rules:
 		            }
 				          });
 					          const SETTINGS_ACTIVE_PANEL_KEY = "mkSettingsActivePanelV1";
-				          const SETTINGS_PANEL_IDS = ["settingsAll", "settingsModels", "settingsAgents", "settingsModes", "settingsPrivacy", "settingsNetwork"];
+				          const SETTINGS_PANEL_IDS = [
+                    "settingsAll",
+                    "settingsModels",
+                    "settingsAgents",
+                    "settingsModes",
+                    "settingsPrivacy",
+                    "settingsNetwork",
+                    "settingsAccounts",
+                    "settingsPipelines",
+                    "settingsVault"
+                  ];
 				
 				          const getActiveSettingsPanel = () => {
 				            try {
@@ -11556,7 +11751,14 @@ Style rules:
 				            }
 				
 				            setActiveSettingsPanel(target);
-				
+              // custom panels should refresh when they become visible
+	              if (target === "settingsAccounts") {
+	                try { renderAccountsPanel && renderAccountsPanel(); } catch {};
+	              } else if (target === "settingsPipelines") {
+	                try { renderPipelinesPanel && renderPipelinesPanel(); } catch {};
+                } else if (target === "settingsVault") {
+                  try { renderVaultPanel && renderVaultPanel(); } catch {};
+	              }
 				            if (!focusFirst) return;
 				            try {
 				              const activePanel = target === "settingsAll" ? (viewport || dialog) : el(target);
@@ -11591,7 +11793,7 @@ Style rules:
 				            if (!panelId) return;
 				            activateSettingsPanel(panelId, { focusFirst: false });
 				          });
-				
+
 				          el("settingsNav")?.addEventListener("keydown", (e) => {
 				            const nav = el("settingsNav");
 				            if (!nav) return;
@@ -11635,11 +11837,19 @@ Style rules:
 				          });
 		          wireDialogLifecycle("privacyModal", { onClose: () => setStatusRight("") });
 		          wireDialogLifecycle("memoryModal", { onClose: () => setStatusRight("") });
-		          wireDialogLifecycle("teachModal", { onClose: () => (state.pendingTeachContext = null) });
-		          wireDialogLifecycle("toolsModal", { onClose: () => resolveToolApproval(false) });
-		          wireDialogLifecycle("changelogModal", { onClose: () => setStatusRight("") });
-	              wireDialogLifecycle("coinsStoreModal", { onClose: () => setStatusRight("") });
-		          wireDialogLifecycle("confirmModal", { onClose: () => resolveConfirm(false) });
+			          wireDialogLifecycle("teachModal", { onClose: () => (state.pendingTeachContext = null) });
+			          wireDialogLifecycle("toolsModal", { onClose: () => resolveToolApproval(false) });
+			          wireDialogLifecycle("changelogModal", { onClose: () => setStatusRight("") });
+                wireDialogLifecycle("appsModal", {
+                  onClose: () => {
+                    const frame = el("appsFrame");
+                    if (frame) frame.removeAttribute("src");
+                    setAppsStatus("Some sites block in-app framing. If blank, use Open External.");
+                    setStatusRight("");
+                  },
+                });
+		              wireDialogLifecycle("coinsStoreModal", { onClose: () => setStatusRight("") });
+			          wireDialogLifecycle("confirmModal", { onClose: () => resolveConfirm(false) });
               el("closeConfirmBtn")?.addEventListener("click", () => closeDialogById("confirmModal"));
               el("confirmCancelBtn")?.addEventListener("click", () => {
                 resolveConfirm(false);
@@ -11677,13 +11887,32 @@ Style rules:
 	                else maybeRefreshCoinsBalance();
 	              });
 
-	              el("closeChangelogBtn")?.addEventListener("click", () => closeDialogById("changelogModal"));
-	              el("changelogBackBtn")?.addEventListener("click", () => closeDialogById("changelogModal"));
-	              el("changelogSyncBtn")?.addEventListener("click", () => {
-	                const subject = encodeURIComponent("Sync with CompanyAI");
-	                const body = encodeURIComponent("Hi CompanyAI —\n\nWe want to sync about Fuse / multi-agent workflows.\n\n— Sent from AgentC");
-	                openExternalUrl(`mailto:ping@company.ai?subject=${subject}&body=${body}`);
-	              });
+		              el("closeChangelogBtn")?.addEventListener("click", () => closeDialogById("changelogModal"));
+		              el("changelogBackBtn")?.addEventListener("click", () => closeDialogById("changelogModal"));
+		              el("changelogSyncBtn")?.addEventListener("click", () => {
+		                const subject = encodeURIComponent("Sync with CompanyAI");
+		                const body = encodeURIComponent("Hi CompanyAI —\n\nWe want to sync about Fuse / multi-agent workflows.\n\n— Sent from AgentC");
+		                openExternalUrl(`mailto:ping@company.ai?subject=${subject}&body=${body}`);
+		              });
+                el("closeAppsBtn")?.addEventListener("click", () => closeDialogById("appsModal"));
+                el("appsLoadBtn")?.addEventListener("click", loadAppsFrameFromInput);
+                el("appsOpenExternalBtn")?.addEventListener("click", openAppsExternalFromInput);
+                el("appsUrlInput")?.addEventListener("keydown", (event) => {
+                  if (event.key !== "Enter") return;
+                  event.preventDefault();
+                  loadAppsFrameFromInput();
+                });
+                document.querySelectorAll("[data-apps-url]").forEach((btn) => {
+                  btn.addEventListener("click", () => {
+                    const url = String(btn.getAttribute("data-apps-url") || "").trim();
+                    const input = el("appsUrlInput");
+                    if (input && url) input.value = url;
+                    loadAppsFrameFromInput();
+                  });
+                });
+                el("appsFrame")?.addEventListener("load", () => {
+                  setAppsStatus("Loaded in panel. If blank, this site blocks iframe embedding.");
+                });
               bus.on("settings:draftChanged", () => {
                 updateEffectiveSettingsSummaryFromDraft();
               });
@@ -11723,11 +11952,12 @@ Style rules:
                 render();
                 runtimeGlitch.sync();
               });
-			          el("coinsBtn")?.addEventListener("click", () => openCoinsPurchase());
-			          el("downloadBtn")?.addEventListener("click", openDownload);
-			          el("changelogBtn")?.addEventListener("click", () => openDialogById("changelogModal"));
-			          el("aiRealtorBtn")?.addEventListener("click", openAiRealtor);
-			          el("memoryBtn")?.addEventListener("click", openMemoryModal);
+				          el("coinsBtn")?.addEventListener("click", () => openCoinsPurchase());
+				          el("downloadBtn")?.addEventListener("click", openDownload);
+				          el("changelogBtn")?.addEventListener("click", () => openDialogById("changelogModal"));
+				          el("aiRealtorBtn")?.addEventListener("click", openAiRealtor);
+	                  el("appsBtn")?.addEventListener("click", openAppsModal);
+				          el("memoryBtn")?.addEventListener("click", openMemoryModal);
 		          el("toolsBtn").addEventListener("click", () => {
 		            if (!toolsAvailable()) {
 		              setStatusRight("Tools unavailable. Run `python3 ./Contents/Resources/dev_server.py` and reload.", true);

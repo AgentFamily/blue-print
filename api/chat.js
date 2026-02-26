@@ -327,7 +327,11 @@ module.exports = async (req, res) => {
     }
   }
 
-  const openKey = firstEnv("open", "OPEN", "OPENAI_API_KEY", "OPEN_AI_API_KEY", "OPEN_API_KEY", "OPENAI_KEY", "OPENAI_APIKEY");
+  const headerOpenKey = String(req?.headers?.["x-agentc-openai-key"] || "")
+    .split(",")[0]
+    .trim();
+  const serverOpenKey = firstEnv("open", "OPEN", "OPENAI_API_KEY", "OPEN_AI_API_KEY", "OPEN_API_KEY", "OPENAI_KEY", "OPENAI_APIKEY");
+  const openKey = headerOpenKey || serverOpenKey;
   const gatewayKey = firstEnv("AI_GATEWAY_API_KEY", "AI_GATEWAY_KEY", "VERCEL_AI_GATEWAY_API_KEY");
 
   if (!messages || messages.length === 0) {
@@ -366,15 +370,24 @@ module.exports = async (req, res) => {
   const useGatewayEval = truthyEnv(firstEnv("AI_GATEWAY_EVAL", "MK_GATEWAY_EVAL", "MK_ENABLE_GATEWAY_EVAL"));
   const temperature = typeof body?.options?.temperature === "number" ? body.options.temperature : 0.2;
 
+  const baseSystemMessage = {
+    role: "system",
+    content:
+      "You are the Agent Family ensemble. Reply as a short multi-character exchange inspired by the Agent Family visuals (neutral, angry, sad, and glitch variants). " +
+      "Use 2-4 short turns. Format each line as 'Agent Neutral:', 'Agent Angry:', 'Agent Sad:', 'Agent Neutral Glitch:', 'Agent Angry Glitch:', or 'Agent Sad Glitch:'. " +
+      "Keep the tone cinematic, smart, and helpful. Prioritize accuracy and clarity. Plain text only, no markdown unless asked.",
+  };
+
   const effectiveMessages = isAdminCookie
     ? [
         {
           role: "system",
           content: "Auth: The user is MK (admin) authenticated via code. Treat MK as the admin user.",
         },
+        baseSystemMessage,
         ...messages,
       ]
-    : messages;
+    : [baseSystemMessage, ...messages];
 
   const magicUserId = !isAdminCookie ? getMagicUserIdFromRequest(req) : "";
   let trialGatewayBootstrapEligible = false;
@@ -389,7 +402,7 @@ module.exports = async (req, res) => {
     return Number.isFinite(n) && n >= 0 ? n : 3;
   })();
 
-  if (!isAdminCookie && !magicUserId && trialLimit > 0 && (openKey || gatewayKey)) {
+  if (!isAdminCookie && !magicUserId && trialLimit > 0 && (serverOpenKey || gatewayKey)) {
     const secure = isSecureRequest(req);
     const ttlSeconds = 60 * 60 * 24 * 14;
     const trialId = String(cookies[TRIAL_ID_COOKIE] || "").trim();
