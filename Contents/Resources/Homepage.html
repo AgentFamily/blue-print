@@ -1945,7 +1945,84 @@
         }
       }
 
-      function chatMessagesForApi() {
+      const CHAT_CONTEXT_MAX_URLS = 2;
+      const CHAT_CONTEXT_MAX_CHARS = 14_000;
+      const CHAT_CONTEXT_SNIPPET_CHARS = 7_000;
+
+      function extractPromptUrls(text, maxCount = CHAT_CONTEXT_MAX_URLS) {
+        const source = String(text || "");
+        const matches = source.match(/https?:\/\/[^\s<>"'`]+/gi) || [];
+        const out = [];
+        const seen = new Set();
+        for (const raw of matches) {
+          const trimmed = String(raw || "").replace(/[),.;!?]+$/g, "").trim();
+          const normalized = normalizeBrowserUrl(trimmed);
+          if (!normalized || seen.has(normalized)) continue;
+          seen.add(normalized);
+          out.push(normalized);
+          if (out.length >= maxCount) break;
+        }
+        return out;
+      }
+
+      function withWebsiteContextPrompt(prompt, websiteContextText) {
+        const base = String(prompt || "").trim();
+        const context = String(websiteContextText || "").trim();
+        if (!context) return base;
+        return `${base}\n\nWebsite context fetched by app:\n${context}`;
+      }
+
+      function formatWebsiteContextEntry(entry, index) {
+        const item = entry && typeof entry === "object" ? entry : {};
+        const url = String(item.final_url || item.url || "").trim();
+        const title = String(item.title || "").trim();
+        const status = Number(item.status || 0);
+        const contentType = String(item.content_type || "").trim();
+        const text = String(item.text || "").trim().slice(0, CHAT_CONTEXT_SNIPPET_CHARS);
+        if (!text) return "";
+        const header = [
+          `Website ${index + 1}`,
+          title ? `Title: ${title}` : "",
+          url ? `URL: ${url}` : "",
+          status > 0 ? `HTTP ${status}` : "",
+          contentType || ""
+        ].filter(Boolean).join(" | ");
+        return `${header}\n${text}`;
+      }
+
+      async function fetchPromptWebsiteContext(prompt) {
+        const urls = extractPromptUrls(prompt);
+        if (!urls.length) {
+          return { contextText: "", warnings: [], used: 0, total: 0 };
+        }
+
+        const blocks = [];
+        const warnings = [];
+        for (let i = 0; i < urls.length; i += 1) {
+          const url = urls[i];
+          try {
+            const route = `/browser/context?url=${encodeURIComponent(url)}&max_chars=${CHAT_CONTEXT_SNIPPET_CHARS}`;
+            const { res } = await browserFetchApi(route, { method: "GET", expectJson: true });
+            const body = await readResponseBody(res);
+            if (!res.ok) throw new Error(responseErrorText(res, body));
+            const data = body?.json || {};
+            const block = formatWebsiteContextEntry(data, i);
+            if (block) blocks.push(block);
+            const err = String(data?.error || "").trim();
+            if (err && !block) warnings.push(`${url}: ${err}`);
+          } catch (err) {
+            warnings.push(`${url}: ${compactError(err?.message || err)}`);
+          }
+        }
+
+        let contextText = blocks.join("\n\n---\n\n").trim();
+        if (contextText.length > CHAT_CONTEXT_MAX_CHARS) {
+          contextText = `${contextText.slice(0, CHAT_CONTEXT_MAX_CHARS)}\n\n[Context truncated]`;
+        }
+        return { contextText, warnings, used: blocks.length, total: urls.length };
+      }
+
+      function chatMessagesForApi(websiteContextText) {
         const history = Array.isArray(chatState.messages) ? chatState.messages.slice(-12) : [];
         const clean = history
           .map((msg) => ({
@@ -1953,10 +2030,18 @@
             content: String(msg.content || "").trim()
           }))
           .filter((msg) => msg.content);
+        const context = String(websiteContextText || "").trim();
+        const systemParts = [
+          "You are a concise assistant. Return direct answers."
+        ];
+        if (context) {
+          systemParts.push("Website context blocks are provided by the app. Use that content directly and do not claim you cannot access the website when context exists.");
+          systemParts.push(`WEBSITE_CONTEXT:\n${context}`);
+        }
         return [
           {
             role: "system",
-            content: "You are a concise assistant. Return direct answers."
+            content: systemParts.join("\n\n")
           },
           ...clean
         ];
@@ -2451,12 +2536,13 @@
         return { changed, count: changed.length };
       }
 
-      async function requestEodDraft(prompt) {
+      async function requestEodDraft(prompt, websiteContextText) {
         const mode = currentProviderMode();
         if (!chatState.modelChecked && mode !== "api") await refreshChatModel({ quiet: true });
         const current = collectEOD();
         const sourcePrompt = resolveFormSourceText(prompt);
         const contextPrompt = resolveFormContextText(prompt);
+        const websiteContext = String(websiteContextText || "").trim();
         const fallbackSource = [sourcePrompt, contextPrompt].filter(Boolean).join("\n");
         const strictPrompt = [
           "Fill the End-of-Day form using the user request.",
@@ -2467,6 +2553,7 @@
           "",
           `User request: ${String(sourcePrompt || "").trim()}`,
           contextPrompt ? `Conversation context:\n${String(contextPrompt).slice(0, 3800)}` : "",
+          websiteContext ? `Website context:\n${websiteContext.slice(0, 8000)}` : "",
           `Current form state: ${JSON.stringify(current)}`
         ].filter(Boolean).join("\n");
 
@@ -2587,7 +2674,7 @@
         return answer;
       }
 
-      function buildLocalConversationPrompt() {
+      function buildLocalConversationPrompt(websiteContextText) {
         const lines = (Array.isArray(chatState.messages) ? chatState.messages.slice(-12) : [])
           .map((msg) => {
             const role = String(msg?.role || "") === "assistant" ? "Assistant" : "User";
@@ -2596,22 +2683,31 @@
             return `${role}: ${text}`;
           })
           .filter(Boolean);
+        const context = String(websiteContextText || "").trim();
+        const parts = [
+          "You are a concise assistant. Continue the conversation."
+        ];
+        if (context) {
+          parts.push("Website context blocks are provided by the app. Use that content directly and do not claim you cannot access the website when context exists.");
+          parts.push(`WEBSITE_CONTEXT:\n${context}`);
+        }
         return [
-          "You are a concise assistant. Continue the conversation.",
+          ...parts,
           ...lines,
           "Assistant:"
         ].join("\n");
       }
 
-      async function resolveAssistantReply(prompt) {
+      async function resolveAssistantReply(prompt, websiteContextText) {
         const mode = currentProviderMode();
         const errors = [];
+        const promptWithContext = withWebsiteContextPrompt(prompt, websiteContextText);
 
         if (mode === "local") {
           try {
             return await callApiAndExtract("/api/generate", {
               model: localModelName(),
-              prompt: buildLocalConversationPrompt(),
+              prompt: buildLocalConversationPrompt(websiteContextText),
               stream: false
             });
           } catch (err) {
@@ -2623,7 +2719,7 @@
           try {
             return await callApiAndExtract("/api/chat", {
               model: apiModelName(),
-              messages: chatMessagesForApi(),
+              messages: chatMessagesForApi(websiteContextText),
               options: { temperature: 0.2 },
               stream: false
             });
@@ -2632,7 +2728,7 @@
           }
 
           try {
-            return await callApiAndExtract("/api/prompt", { prompt: String(prompt || "").trim() });
+            return await callApiAndExtract("/api/prompt", { prompt: promptWithContext });
           } catch (err) {
             errors.push(`/api/prompt(api): ${compactError(err?.message || err)}`);
           }
@@ -2642,7 +2738,7 @@
 
         if (!chatState.modelChecked) await refreshChatModel({ quiet: true });
         const historyPayload = {
-          messages: chatMessagesForApi(),
+          messages: chatMessagesForApi(websiteContextText),
           options: { temperature: 0.2 },
           stream: false
         };
@@ -2670,7 +2766,7 @@
           try {
             return await callApiAndExtract("/api/generate", {
               model: chatState.model,
-              prompt: buildLocalConversationPrompt(),
+              prompt: buildLocalConversationPrompt(websiteContextText),
               stream: false
             });
           } catch (err) {
@@ -2679,7 +2775,7 @@
         }
 
         try {
-          return await callApiAndExtract("/api/prompt", { prompt: String(prompt || "").trim() });
+          return await callApiAndExtract("/api/prompt", { prompt: promptWithContext });
         } catch (err) {
           errors.push(`/api/prompt: ${compactError(err?.message || err)}`);
         }
@@ -2750,11 +2846,17 @@
 
         try {
           await diagnoseChatTransport({ quiet: true });
-          const answer = await resolveAssistantReply(prompt);
+          const context = await fetchPromptWebsiteContext(prompt);
+          if (context.total > 0 && context.used > 0) {
+            chatStatus(`Website context loaded from ${context.used}/${context.total} URL(s). Thinking...`, false);
+          } else if (context.total > 0 && context.warnings.length) {
+            chatStatus("Website context could not be fetched. Continuing with plain prompt.", false);
+          }
+          const answer = await resolveAssistantReply(prompt, context.contextText);
           appendChatMessage("assistant", answer);
           if (isFormCommandText(prompt)) {
             try {
-              const draft = await requestEodDraft(prompt);
+              const draft = await requestEodDraft(prompt, context.contextText);
               const applied = applyEodDraft(draft);
               revealEodForm();
               const label = applied.count > 0 ? `End-of-Day form updated (${applied.count} field${applied.count === 1 ? "" : "s"}).` : "End-of-Day form checked (no new field changes).";
@@ -2796,7 +2898,11 @@
 
         try {
           await diagnoseChatTransport({ quiet: true });
-          const draft = await requestEodDraft(prompt);
+          const context = await fetchPromptWebsiteContext(prompt);
+          if (context.total > 0 && context.used > 0) {
+            chatStatus(`Website context loaded from ${context.used}/${context.total} URL(s). Generating draft...`, false);
+          }
+          const draft = await requestEodDraft(prompt, context.contextText);
           const applied = applyEodDraft(draft);
           revealEodForm();
           appendChatMessage("assistant", applied.count > 0 ? `Form updated (${applied.count} fields).` : "Form checked (no new field changes).");

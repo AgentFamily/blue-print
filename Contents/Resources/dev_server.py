@@ -536,6 +536,30 @@ def _mirror_render_html(src_url: str, status: int, final_url: str, content_type:
     return html_text
 
 
+def _browser_context_payload(target_url: str, max_chars: int = 12_000) -> Dict[str, Any]:
+    status, final_url, content_type, raw_html = _reader_fetch(target_url, max_bytes=2_000_000)
+    title = _reader_extract_title(raw_html)
+    text = _reader_extract_text(raw_html)
+    excerpt = str(text or "").strip()[: int(max(800, min(50_000, max_chars)))]
+    if not excerpt:
+        excerpt = str(raw_html or "").strip()[:2000]
+    err = ""
+    if int(status or 0) >= 400:
+        err = f"Source returned HTTP {int(status)}."
+    if (str(content_type or "").lower().startswith("text/plain")) and str(raw_html or "").lower().startswith("could not fetch url:"):
+        err = str(raw_html or "").strip()
+    return {
+        "ok": not bool(err),
+        "url": str(target_url),
+        "final_url": str(final_url or target_url),
+        "status": int(status or 0),
+        "content_type": str(content_type or ""),
+        "title": str(title or ""),
+        "text": excerpt,
+        "error": err,
+    }
+
+
 def _handle_gateway_chat(handler: http.server.BaseHTTPRequestHandler, body: bytes, open_key: str = "") -> None:
     open_key = str(open_key or _effective_open_api_key(handler)).strip()
     gateway_key = _gateway_api_key()
@@ -1760,6 +1784,34 @@ def build_handler(*, upstream: str, tool_token: str):
                     )
                     return
                 _json_response(self, 200, _browser_probe(target_url))
+                return
+
+            if path == "/browser/context":
+                params = parse_qs(parsed.query or "")
+                raw_url = ""
+                max_chars = 12_000
+                try:
+                    raw_url = str((params.get("url") or [""])[0] or "").strip()
+                except Exception:
+                    raw_url = ""
+                try:
+                    max_chars = int(str((params.get("max_chars") or ["12000"])[0] or "12000").strip())
+                except Exception:
+                    max_chars = 12_000
+                max_chars = max(800, min(50_000, max_chars))
+                target_url = _normalize_browser_url(raw_url)
+                if not target_url:
+                    _json_response(
+                        self,
+                        400,
+                        {
+                            "ok": False,
+                            "error": "Invalid URL. Use http(s) URL, for example /browser/context?url=https%3A%2F%2Fexample.com",
+                        },
+                    )
+                    return
+                payload = _browser_context_payload(target_url, max_chars=max_chars)
+                _json_response(self, 200, payload)
                 return
 
             if path == "/browser/read":
