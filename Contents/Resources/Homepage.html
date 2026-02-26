@@ -671,6 +671,10 @@
         align-items: center;
       }
 
+      .browser-mode {
+        min-width: 210px;
+      }
+
       .browser-url {
         flex: 1 1 480px;
         min-width: 220px;
@@ -694,6 +698,15 @@
         padding: 8px 10px;
         font-family: "IBM Plex Mono", monospace;
         cursor: pointer;
+      }
+
+      .browser-row select {
+        border: 1px solid rgba(126, 207, 255, 0.28);
+        border-radius: 10px;
+        background: rgba(4, 21, 40, 0.72);
+        color: var(--text-main);
+        padding: 8px 10px;
+        font-family: "IBM Plex Mono", monospace;
       }
 
       .browser-status {
@@ -1016,10 +1029,16 @@
                   <h3>Agent Browser</h3>
                   <div class="browser-grid">
                     <div class="browser-row">
+                      <select id="browser_mode_select" class="browser-mode" aria-label="Browser mode">
+                        <option value="smart">Smart (Auto fallback)</option>
+                        <option value="live">Live (Iframe)</option>
+                        <option value="reader">Reader (Always works)</option>
+                      </select>
                       <label class="browser-url" for="browser_url_input">
                         <input id="browser_url_input" type="text" placeholder="https://example.com" autocomplete="off" />
                       </label>
                       <button id="browser_open_btn" type="button">Open</button>
+                      <button id="browser_reader_btn" type="button">Open Reader</button>
                       <button id="browser_external_btn" type="button">Open External</button>
                       <button id="browser_use_url_btn" type="button">Use URL in Prompt</button>
                     </div>
@@ -2607,10 +2626,14 @@
       initChat();
 
       const BROWSER_LAST_URL_KEY = "atlasBrowserLastUrlV1";
+      const BROWSER_MODE_KEY = "atlasBrowserModeV1";
       const browserState = {
         history: [],
         index: -1,
-        loading: false
+        loading: false,
+        currentMode: "live",
+        navToken: 0,
+        expectedSrc: ""
       };
 
       function browserEl(id) {
@@ -2633,10 +2656,69 @@
         node.style.color = isError ? "#ffb0b0" : "var(--accent)";
       }
 
-      function browserCurrentUrl() {
-        if (browserState.index >= 0 && browserState.index < browserState.history.length) {
-          return String(browserState.history[browserState.index] || "");
+      function browserSelectedMode() {
+        const raw = String(browserEl("browser_mode_select")?.value || "smart").trim().toLowerCase();
+        if (raw === "live" || raw === "reader") return raw;
+        return "smart";
+      }
+
+      function browserRememberMode(mode) {
+        try {
+          localStorage.setItem(BROWSER_MODE_KEY, String(mode || "smart"));
+        } catch {
+          // ignore
         }
+      }
+
+      function browserLikelyBlockedHost(url) {
+        try {
+          const host = new URL(url).hostname.toLowerCase();
+          const blocked = [
+            "chatgpt.com",
+            "openai.com",
+            "platform.openai.com",
+            "github.com",
+            "google.com"
+          ];
+          return blocked.some((d) => host === d || host.endsWith(`.${d}`));
+        } catch {
+          return false;
+        }
+      }
+
+      function browserRequestedMode(forcedMode) {
+        const req = String(forcedMode || "").trim().toLowerCase();
+        if (req === "live" || req === "reader") return req;
+        return browserSelectedMode();
+      }
+
+      function browserReaderSrc(url) {
+        return `/browser/read?url=${encodeURIComponent(url)}`;
+      }
+
+      async function browserProbe(url) {
+        const endpoint = `/browser/probe?url=${encodeURIComponent(url)}`;
+        const resp = await fetch(endpoint, { method: "GET", cache: "no-store" });
+        if (!resp.ok) {
+          throw new Error(`Probe failed (${resp.status}).`);
+        }
+        const data = await resp.json();
+        if (!data || data.ok === false) {
+          throw new Error(String(data?.error || "Probe failed."));
+        }
+        return data;
+      }
+
+      function browserCurrentEntry() {
+        if (browserState.index >= 0 && browserState.index < browserState.history.length) {
+          return browserState.history[browserState.index] || null;
+        }
+        return null;
+      }
+
+      function browserCurrentUrl() {
+        const entry = browserCurrentEntry();
+        if (entry && entry.url) return String(entry.url);
         const raw = String(browserEl("browser_url_input")?.value || "").trim();
         return normalizeBrowserUrl(raw);
       }
@@ -2681,24 +2763,14 @@
         }
       }
 
-      function browserNavigate(rawUrl, options) {
+      async function browserNavigate(rawUrl, options) {
         const fromHistory = Boolean(options && options.fromHistory);
         const replace = Boolean(options && options.replace);
+        const forcedMode = String(options?.mode || "").trim().toLowerCase();
         const url = normalizeBrowserUrl(rawUrl);
         if (!url) {
           browserStatus("Enter a valid URL first (e.g. https://chatgpt.com).", true);
           return false;
-        }
-
-        if (!fromHistory) {
-          if (replace && browserState.index >= 0) {
-            browserState.history[browserState.index] = url;
-          } else {
-            const next = browserState.history.slice(0, browserState.index + 1);
-            next.push(url);
-            browserState.history = next;
-            browserState.index = next.length - 1;
-          }
         }
 
         const input = browserEl("browser_url_input");
@@ -2709,33 +2781,91 @@
           return false;
         }
 
+        const navToken = ++browserState.navToken;
         browserState.loading = true;
         browserRenderNav();
         browserRemember(url);
-        frame.src = url;
-        browserStatus("Loading page... If blank, the site blocks iframe embedding.", false);
+
+        const requestedMode = browserRequestedMode(forcedMode);
+        let mode = requestedMode;
+        let reason = "";
+
+        if (requestedMode === "smart") {
+          browserStatus("Smart mode is checking compatibility...", false);
+          try {
+            const probe = await browserProbe(url);
+            if (navToken !== browserState.navToken) return false;
+            if (probe.frame_allowed === false) {
+              mode = "reader";
+              reason = String(probe.reason || "Site blocks iframe embedding.");
+            } else {
+              mode = "live";
+            }
+          } catch (err) {
+            reason = String(err?.message || err || "Compatibility check failed.");
+            mode = browserLikelyBlockedHost(url) ? "reader" : "live";
+          }
+        } else if (requestedMode === "reader") {
+          mode = "reader";
+        } else {
+          mode = "live";
+        }
+
+        if (navToken !== browserState.navToken) return false;
+
+        if (!fromHistory) {
+          const entry = { url, mode };
+          if (replace && browserState.index >= 0) {
+            browserState.history[browserState.index] = entry;
+          } else {
+            const next = browserState.history.slice(0, browserState.index + 1);
+            next.push(entry);
+            browserState.history = next;
+            browserState.index = next.length - 1;
+          }
+        }
+
+        const targetSrc = mode === "reader" ? browserReaderSrc(url) : url;
+        browserState.currentMode = mode;
+        browserState.expectedSrc = targetSrc;
+        frame.src = targetSrc;
+
+        if (mode === "reader") {
+          if (requestedMode === "smart") {
+            browserStatus(reason ? `Smart mode switched to Reader: ${reason}` : "Smart mode switched to Reader for compatibility.", false);
+          } else {
+            browserStatus("Opening in Reader mode.", false);
+          }
+        } else if (requestedMode === "smart" && reason) {
+          browserStatus(`Smart mode stayed Live (${reason}). If blank, click Open Reader.`, false);
+        } else {
+          browserStatus("Loading live page... If blank, click Open Reader or Open External.", false);
+        }
         return true;
       }
 
       function browserBack() {
         if (browserState.index <= 0) return;
         browserState.index -= 1;
-        browserNavigate(browserState.history[browserState.index], { fromHistory: true });
+        const entry = browserCurrentEntry();
+        void browserNavigate(entry?.url || "", { fromHistory: true, mode: entry?.mode || "smart" });
       }
 
       function browserForward() {
         if (browserState.index < 0 || browserState.index >= browserState.history.length - 1) return;
         browserState.index += 1;
-        browserNavigate(browserState.history[browserState.index], { fromHistory: true });
+        const entry = browserCurrentEntry();
+        void browserNavigate(entry?.url || "", { fromHistory: true, mode: entry?.mode || "smart" });
       }
 
       function browserReload() {
-        const url = browserCurrentUrl();
+        const entry = browserCurrentEntry();
+        const url = entry?.url || browserCurrentUrl();
         if (!url) {
           browserStatus("No URL to reload.", true);
           return;
         }
-        browserNavigate(url, { fromHistory: true });
+        void browserNavigate(url, { fromHistory: true, mode: entry?.mode || "smart" });
       }
 
       function browserUseUrlInPrompt() {
@@ -2761,18 +2891,40 @@
       function initBrowser() {
         const input = browserEl("browser_url_input");
         const frame = browserEl("browser_frame");
+        const modeSelect = browserEl("browser_mode_select");
 
-        const saved = (() => {
+        const savedUrl = (() => {
           try {
             return String(localStorage.getItem(BROWSER_LAST_URL_KEY) || "");
           } catch {
             return "";
           }
         })();
-        const startUrl = normalizeBrowserUrl(saved) || "https://chatgpt.com";
-        if (input) input.value = startUrl;
+        const savedMode = (() => {
+          try {
+            return String(localStorage.getItem(BROWSER_MODE_KEY) || "smart").trim().toLowerCase();
+          } catch {
+            return "smart";
+          }
+        })();
+        if (modeSelect) modeSelect.value = savedMode === "live" || savedMode === "reader" ? savedMode : "smart";
 
-        browserEl("browser_open_btn")?.addEventListener("click", () => browserNavigate(String(input?.value || "")));
+        const startUrl = normalizeBrowserUrl(savedUrl) || "https://chatgpt.com";
+        if (input) input.value = startUrl;
+        if (modeSelect && modeSelect.value === "live" && browserLikelyBlockedHost(startUrl)) {
+          modeSelect.value = "smart";
+          browserRememberMode("smart");
+        }
+
+        modeSelect?.addEventListener("change", () => {
+          const mode = browserSelectedMode();
+          browserRememberMode(mode);
+          const current = browserCurrentUrl();
+          if (current) void browserNavigate(current, { replace: true, mode });
+        });
+
+        browserEl("browser_open_btn")?.addEventListener("click", () => { void browserNavigate(String(input?.value || "")); });
+        browserEl("browser_reader_btn")?.addEventListener("click", () => { void browserNavigate(String(input?.value || ""), { mode: "reader" }); });
         browserEl("browser_back_btn")?.addEventListener("click", browserBack);
         browserEl("browser_forward_btn")?.addEventListener("click", browserForward);
         browserEl("browser_reload_btn")?.addEventListener("click", browserReload);
@@ -2781,29 +2933,61 @@
         input?.addEventListener("keydown", (event) => {
           if (event.key !== "Enter") return;
           event.preventDefault();
-          browserNavigate(String(input.value || ""));
+          void browserNavigate(String(input.value || ""));
         });
         document.querySelectorAll("[data-browser-url]").forEach((btn) => {
           btn.addEventListener("click", () => {
             const url = String(btn.getAttribute("data-browser-url") || "").trim();
             if (input && url) input.value = url;
-            browserNavigate(url);
+            void browserNavigate(url);
           });
         });
 
         frame?.addEventListener("load", () => {
           browserState.loading = false;
           browserRenderNav();
-          browserStatus("Loaded in panel. If blank, this site blocks iframe embedding.", false);
+          const mode = browserState.currentMode || "live";
+          if (mode === "reader") {
+            browserStatus("Loaded in Reader mode.", false);
+          } else {
+            let stayedBlank = false;
+            try {
+              const doc = frame.contentDocument;
+              const href = String(doc?.location?.href || "");
+              const text = String(doc?.body?.textContent || "").trim();
+              if (!text && (!href || href === "about:blank")) {
+                stayedBlank = true;
+              }
+            } catch {
+              stayedBlank = false;
+            }
+            if (stayedBlank) {
+              const current = browserCurrentUrl();
+              if (current) {
+                browserStatus("Live frame stayed blank. Switching to Reader mode.", false);
+                void browserNavigate(current, { replace: true, mode: "reader" });
+                return;
+              }
+            }
+            browserStatus("Loaded in live panel. If blank, click Open Reader.", false);
+          }
         });
         frame?.addEventListener("error", () => {
           browserState.loading = false;
           browserRenderNav();
+          if (browserState.currentMode === "live") {
+            const current = browserCurrentUrl();
+            if (current) {
+              browserStatus("Live load failed. Switching to Reader mode.", false);
+              void browserNavigate(current, { replace: true, mode: "reader" });
+              return;
+            }
+          }
           browserStatus("Could not load page in panel. Try Open External.", true);
         });
 
         browserRenderNav();
-        browserNavigate(startUrl);
+        void browserNavigate(startUrl, { mode: browserSelectedMode() });
       }
 
       initBrowser();

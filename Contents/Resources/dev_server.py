@@ -17,7 +17,7 @@ import threading
 import time
 import urllib.error
 import urllib.request
-from urllib.parse import unquote, urlparse
+from urllib.parse import parse_qs, quote, unquote, urljoin, urlparse
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
@@ -139,6 +139,305 @@ def _extract_chat_content(payload: Any) -> str:
     except Exception:
         content = ""
     return str(content or "")
+
+
+def _normalize_browser_url(raw: str) -> str:
+    text = str(raw or "").strip()
+    if not text:
+        return ""
+    if text.startswith("//"):
+        text = "https:" + text
+    elif re.match(r"^[a-z0-9.-]+\.[a-z]{2,}(/.*)?$", text, re.IGNORECASE):
+        text = "https://" + text
+    parsed = urlparse(text)
+    if parsed.scheme not in {"http", "https"}:
+        return ""
+    if not parsed.netloc:
+        return ""
+    return parsed.geturl()
+
+
+def _reader_escape(text: str) -> str:
+    return (
+        str(text or "")
+        .replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace('"', "&quot;")
+        .replace("'", "&#39;")
+    )
+
+
+def _reader_fetch(url: str, timeout_s: float = 12.0, max_bytes: int = 1_500_000) -> Tuple[int, str, str, str]:
+    req = urllib.request.Request(url, method="GET")
+    req.add_header(
+        "User-Agent",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15",
+    )
+    req.add_header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+    req.add_header("Accept-Language", "en-US,en;q=0.9")
+    req.add_header("Cache-Control", "no-cache")
+
+    try:
+        with urllib.request.urlopen(req, timeout=float(timeout_s)) as resp:
+            status = int(getattr(resp, "status", 200) or 200)
+            final_url = str(getattr(resp, "url", url) or url)
+            content_type = str(resp.headers.get("Content-Type") or "")
+            raw = resp.read(max_bytes + 1)
+    except urllib.error.HTTPError as e:
+        status = int(getattr(e, "code", 502) or 502)
+        final_url = str(getattr(e, "url", url) or url)
+        content_type = str(getattr(e, "headers", {}).get("Content-Type", "") if getattr(e, "headers", None) else "")
+        raw = e.read(max_bytes + 1)
+    except Exception as e:
+        return 502, url, "text/plain; charset=utf-8", f"Could not fetch URL: {e}"
+
+    if len(raw) > max_bytes:
+        raw = raw[:max_bytes]
+    text = raw.decode("utf-8", errors="replace")
+    return status, final_url, content_type, text
+
+
+def _extract_frame_ancestors_values(csp_values: list[str]) -> list[str]:
+    out: list[str] = []
+    for csp in csp_values or []:
+        for directive in str(csp or "").split(";"):
+            item = re.sub(r"\s+", " ", directive.strip())
+            if not item:
+                continue
+            if item.lower().startswith("frame-ancestors"):
+                value = item[len("frame-ancestors") :].strip()
+                if value:
+                    out.append(value)
+    return out
+
+
+def _frame_policy_allows_localhost(xfo_value: str, frame_ancestors_values: list[str]) -> Tuple[bool, str]:
+    xfo = str(xfo_value or "").strip().lower()
+    if xfo:
+        if "deny" in xfo:
+            return False, "Blocked by X-Frame-Options: DENY."
+        if "sameorigin" in xfo:
+            return False, "Blocked by X-Frame-Options: SAMEORIGIN."
+        if xfo.startswith("allow-from"):
+            if ("localhost" not in xfo) and ("127.0.0.1" not in xfo) and ("::1" not in xfo):
+                return False, "Blocked by X-Frame-Options ALLOW-FROM policy."
+
+    if frame_ancestors_values:
+        for value in frame_ancestors_values:
+            tokens = [tok.strip().strip(",") for tok in re.split(r"\s+", str(value or "").strip()) if tok.strip()]
+            low_tokens = [tok.lower() for tok in tokens]
+            if not low_tokens:
+                continue
+            if "'none'" in low_tokens:
+                return False, "Blocked by CSP frame-ancestors 'none'."
+            if "*" in low_tokens:
+                return True, "Allowed by CSP frame-ancestors *."
+            for tok in low_tokens:
+                token = tok.strip("'\"")
+                if token in {"http:", "https:"}:
+                    return True, "Allowed by CSP scheme source."
+                if ("localhost" in token) or ("127.0.0.1" in token) or ("::1" in token):
+                    return True, "CSP frame-ancestors allows localhost."
+        return False, "Blocked by CSP frame-ancestors."
+
+    return True, "No explicit frame restrictions detected."
+
+
+def _browser_probe(url: str, timeout_s: float = 10.0) -> Dict[str, Any]:
+    req = urllib.request.Request(url, method="GET")
+    req.add_header(
+        "User-Agent",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15",
+    )
+    req.add_header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+    req.add_header("Accept-Language", "en-US,en;q=0.9")
+    req.add_header("Cache-Control", "no-cache")
+
+    status = 0
+    final_url = url
+    content_type = ""
+    xfo_value = ""
+    csp_values: list[str] = []
+    error_msg = ""
+
+    try:
+        with urllib.request.urlopen(req, timeout=float(timeout_s)) as resp:
+            status = int(getattr(resp, "status", 200) or 200)
+            final_url = str(getattr(resp, "url", url) or url)
+            content_type = str(resp.headers.get("Content-Type") or "")
+            xfo_value = str(resp.headers.get("X-Frame-Options") or "")
+            try:
+                csp_values = [str(v).strip() for v in (resp.headers.get_all("Content-Security-Policy") or []) if str(v).strip()]
+            except Exception:
+                csp_values = []
+            if not csp_values:
+                single = str(resp.headers.get("Content-Security-Policy") or "").strip()
+                if single:
+                    csp_values = [single]
+            _ = resp.read(4096)
+    except urllib.error.HTTPError as e:
+        status = int(getattr(e, "code", 502) or 502)
+        final_url = str(getattr(e, "url", url) or url)
+        headers = getattr(e, "headers", None)
+        content_type = str(headers.get("Content-Type") if headers else "") or ""
+        xfo_value = str(headers.get("X-Frame-Options") if headers else "") or ""
+        try:
+            csp_values = [str(v).strip() for v in (headers.get_all("Content-Security-Policy") or []) if str(v).strip()] if headers else []
+        except Exception:
+            csp_values = []
+        if not csp_values:
+            single = str(headers.get("Content-Security-Policy") if headers else "") or ""
+            if single.strip():
+                csp_values = [single.strip()]
+        try:
+            _ = e.read(2048)
+        except Exception:
+            pass
+    except Exception as e:
+        error_msg = f"Could not reach URL: {e}"
+
+    frame_ancestors_values = _extract_frame_ancestors_values(csp_values)
+    frame_allowed, reason = _frame_policy_allows_localhost(xfo_value, frame_ancestors_values)
+
+    if error_msg:
+        return {
+            "ok": False,
+            "url": url,
+            "final_url": final_url,
+            "status": int(status or 0),
+            "content_type": content_type,
+            "frame_allowed": False,
+            "reason": error_msg,
+            "x_frame_options": xfo_value,
+            "frame_ancestors": " | ".join(frame_ancestors_values),
+            "error": error_msg,
+        }
+
+    if int(status or 0) >= 400:
+        frame_allowed = False
+        reason = f"HTTP {int(status)} returned by site."
+
+    return {
+        "ok": True,
+        "url": url,
+        "final_url": final_url,
+        "status": int(status or 0),
+        "content_type": content_type,
+        "frame_allowed": bool(frame_allowed),
+        "reason": reason,
+        "x_frame_options": xfo_value,
+        "frame_ancestors": " | ".join(frame_ancestors_values),
+        "error": "",
+    }
+
+
+def _reader_extract_title(html_text: str) -> str:
+    m = re.search(r"<title[^>]*>([\s\S]*?)</title>", html_text or "", re.IGNORECASE)
+    if not m:
+        return ""
+    title = re.sub(r"\s+", " ", m.group(1) or "").strip()
+    return title[:240]
+
+
+def _reader_extract_text(html_text: str) -> str:
+    text = str(html_text or "")
+    text = re.sub(r"(?is)<script\b[^>]*>[\s\S]*?</script>", " ", text)
+    text = re.sub(r"(?is)<style\b[^>]*>[\s\S]*?</style>", " ", text)
+    text = re.sub(r"(?is)<noscript\b[^>]*>[\s\S]*?</noscript>", " ", text)
+    text = re.sub(r"(?i)<br\s*/?>", "\n", text)
+    text = re.sub(r"(?i)</(p|div|section|article|h1|h2|h3|h4|h5|h6|li|tr)>", "\n", text)
+    text = re.sub(r"(?is)<[^>]+>", " ", text)
+    text = re.sub(r"\n\s*\n\s*\n+", "\n\n", text)
+    text = re.sub(r"[ \t]+\n", "\n", text)
+    text = re.sub(r"[ \t]{2,}", " ", text)
+    text = text.strip()
+    return text[:60_000]
+
+
+def _reader_extract_links(html_text: str, base_url: str, max_links: int = 60) -> list[Tuple[str, str]]:
+    out: list[Tuple[str, str]] = []
+    seen: set[str] = set()
+    for m in re.finditer(r'(?is)<a\b[^>]*href\s*=\s*["\']([^"\']+)["\'][^>]*>([\s\S]*?)</a>', html_text or ""):
+        href = str(m.group(1) or "").strip()
+        if not href or href.startswith("#") or href.lower().startswith(("javascript:", "mailto:", "tel:")):
+            continue
+        try:
+            full = urljoin(base_url, href)
+        except Exception:
+            continue
+        full = _normalize_browser_url(full)
+        if not full or full in seen:
+            continue
+        label_raw = re.sub(r"(?is)<[^>]+>", " ", str(m.group(2) or ""))
+        label = re.sub(r"\s+", " ", label_raw).strip()
+        if not label:
+            label = full
+        label = label[:180]
+        seen.add(full)
+        out.append((label, full))
+        if len(out) >= max_links:
+            break
+    return out
+
+
+def _reader_render_html(src_url: str, status: int, final_url: str, content_type: str, raw_html: str) -> str:
+    title = _reader_extract_title(raw_html) or final_url or src_url
+    summary = _reader_extract_text(raw_html)
+    links = _reader_extract_links(raw_html, final_url or src_url)
+
+    links_html = ""
+    if links:
+        parts = []
+        for label, link in links:
+            q = quote(link, safe="")
+            parts.append(
+                f'<li><a href="/browser/read?url={q}" target="_self">{_reader_escape(label)}</a>'
+                f'<span class="u">{_reader_escape(link)}</span></li>'
+            )
+        links_html = "<h3>Links</h3><ul>" + "".join(parts) + "</ul>"
+
+    body = f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Reader: {_reader_escape(title)}</title>
+  <style>
+    :root {{
+      --bg: #071c33;
+      --panel: #0b2746;
+      --ink: #d8f1ff;
+      --muted: #8db9d7;
+      --line: rgba(127, 202, 248, 0.28);
+      --accent: #7de4ff;
+    }}
+    html, body {{ margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }}
+    .wrap {{ max-width: 980px; margin: 0 auto; padding: 14px; }}
+    .card {{ border: 1px solid var(--line); border-radius: 12px; background: var(--panel); padding: 12px; }}
+    h1 {{ margin: 0 0 8px; font-size: 20px; line-height: 1.25; }}
+    h3 {{ margin: 16px 0 8px; font-size: 14px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }}
+    .meta {{ color: var(--muted); font-size: 12px; margin-bottom: 10px; }}
+    .txt {{ white-space: pre-wrap; line-height: 1.55; font-size: 14px; }}
+    ul {{ margin: 0; padding-left: 18px; display: grid; gap: 8px; }}
+    a {{ color: var(--accent); word-break: break-all; }}
+    .u {{ display: block; color: var(--muted); font-size: 11px; margin-top: 2px; }}
+    .warn {{ margin-top: 8px; color: #ffd88b; font-size: 12px; }}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>{_reader_escape(title)}</h1>
+      <div class="meta">Source: {_reader_escape(final_url or src_url)} | HTTP {status} | Content-Type: {_reader_escape(content_type or "unknown")}</div>
+      <div class="txt">{_reader_escape(summary or "No readable content extracted.")}</div>
+      {links_html}
+      <div class="warn">Reader mode strips active scripts for reliability. For full app behavior, use Open External.</div>
+    </div>
+  </div>
+</body>
+</html>"""
+    return body
 
 
 def _handle_gateway_chat(handler: http.server.BaseHTTPRequestHandler, body: bytes, open_key: str = "") -> None:
@@ -1343,6 +1642,49 @@ def build_handler(*, upstream: str, tool_token: str):
 
             if self.path == "/health":
                 _handle_health(self, upstream)
+                return
+
+            if path == "/browser/probe":
+                params = parse_qs(parsed.query or "")
+                raw_url = ""
+                try:
+                    raw_url = str((params.get("url") or [""])[0] or "").strip()
+                except Exception:
+                    raw_url = ""
+                target_url = _normalize_browser_url(raw_url)
+                if not target_url:
+                    _json_response(
+                        self,
+                        400,
+                        {
+                            "ok": False,
+                            "error": "Invalid URL. Use http(s) URL.",
+                            "frame_allowed": False,
+                        },
+                    )
+                    return
+                _json_response(self, 200, _browser_probe(target_url))
+                return
+
+            if path == "/browser/read":
+                params = parse_qs(parsed.query or "")
+                raw_url = ""
+                try:
+                    raw_url = str((params.get("url") or [""])[0] or "").strip()
+                except Exception:
+                    raw_url = ""
+                target_url = _normalize_browser_url(raw_url)
+                if not target_url:
+                    _text_response(
+                        self,
+                        400,
+                        "Invalid URL. Use http(s) URL, for example /browser/read?url=https%3A%2F%2Fexample.com",
+                        "text/plain; charset=utf-8",
+                    )
+                    return
+                status, final_url, content_type, raw_html = _reader_fetch(target_url)
+                html = _reader_render_html(target_url, status, final_url, content_type, raw_html)
+                _text_response(self, 200, html, "text/html; charset=utf-8")
                 return
 
             if self.path == "/server/info":
