@@ -522,6 +522,129 @@
         box-shadow: 0 0 0 4px rgba(255, 224, 125, 0.2);
       }
 
+      .verify-card {
+        margin: 24px 0;
+      }
+
+      .verify-grid {
+        display: grid;
+        gap: 12px;
+      }
+
+      .verify-list {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        display: grid;
+        gap: 8px;
+      }
+
+      .verify-item {
+        border: 1px solid rgba(128, 202, 248, 0.25);
+        border-radius: 10px;
+        background: rgba(4, 22, 40, 0.74);
+        padding: 9px 10px;
+        display: grid;
+        gap: 4px;
+      }
+
+      .verify-item-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      .verify-item-title {
+        margin: 0;
+        font-size: 0.96rem;
+        letter-spacing: 0.03em;
+      }
+
+      .verify-item-meta {
+        margin: 0;
+        color: var(--text-dim);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.7rem;
+        line-height: 1.45;
+      }
+
+      .verify-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border-radius: 999px;
+        border: 1px solid rgba(124, 207, 255, 0.31);
+        background: rgba(5, 29, 53, 0.6);
+        padding: 4px 8px;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.65rem;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+      }
+
+      .verify-pill::before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--ok);
+        box-shadow: 0 0 0 4px rgba(74, 240, 191, 0.14);
+      }
+
+      .verify-pill.warn::before {
+        background: var(--warn);
+        box-shadow: 0 0 0 4px rgba(255, 224, 125, 0.2);
+      }
+
+      .verify-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .verify-actions button {
+        border: 1px solid rgba(126, 207, 255, 0.28);
+        border-radius: 10px;
+        background: rgba(4, 21, 40, 0.72);
+        color: var(--text-main);
+        padding: 8px 10px;
+        font-family: "IBM Plex Mono", monospace;
+        cursor: pointer;
+      }
+
+      .verify-status {
+        color: var(--accent);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.73rem;
+      }
+
+      .verify-sources {
+        border: 1px dashed rgba(126, 207, 255, 0.3);
+        border-radius: 10px;
+        padding: 8px 10px;
+      }
+
+      .verify-sources summary {
+        cursor: pointer;
+        font-family: "IBM Plex Mono", monospace;
+        color: var(--accent);
+        font-size: 0.73rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .verify-sources ul {
+        margin: 8px 0 0;
+        padding-left: 18px;
+        display: grid;
+        gap: 6px;
+      }
+
+      .verify-sources a {
+        color: var(--accent);
+      }
+
       .territories h3 {
         margin: 0 0 12px;
         font-size: 1.4rem;
@@ -1165,6 +1288,35 @@
                     <div class="browser-frame-wrap">
                       <iframe id="browser_frame" class="browser-frame" loading="lazy" referrerpolicy="no-referrer"></iframe>
                     </div>
+                  </div>
+                </section>
+
+                <section id="openclaw-verify" class="blueprint-card verify-card">
+                  <h3>OpenClaw Spec Verification</h3>
+                  <div class="verify-grid">
+                    <p class="spec-board-note">
+                      Point-by-point bullets from <code>26Feb26 OpenClaw.pdf</code>, mapped to this app.
+                    </p>
+                    <ul id="openclaw_spec_list" class="verify-list"></ul>
+
+                    <div class="verify-actions">
+                      <button id="verify_browser_btn" type="button">Run Browser Verify</button>
+                    </div>
+                    <div class="verify-status" id="browser_verify_status">Browser verification not run yet.</div>
+                    <ul id="browser_verify_list" class="verify-list"></ul>
+
+                    <details class="verify-sources">
+                      <summary>Primary OpenClaw Sources</summary>
+                      <ul>
+                        <li><a href="https://docs.openclaw.ai/" target="_blank" rel="noopener noreferrer">docs.openclaw.ai</a></li>
+                        <li><a href="https://docs.openclaw.ai/gateway/security" target="_blank" rel="noopener noreferrer">Gateway security</a></li>
+                        <li><a href="https://docs.openclaw.ai/plugins/agent-tools" target="_blank" rel="noopener noreferrer">Agent tools</a></li>
+                        <li><a href="https://docs.openclaw.ai/automation/cron-jobs" target="_blank" rel="noopener noreferrer">Cron jobs</a></li>
+                        <li><a href="https://openclaw.ai/showcase" target="_blank" rel="noopener noreferrer">Showcase</a></li>
+                        <li><a href="https://openclaw.ai/blog/virustotal-partnership" target="_blank" rel="noopener noreferrer">VirusTotal partnership</a></li>
+                        <li><a href="https://github.com/openclaw/openclaw" target="_blank" rel="noopener noreferrer">OpenClaw GitHub</a></li>
+                      </ul>
+                    </details>
                   </div>
                 </section>
 
@@ -3559,7 +3711,7 @@
         if (modeSelect) modeSelect.value = savedMode === "live" || savedMode === "mirror" || savedMode === "reader" || savedMode === "safari" ? savedMode : "smart";
 
         const startUrl = normalizeBrowserUrl(BROWSER_HOME_URL) || "https://a-i-agency.com";
-        browserRememberLastUrl(startUrl);
+        browserRemember(startUrl);
         if (input) input.value = startUrl;
         if (modeSelect && modeSelect.value === "live" && browserLikelyBlockedHost(startUrl)) {
           modeSelect.value = "smart";
@@ -3680,6 +3832,213 @@
       }
 
       initBrowser();
+
+      const OPENCLAW_SPEC_POINTS = [
+        {
+          state: "ok",
+          title: "Human-in-loop operation before risky actions",
+          source: "PDF p1, p5",
+          detail: "Chat and form actions are operator-triggered; no blind outbound publishing or negotiation automation."
+        },
+        {
+          state: "warn",
+          title: "Always-on automation cadence (cron-backed)",
+          source: "PDF p2, p5, p7",
+          detail: "Spec recommends scheduled jobs and persistent cadence. This app currently focuses on interactive control, not cron scheduling."
+        },
+        {
+          state: "ok",
+          title: "Security boundary with private secrets",
+          source: "PDF p1, p2, p11",
+          detail: "Vault keeps secrets masked by default and uses passphrase unlock before API usage."
+        },
+        {
+          state: "ok",
+          title: "LLM source selectivity (API + local)",
+          source: "PDF p2, p10",
+          detail: "Chat supports Auto, Local (Ollama), and API (OpenAI/Gateway) modes with model override."
+        },
+        {
+          state: "ok",
+          title: "Website context from URLs in prompts",
+          source: "PDF p5, p9",
+          detail: "Prompt URLs are fetched through the browser context endpoint and injected into model calls."
+        },
+        {
+          state: "ok",
+          title: "In-app browser fallback for blocked sites",
+          source: "PDF p2",
+          detail: "Browser supports Smart + Live/Mirror/Reader/Safari/External with automatic fallback on iframe blocks."
+        },
+        {
+          state: "ok",
+          title: "All node specs visible (not hover-only)",
+          source: "PDF p3-p5, user requirement",
+          detail: "Route specs are rendered in an always-visible board and synchronized with map selection."
+        },
+        {
+          state: "warn",
+          title: "Compliance workflow enforcement (PECR/CAN-SPAM/ASA)",
+          source: "PDF p10-p12",
+          detail: "Spec references compliance controls; this app does not yet enforce jurisdiction-specific legal checks automatically."
+        }
+      ];
+
+      function verifyEl(id) {
+        return document.getElementById(id);
+      }
+
+      function verifyEsc(value) {
+        return String(value == null ? "" : value).replace(/[&<>"']/g, (ch) => (
+          { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]
+        ));
+      }
+
+      function verifyPillText(state) {
+        return state === "ok" ? "Verified" : "Needs Follow-Up";
+      }
+
+      function renderOpenClawSpecList() {
+        const list = verifyEl("openclaw_spec_list");
+        if (!list) return;
+        list.innerHTML = OPENCLAW_SPEC_POINTS.map((item) => {
+          const warn = item.state !== "ok";
+          return `
+            <li class="verify-item">
+              <div class="verify-item-head">
+                <p class="verify-item-title">${verifyEsc(item.title)}</p>
+                <span class="verify-pill${warn ? " warn" : ""}">${verifyEsc(verifyPillText(item.state))}</span>
+              </div>
+              <p class="verify-item-meta">${verifyEsc(item.detail)}</p>
+              <p class="verify-item-meta">Source: ${verifyEsc(item.source)}</p>
+            </li>
+          `;
+        }).join("");
+      }
+
+      function renderBrowserVerifyResults(results) {
+        const list = verifyEl("browser_verify_list");
+        if (!list) return;
+        const items = Array.isArray(results) ? results : [];
+        if (!items.length) {
+          list.innerHTML = "";
+          return;
+        }
+        list.innerHTML = items.map((item) => {
+          const warn = String(item?.state || "warn") !== "ok";
+          return `
+            <li class="verify-item">
+              <div class="verify-item-head">
+                <p class="verify-item-title">${verifyEsc(item?.title || "")}</p>
+                <span class="verify-pill${warn ? " warn" : ""}">${warn ? "Check" : "Pass"}</span>
+              </div>
+              <p class="verify-item-meta">${verifyEsc(item?.detail || "")}</p>
+            </li>
+          `;
+        }).join("");
+      }
+
+      async function runBrowserVerification() {
+        const status = verifyEl("browser_verify_status");
+        const push = [];
+        const add = (state, title, detail) => push.push({ state, title, detail });
+
+        if (status) {
+          status.textContent = "Running browser verification...";
+          status.style.color = "var(--accent)";
+        }
+
+        const requiredIds = [
+          "browser_mode_select",
+          "browser_url_input",
+          "browser_open_btn",
+          "browser_frame",
+          "browser_status"
+        ];
+        const missing = requiredIds.filter((id) => !browserEl(id));
+        add(
+          missing.length ? "warn" : "ok",
+          "Browser controls rendered",
+          missing.length ? `Missing elements: ${missing.join(", ")}` : "All required browser controls are present."
+        );
+
+        const modeSelect = browserEl("browser_mode_select");
+        const modes = modeSelect ? Array.from(modeSelect.options).map((opt) => String(opt.value || "").trim().toLowerCase()) : [];
+        const expectedModes = ["smart", "live", "mirror", "reader", "safari"];
+        const missingModes = expectedModes.filter((mode) => !modes.includes(mode));
+        add(
+          missingModes.length ? "warn" : "ok",
+          "Browser modes available",
+          missingModes.length ? `Missing modes: ${missingModes.join(", ")}` : `Modes: ${expectedModes.join(", ")}`
+        );
+
+        const homeUrl = normalizeBrowserUrl(BROWSER_HOME_URL);
+        const homePinned = homeUrl === "https://a-i-agency.com";
+        add(
+          homePinned ? "ok" : "warn",
+          "Home URL pinned",
+          homePinned ? `Browser home is pinned to ${homeUrl}.` : `Unexpected home URL value: ${String(BROWSER_HOME_URL || "")}`
+        );
+
+        const linkBtn = Array.from(document.querySelectorAll("[data-browser-url]")).find((btn) => String(btn.getAttribute("data-browser-url") || "") === "https://a-i-agency.com");
+        add(
+          linkBtn ? "ok" : "warn",
+          "Quick link for A-i-Agency",
+          linkBtn ? "A-i-Agency quick-open button is present." : "A-i-Agency quick-open button is missing."
+        );
+
+        const mirrorRoute = browserMirrorSrc("https://a-i-agency.com", "");
+        const readerRoute = browserReaderSrc("https://a-i-agency.com", "");
+        add(
+          mirrorRoute.includes("/browser/mirror?url=") && readerRoute.includes("/browser/read?url=") ? "ok" : "warn",
+          "Reader/Mirror routes generated",
+          `Mirror: ${mirrorRoute} | Reader: ${readerRoute}`
+        );
+
+        try {
+          const health = await browserFetchApi("/health", { method: "GET", expectJson: true });
+          const body = await readResponseBody(health.res);
+          const ok = Boolean(health.res.ok && body?.json && body.json.ok !== false);
+          add(ok ? "ok" : "warn", "Local browser API reachable", ok ? `Health check passed via ${health.base || "current origin"}.` : `Health check failed: ${responseErrorText(health.res, body)}`);
+        } catch (err) {
+          add("warn", "Local browser API reachable", `Health endpoint unavailable: ${compactError(err?.message || err)}`);
+        }
+
+        try {
+          const result = await browserProbe("https://a-i-agency.com");
+          const data = result?.data || {};
+          const modeHint = data.frame_allowed === false ? "iframe-blocked (expected for many sites)" : "iframe-allowed";
+          add("ok", "Probe endpoint works", `Probe response: ${modeHint}; endpoint base ${result?.base || "current origin"}.`);
+        } catch (err) {
+          add("warn", "Probe endpoint works", `Probe failed: ${compactError(err?.message || err)}`);
+        }
+
+        try {
+          const route = `/browser/context?url=${encodeURIComponent("https://a-i-agency.com")}&max_chars=500`;
+          const { res } = await browserFetchApi(route, { method: "GET", expectJson: true });
+          const body = await readResponseBody(res);
+          const textLen = String(body?.json?.text || "").trim().length;
+          add(res.ok && textLen > 0 ? "ok" : "warn", "Context extraction endpoint works", res.ok ? `Context extracted (${textLen} chars).` : `Context endpoint error: ${responseErrorText(res, body)}`);
+        } catch (err) {
+          add("warn", "Context extraction endpoint works", `Context fetch failed: ${compactError(err?.message || err)}`);
+        }
+
+        renderBrowserVerifyResults(push);
+        const warnCount = push.filter((item) => item.state !== "ok").length;
+        const passCount = push.length - warnCount;
+        if (status) {
+          status.textContent = warnCount ? `Browser verify: ${passCount} passed, ${warnCount} need follow-up.` : `Browser verify complete: all ${passCount} checks passed.`;
+          status.style.color = warnCount ? "#ffd88b" : "var(--ok)";
+        }
+      }
+
+      function initOpenClawVerification() {
+        renderOpenClawSpecList();
+        verifyEl("verify_browser_btn")?.addEventListener("click", () => { void runBrowserVerification(); });
+        void runBrowserVerification();
+      }
+
+      initOpenClawVerification();
 
       function escapeHtml(s){ return (s+'').replace(/[&<>"']/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c];}); }
     </script>
