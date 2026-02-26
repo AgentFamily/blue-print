@@ -1045,6 +1045,7 @@
                       <button id="browser_use_url_btn" type="button">Use URL in Prompt</button>
                     </div>
                     <div class="browser-row" aria-label="Browser navigation">
+                      <button id="browser_home_btn" type="button">App Home</button>
                       <button id="browser_back_btn" type="button">Back</button>
                       <button id="browser_forward_btn" type="button">Forward</button>
                       <button id="browser_reload_btn" type="button">Reload</button>
@@ -2995,7 +2996,7 @@
           return true;
         } catch (err) {
           browserStatus("Safari bridge unavailable. Opened external browser.", false);
-          browserOpenExternal(target);
+          void browserOpenExternal(target);
           return false;
         }
       }
@@ -3018,32 +3019,58 @@
         const back = browserEl("browser_back_btn");
         const forward = browserEl("browser_forward_btn");
         const reload = browserEl("browser_reload_btn");
+        const home = browserEl("browser_home_btn");
+        if (home) home.disabled = browserState.loading;
         if (back) back.disabled = browserState.loading || browserState.index <= 0;
         if (forward) forward.disabled = browserState.loading || browserState.index < 0 || browserState.index >= browserState.history.length - 1;
         if (reload) reload.disabled = browserState.loading || !browserCurrentUrl();
       }
 
-      function browserOpenExternal(url) {
+      async function browserOpenExternal(url) {
         const target = normalizeBrowserUrl(url || browserCurrentUrl());
         if (!target) {
           browserStatus("Enter a valid URL first (e.g. https://chatgpt.com).", true);
-          return;
+          return false;
+        }
+
+        const route = `/browser/open?target=default&url=${encodeURIComponent(target)}`;
+        try {
+          const { res } = await browserFetchApi(route, { method: "GET", expectJson: true });
+          const body = await readResponseBody(res);
+          if (!res.ok) throw new Error(responseErrorText(res, body));
+          browserStatus("Opened in external browser.", false);
+          return true;
+        } catch {
+          // ignore and try window.open fallback
         }
         try {
           const opened = window.open(target, "_blank", "noopener,noreferrer");
           if (opened) {
             browserStatus("Opened in external browser.", false);
-            return;
+            return true;
           }
         } catch {
           // ignore
         }
+        browserStatus("Could not open external browser.", true);
+        return false;
+      }
+
+      function browserGoAppHome() {
         try {
-          window.location.href = target;
-          browserStatus("Opened in external browser.", false);
+          const root = new URL("/", window.location.origin).toString();
+          window.location.href = root;
+          return;
         } catch {
-          browserStatus("Could not open external browser.", true);
+          // ignore
         }
+        try {
+          window.location.href = "/";
+          return;
+        } catch {
+          // ignore
+        }
+        browserStatus("Could not return to app home.", true);
       }
 
       function browserRemember(url) {
@@ -3243,10 +3270,11 @@
         browserEl("browser_open_btn")?.addEventListener("click", () => { void browserNavigate(String(input?.value || "")); });
         browserEl("browser_reader_btn")?.addEventListener("click", () => { void browserNavigate(String(input?.value || ""), { mode: "reader" }); });
         browserEl("browser_safari_btn")?.addEventListener("click", () => { void browserOpenSafari(String(input?.value || "")); });
+        browserEl("browser_home_btn")?.addEventListener("click", browserGoAppHome);
         browserEl("browser_back_btn")?.addEventListener("click", browserBack);
         browserEl("browser_forward_btn")?.addEventListener("click", browserForward);
         browserEl("browser_reload_btn")?.addEventListener("click", browserReload);
-        browserEl("browser_external_btn")?.addEventListener("click", () => browserOpenExternal(String(input?.value || "")));
+        browserEl("browser_external_btn")?.addEventListener("click", () => { void browserOpenExternal(String(input?.value || "")); });
         browserEl("browser_use_url_btn")?.addEventListener("click", browserUseUrlInPrompt);
         input?.addEventListener("keydown", (event) => {
           if (event.key !== "Enter") return;
