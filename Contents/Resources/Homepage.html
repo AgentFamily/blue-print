@@ -655,6 +655,68 @@
         font-size: 0.75rem;
       }
 
+      .browser-card {
+        margin: 24px 0;
+      }
+
+      .browser-grid {
+        display: grid;
+        gap: 10px;
+      }
+
+      .browser-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .browser-url {
+        flex: 1 1 480px;
+        min-width: 220px;
+      }
+
+      .browser-url input {
+        width: 100%;
+        border: 1px solid rgba(126, 207, 255, 0.28);
+        border-radius: 10px;
+        background: rgba(4, 21, 40, 0.72);
+        color: var(--text-main);
+        padding: 9px 10px;
+        font-family: "IBM Plex Mono", monospace;
+      }
+
+      .browser-row button {
+        border: 1px solid rgba(126, 207, 255, 0.28);
+        border-radius: 10px;
+        background: rgba(4, 21, 40, 0.72);
+        color: var(--text-main);
+        padding: 8px 10px;
+        font-family: "IBM Plex Mono", monospace;
+        cursor: pointer;
+      }
+
+      .browser-status {
+        color: var(--accent);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.75rem;
+      }
+
+      .browser-frame-wrap {
+        border: 1px solid rgba(126, 207, 255, 0.26);
+        border-radius: 10px;
+        overflow: hidden;
+        min-height: 56vh;
+        background: rgba(4, 22, 40, 0.7);
+      }
+
+      .browser-frame {
+        width: 100%;
+        height: min(68vh, 900px);
+        border: 0;
+        background: #fff;
+      }
+
       .warn::before {
         background: var(--warn);
         box-shadow: 0 0 0 4px rgba(255, 224, 125, 0.2);
@@ -947,6 +1009,33 @@
                       </div>
                     </div>
                     <div class="chat-status" id="chat_status">Ready.</div>
+                  </div>
+                </section>
+
+                <section id="agent-browser" class="blueprint-card browser-card">
+                  <h3>Agent Browser</h3>
+                  <div class="browser-grid">
+                    <div class="browser-row">
+                      <label class="browser-url" for="browser_url_input">
+                        <input id="browser_url_input" type="text" placeholder="https://example.com" autocomplete="off" />
+                      </label>
+                      <button id="browser_open_btn" type="button">Open</button>
+                      <button id="browser_external_btn" type="button">Open External</button>
+                      <button id="browser_use_url_btn" type="button">Use URL in Prompt</button>
+                    </div>
+                    <div class="browser-row" aria-label="Browser navigation">
+                      <button id="browser_back_btn" type="button">Back</button>
+                      <button id="browser_forward_btn" type="button">Forward</button>
+                      <button id="browser_reload_btn" type="button">Reload</button>
+                      <button type="button" data-browser-url="https://chatgpt.com">ChatGPT</button>
+                      <button type="button" data-browser-url="https://platform.openai.com">OpenAI</button>
+                      <button type="button" data-browser-url="https://github.com">GitHub</button>
+                      <button type="button" data-browser-url="https://www.google.com">Google</button>
+                    </div>
+                    <div class="browser-status" id="browser_status">Browser ready.</div>
+                    <div class="browser-frame-wrap">
+                      <iframe id="browser_frame" class="browser-frame" loading="lazy" referrerpolicy="no-referrer"></iframe>
+                    </div>
                   </div>
                 </section>
 
@@ -2516,6 +2605,208 @@
       }
 
       initChat();
+
+      const BROWSER_LAST_URL_KEY = "atlasBrowserLastUrlV1";
+      const browserState = {
+        history: [],
+        index: -1,
+        loading: false
+      };
+
+      function browserEl(id) {
+        return document.getElementById(id);
+      }
+
+      function normalizeBrowserUrl(raw) {
+        const text = String(raw || "").trim();
+        if (!text) return "";
+        if (/^https?:\/\//i.test(text)) return text;
+        if (/^\/\//.test(text)) return `https:${text}`;
+        if (/^[a-z0-9.-]+\.[a-z]{2,}(\/.*)?$/i.test(text)) return `https://${text}`;
+        return "";
+      }
+
+      function browserStatus(text, isError) {
+        const node = browserEl("browser_status");
+        if (!node) return;
+        node.textContent = String(text || "");
+        node.style.color = isError ? "#ffb0b0" : "var(--accent)";
+      }
+
+      function browserCurrentUrl() {
+        if (browserState.index >= 0 && browserState.index < browserState.history.length) {
+          return String(browserState.history[browserState.index] || "");
+        }
+        const raw = String(browserEl("browser_url_input")?.value || "").trim();
+        return normalizeBrowserUrl(raw);
+      }
+
+      function browserRenderNav() {
+        const back = browserEl("browser_back_btn");
+        const forward = browserEl("browser_forward_btn");
+        const reload = browserEl("browser_reload_btn");
+        if (back) back.disabled = browserState.loading || browserState.index <= 0;
+        if (forward) forward.disabled = browserState.loading || browserState.index < 0 || browserState.index >= browserState.history.length - 1;
+        if (reload) reload.disabled = browserState.loading || !browserCurrentUrl();
+      }
+
+      function browserOpenExternal(url) {
+        const target = normalizeBrowserUrl(url || browserCurrentUrl());
+        if (!target) {
+          browserStatus("Enter a valid URL first (e.g. https://chatgpt.com).", true);
+          return;
+        }
+        try {
+          const opened = window.open(target, "_blank", "noopener,noreferrer");
+          if (opened) {
+            browserStatus("Opened in external browser.", false);
+            return;
+          }
+        } catch {
+          // ignore
+        }
+        try {
+          window.location.href = target;
+          browserStatus("Opened in external browser.", false);
+        } catch {
+          browserStatus("Could not open external browser.", true);
+        }
+      }
+
+      function browserRemember(url) {
+        try {
+          localStorage.setItem(BROWSER_LAST_URL_KEY, String(url || ""));
+        } catch {
+          // ignore
+        }
+      }
+
+      function browserNavigate(rawUrl, options) {
+        const fromHistory = Boolean(options && options.fromHistory);
+        const replace = Boolean(options && options.replace);
+        const url = normalizeBrowserUrl(rawUrl);
+        if (!url) {
+          browserStatus("Enter a valid URL first (e.g. https://chatgpt.com).", true);
+          return false;
+        }
+
+        if (!fromHistory) {
+          if (replace && browserState.index >= 0) {
+            browserState.history[browserState.index] = url;
+          } else {
+            const next = browserState.history.slice(0, browserState.index + 1);
+            next.push(url);
+            browserState.history = next;
+            browserState.index = next.length - 1;
+          }
+        }
+
+        const input = browserEl("browser_url_input");
+        const frame = browserEl("browser_frame");
+        if (input) input.value = url;
+        if (!frame) {
+          browserStatus("Browser frame unavailable.", true);
+          return false;
+        }
+
+        browserState.loading = true;
+        browserRenderNav();
+        browserRemember(url);
+        frame.src = url;
+        browserStatus("Loading page... If blank, the site blocks iframe embedding.", false);
+        return true;
+      }
+
+      function browserBack() {
+        if (browserState.index <= 0) return;
+        browserState.index -= 1;
+        browserNavigate(browserState.history[browserState.index], { fromHistory: true });
+      }
+
+      function browserForward() {
+        if (browserState.index < 0 || browserState.index >= browserState.history.length - 1) return;
+        browserState.index += 1;
+        browserNavigate(browserState.history[browserState.index], { fromHistory: true });
+      }
+
+      function browserReload() {
+        const url = browserCurrentUrl();
+        if (!url) {
+          browserStatus("No URL to reload.", true);
+          return;
+        }
+        browserNavigate(url, { fromHistory: true });
+      }
+
+      function browserUseUrlInPrompt() {
+        const url = browserCurrentUrl();
+        if (!url) {
+          browserStatus("No URL to use yet.", true);
+          return;
+        }
+        const input = chatEl("chat_input");
+        if (!input) return;
+        const before = String(input.value || "").trim();
+        const next = before ? `${before}\n\nUse this website context: ${url}` : `Use this website context: ${url}`;
+        input.value = next;
+        try {
+          input.focus();
+          input.selectionStart = input.selectionEnd = input.value.length;
+        } catch {
+          // ignore
+        }
+        browserStatus("URL added to prompt.", false);
+      }
+
+      function initBrowser() {
+        const input = browserEl("browser_url_input");
+        const frame = browserEl("browser_frame");
+
+        const saved = (() => {
+          try {
+            return String(localStorage.getItem(BROWSER_LAST_URL_KEY) || "");
+          } catch {
+            return "";
+          }
+        })();
+        const startUrl = normalizeBrowserUrl(saved) || "https://chatgpt.com";
+        if (input) input.value = startUrl;
+
+        browserEl("browser_open_btn")?.addEventListener("click", () => browserNavigate(String(input?.value || "")));
+        browserEl("browser_back_btn")?.addEventListener("click", browserBack);
+        browserEl("browser_forward_btn")?.addEventListener("click", browserForward);
+        browserEl("browser_reload_btn")?.addEventListener("click", browserReload);
+        browserEl("browser_external_btn")?.addEventListener("click", () => browserOpenExternal(String(input?.value || "")));
+        browserEl("browser_use_url_btn")?.addEventListener("click", browserUseUrlInPrompt);
+        input?.addEventListener("keydown", (event) => {
+          if (event.key !== "Enter") return;
+          event.preventDefault();
+          browserNavigate(String(input.value || ""));
+        });
+        document.querySelectorAll("[data-browser-url]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const url = String(btn.getAttribute("data-browser-url") || "").trim();
+            if (input && url) input.value = url;
+            browserNavigate(url);
+          });
+        });
+
+        frame?.addEventListener("load", () => {
+          browserState.loading = false;
+          browserRenderNav();
+          browserStatus("Loaded in panel. If blank, this site blocks iframe embedding.", false);
+        });
+        frame?.addEventListener("error", () => {
+          browserState.loading = false;
+          browserRenderNav();
+          browserStatus("Could not load page in panel. Try Open External.", true);
+        });
+
+        browserRenderNav();
+        browserNavigate(startUrl);
+      }
+
+      initBrowser();
 
       function escapeHtml(s){ return (s+'').replace(/[&<>"']/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c];}); }
     </script>
