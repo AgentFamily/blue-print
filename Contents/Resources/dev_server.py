@@ -455,6 +455,87 @@ def _reader_render_html(src_url: str, status: int, final_url: str, content_type:
     return body
 
 
+def _mirror_rewrite_links(html_text: str, base_url: str) -> str:
+    source = str(html_text or "")
+
+    def _rewrite_anchor_tag(match: re.Match[str]) -> str:
+        tag = str(match.group(0) or "")
+
+        def _rewrite_href(attr_match: re.Match[str]) -> str:
+            quote_char = str(attr_match.group(1) or '"')
+            raw_href = str(attr_match.group(2) or "").strip()
+            if not raw_href or raw_href.startswith("#") or raw_href.lower().startswith(("javascript:", "mailto:", "tel:")):
+                return str(attr_match.group(0) or "")
+            try:
+                full = urljoin(base_url, raw_href)
+            except Exception:
+                return str(attr_match.group(0) or "")
+            norm = _normalize_browser_url(full)
+            if not norm:
+                return str(attr_match.group(0) or "")
+            proxy_href = f"/browser/mirror?url={quote(norm, safe='')}"
+            return f"href={quote_char}{proxy_href}{quote_char}"
+
+        rewritten = re.sub(r'(?is)\bhref\s*=\s*(["\'])(.*?)\1', _rewrite_href, tag, count=1)
+        rewritten = re.sub(r'(?is)\btarget\s*=\s*(["\']).*?\1', "", rewritten)
+        return rewritten
+
+    return re.sub(r"(?is)<a\b[^>]*>", _rewrite_anchor_tag, source)
+
+
+def _mirror_render_html(src_url: str, status: int, final_url: str, content_type: str, raw_html: str) -> str:
+    target = final_url or src_url
+    if not target:
+        target = src_url
+    target = _normalize_browser_url(target) or src_url
+    if not target:
+        return _reader_render_html(src_url, status, final_url, content_type, raw_html)
+
+    html_text = str(raw_html or "")
+    if "<html" not in html_text.lower():
+        fallback = _reader_render_html(src_url, status, final_url, content_type, raw_html)
+        return fallback
+
+    # Mirror mode removes active scripts, then rewrites links through /browser/mirror.
+    # This keeps navigation in-app while avoiding most script-origin breakages.
+    html_text = re.sub(r"(?is)<script\b[^>]*>[\s\S]*?</script>", "", html_text)
+    html_text = re.sub(r"(?is)<script\b[^>]*/\s*>", "", html_text)
+    html_text = re.sub(r'(?is)<meta[^>]+http-equiv\s*=\s*["\']content-security-policy["\'][^>]*>', "", html_text)
+    html_text = _mirror_rewrite_links(html_text, target)
+
+    toolbar = (
+        '<div id="agentc-mirror-toolbar">'
+        '<strong>Mirror Mode</strong>'
+        f'<span class="meta">Source: <a href="{_reader_escape(target)}" target="_blank" rel="noopener noreferrer">{_reader_escape(target)}</a> | HTTP {int(status)} | {_reader_escape(content_type or "unknown")}</span>'
+        '<span class="actions">'
+        f'<a href="/browser/read?url={quote(target, safe="")}" target="_self">Reader</a>'
+        f'<a href="{_reader_escape(target)}" target="_blank" rel="noopener noreferrer">Open Site</a>'
+        "</span>"
+        "</div>"
+    )
+    style_block = """
+<style id="agentc-mirror-style">
+  #agentc-mirror-toolbar{position:sticky;top:0;z-index:2147483647;display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:9px 12px;background:#071c33;color:#d8f1ff;border-bottom:1px solid rgba(127,202,248,.28);font:12px/1.35 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+  #agentc-mirror-toolbar .meta{opacity:.9}
+  #agentc-mirror-toolbar a{color:#7de4ff;text-decoration:none}
+  #agentc-mirror-toolbar a:hover{text-decoration:underline}
+  #agentc-mirror-toolbar .actions{margin-left:auto;display:inline-flex;gap:10px}
+</style>
+"""
+
+    if re.search(r"(?is)<head\b", html_text):
+        html_text = re.sub(r"(?is)<head\b[^>]*>", lambda m: str(m.group(0)) + f'<base href="{_reader_escape(target)}" />' + style_block, html_text, count=1)
+    else:
+        html_text = f"<head><base href=\"{_reader_escape(target)}\" />{style_block}</head>" + html_text
+
+    if re.search(r"(?is)<body\b", html_text):
+        html_text = re.sub(r"(?is)<body\b[^>]*>", lambda m: str(m.group(0)) + toolbar, html_text, count=1)
+    else:
+        html_text += toolbar
+
+    return html_text
+
+
 def _handle_gateway_chat(handler: http.server.BaseHTTPRequestHandler, body: bytes, open_key: str = "") -> None:
     open_key = str(open_key or _effective_open_api_key(handler)).strip()
     gateway_key = _gateway_api_key()
@@ -1699,6 +1780,27 @@ def build_handler(*, upstream: str, tool_token: str):
                     return
                 status, final_url, content_type, raw_html = _reader_fetch(target_url)
                 html = _reader_render_html(target_url, status, final_url, content_type, raw_html)
+                _text_response(self, 200, html, "text/html; charset=utf-8")
+                return
+
+            if path == "/browser/mirror":
+                params = parse_qs(parsed.query or "")
+                raw_url = ""
+                try:
+                    raw_url = str((params.get("url") or [""])[0] or "").strip()
+                except Exception:
+                    raw_url = ""
+                target_url = _normalize_browser_url(raw_url)
+                if not target_url:
+                    _text_response(
+                        self,
+                        400,
+                        "Invalid URL. Use http(s) URL, for example /browser/mirror?url=https%3A%2F%2Fexample.com",
+                        "text/plain; charset=utf-8",
+                    )
+                    return
+                status, final_url, content_type, raw_html = _reader_fetch(target_url, max_bytes=2_500_000)
+                html = _mirror_render_html(target_url, status, final_url, content_type, raw_html)
                 _text_response(self, 200, html, "text/html; charset=utf-8")
                 return
 

@@ -1031,6 +1031,7 @@
                     <div class="browser-row">
                       <select id="browser_mode_select" class="browser-mode" aria-label="Browser mode">
                         <option value="smart">Smart (Auto fallback)</option>
+                        <option value="mirror">Mirror (In-App Proxy)</option>
                         <option value="safari">Safari (Native WebKit)</option>
                         <option value="live">Live (Iframe)</option>
                         <option value="reader">Reader (Always works)</option>
@@ -1039,6 +1040,7 @@
                         <input id="browser_url_input" type="text" placeholder="https://example.com" autocomplete="off" />
                       </label>
                       <button id="browser_open_btn" type="button">Open</button>
+                      <button id="browser_mirror_btn" type="button">Open Mirror</button>
                       <button id="browser_reader_btn" type="button">Open Reader</button>
                       <button id="browser_safari_btn" type="button">Open Safari</button>
                       <button id="browser_external_btn" type="button">Open External</button>
@@ -2880,7 +2882,7 @@
 
       function browserSelectedMode() {
         const raw = String(browserEl("browser_mode_select")?.value || "smart").trim().toLowerCase();
-        if (raw === "live" || raw === "reader" || raw === "safari") return raw;
+        if (raw === "live" || raw === "mirror" || raw === "reader" || raw === "safari") return raw;
         return "smart";
       }
 
@@ -2910,7 +2912,7 @@
 
       function browserRequestedMode(forcedMode) {
         const req = String(forcedMode || "").trim().toLowerCase();
-        if (req === "live" || req === "reader" || req === "safari") return req;
+        if (req === "live" || req === "mirror" || req === "reader" || req === "safari") return req;
         return browserSelectedMode();
       }
 
@@ -2965,6 +2967,11 @@
 
       function browserReaderSrc(url, base) {
         const route = `/browser/read?url=${encodeURIComponent(url)}`;
+        return browserUrlForBase(base || browserState.endpointBase || "", route);
+      }
+
+      function browserMirrorSrc(url, base) {
+        const route = `/browser/mirror?url=${encodeURIComponent(url)}`;
         return browserUrlForBase(base || browserState.endpointBase || "", route);
       }
 
@@ -3127,7 +3134,7 @@
 
         let mode = requestedMode;
         let reason = "";
-        let readerBase = browserState.endpointBase || chatState.apiBase || "";
+        let endpointBase = browserState.endpointBase || chatState.apiBase || "";
 
         if (requestedMode === "smart") {
           browserStatus("Smart mode is checking compatibility...", false);
@@ -3135,21 +3142,26 @@
             const probeResult = await browserProbe(url);
             if (navToken !== browserState.navToken) return false;
             const probe = probeResult?.data || {};
-            readerBase = probeResult?.base || readerBase;
+            endpointBase = probeResult?.base || endpointBase;
             if (probe.frame_allowed === false) {
-              mode = "reader";
+              mode = "mirror";
               reason = String(probe.reason || "Site blocks iframe embedding.");
             } else {
               mode = "live";
             }
           } catch (err) {
             reason = String(err?.message || err || "Compatibility check failed.");
-            mode = browserLikelyBlockedHost(url) ? "reader" : "live";
+            mode = browserLikelyBlockedHost(url) ? "mirror" : "live";
+          }
+        } else if (requestedMode === "mirror") {
+          mode = "mirror";
+          if (!endpointBase && (location.protocol === "http:" || location.protocol === "https:")) {
+            endpointBase = "";
           }
         } else if (requestedMode === "reader") {
           mode = "reader";
-          if (!readerBase && (location.protocol === "http:" || location.protocol === "https:")) {
-            readerBase = "";
+          if (!endpointBase && (location.protocol === "http:" || location.protocol === "https:")) {
+            endpointBase = "";
           }
         } else {
           mode = "live";
@@ -3169,21 +3181,29 @@
           }
         }
 
-        const targetSrc = mode === "reader" ? browserReaderSrc(url, readerBase) : url;
+        let targetSrc = url;
+        if (mode === "mirror") targetSrc = browserMirrorSrc(url, endpointBase);
+        else if (mode === "reader") targetSrc = browserReaderSrc(url, endpointBase);
         browserState.currentMode = mode;
         browserState.expectedSrc = targetSrc;
         frame.src = targetSrc;
 
-        if (mode === "reader") {
+        if (mode === "mirror") {
+          if (requestedMode === "smart") {
+            browserStatus(reason ? `Smart mode switched to Mirror: ${reason}` : "Smart mode switched to Mirror for compatibility.", false);
+          } else {
+            browserStatus("Opening in Mirror mode (in-app proxy).", false);
+          }
+        } else if (mode === "reader") {
           if (requestedMode === "smart") {
             browserStatus(reason ? `Smart mode switched to Reader: ${reason}` : "Smart mode switched to Reader for compatibility.", false);
           } else {
             browserStatus("Opening in Reader mode.", false);
           }
         } else if (requestedMode === "smart" && reason) {
-          browserStatus(`Smart mode stayed Live (${reason}). If blank, click Open Reader or Open Safari.`, false);
+          browserStatus(`Smart mode stayed Live (${reason}). If blank, click Open Mirror, Open Reader, or Open Safari.`, false);
         } else {
-          browserStatus("Loading live page... If blank, click Open Reader, Open Safari, or Open External.", false);
+          browserStatus("Loading live page... If blank, click Open Mirror, Open Reader, Open Safari, or Open External.", false);
         }
         return true;
       }
@@ -3251,7 +3271,7 @@
             return "smart";
           }
         })();
-        if (modeSelect) modeSelect.value = savedMode === "live" || savedMode === "reader" || savedMode === "safari" ? savedMode : "smart";
+        if (modeSelect) modeSelect.value = savedMode === "live" || savedMode === "mirror" || savedMode === "reader" || savedMode === "safari" ? savedMode : "smart";
 
         const startUrl = normalizeBrowserUrl(savedUrl) || "https://chatgpt.com";
         if (input) input.value = startUrl;
@@ -3268,6 +3288,7 @@
         });
 
         browserEl("browser_open_btn")?.addEventListener("click", () => { void browserNavigate(String(input?.value || "")); });
+        browserEl("browser_mirror_btn")?.addEventListener("click", () => { void browserNavigate(String(input?.value || ""), { mode: "mirror" }); });
         browserEl("browser_reader_btn")?.addEventListener("click", () => { void browserNavigate(String(input?.value || ""), { mode: "reader" }); });
         browserEl("browser_safari_btn")?.addEventListener("click", () => { void browserOpenSafari(String(input?.value || "")); });
         browserEl("browser_home_btn")?.addEventListener("click", browserGoAppHome);
@@ -3293,7 +3314,7 @@
           browserState.loading = false;
           browserRenderNav();
           const mode = browserState.currentMode || "live";
-          if (mode === "reader") {
+          if (mode === "mirror" || mode === "reader") {
             let readerText = "";
             try {
               readerText = String(frame.contentDocument?.body?.textContent || "").trim().toLowerCase();
@@ -3306,14 +3327,23 @@
               const current = browserCurrentUrl();
               if (nextBase !== undefined && current) {
                 browserState.endpointBase = nextBase;
-                browserStatus("Reader endpoint missing on this origin. Trying local server...", false);
-                void browserNavigate(current, { replace: true, mode: "reader" });
+                browserStatus("Browser endpoint missing on this origin. Trying local server...", false);
+                void browserNavigate(current, { replace: true, mode });
                 return;
               }
-              browserStatus("Reader endpoint not found. Use Open Safari or Open External.", true);
+              if (mode === "mirror") {
+                const current = browserCurrentUrl();
+                if (current) {
+                  browserStatus("Mirror endpoint unavailable. Switching to Reader mode...", false);
+                  void browserNavigate(current, { replace: true, mode: "reader" });
+                  return;
+                }
+              }
+              browserStatus("Browser endpoint not found. Use Open Safari or Open External.", true);
               return;
             }
-            browserStatus("Loaded in Reader mode.", false);
+            if (mode === "mirror") browserStatus("Loaded in Mirror mode (in-app proxy).", false);
+            else browserStatus("Loaded in Reader mode.", false);
           } else {
             let stayedBlank = false;
             try {
@@ -3329,12 +3359,12 @@
             if (stayedBlank) {
               const current = browserCurrentUrl();
               if (current) {
-                browserStatus("Live frame stayed blank. Switching to Reader mode.", false);
-                void browserNavigate(current, { replace: true, mode: "reader" });
+                browserStatus("Live frame stayed blank. Switching to Mirror mode.", false);
+                void browserNavigate(current, { replace: true, mode: "mirror" });
                 return;
               }
             }
-            browserStatus("Loaded in live panel. If blank, click Open Reader or Open Safari.", false);
+            browserStatus("Loaded in live panel. If blank, click Open Mirror, Open Reader, or Open Safari.", false);
           }
         });
         frame?.addEventListener("error", () => {
@@ -3343,12 +3373,20 @@
           if (browserState.currentMode === "live") {
             const current = browserCurrentUrl();
             if (current) {
-              browserStatus("Live load failed. Switching to Reader mode.", false);
+              browserStatus("Live load failed. Switching to Mirror mode.", false);
+              void browserNavigate(current, { replace: true, mode: "mirror" });
+              return;
+            }
+          }
+          if (browserState.currentMode === "mirror") {
+            const current = browserCurrentUrl();
+            if (current) {
+              browserStatus("Mirror load failed. Switching to Reader mode.", false);
               void browserNavigate(current, { replace: true, mode: "reader" });
               return;
             }
           }
-          browserStatus("Could not load page in panel. Try Open Safari or Open External.", true);
+          browserStatus("Could not load page in panel. Try Open Reader, Open Safari, or Open External.", true);
         });
 
         browserRenderNav();
