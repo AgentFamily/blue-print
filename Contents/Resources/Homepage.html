@@ -1592,7 +1592,8 @@
         loading: false,
         messages: [],
         model: "",
-        modelChecked: false
+        modelChecked: false,
+        apiBase: ""
       };
 
       function chatEl(id) {
@@ -1621,6 +1622,47 @@
           },
           ...clean
         ];
+      }
+
+      function chatApiBases() {
+        const out = [];
+        try {
+          const protocol = String(window.location?.protocol || "").toLowerCase();
+          const origin = String(window.location?.origin || "");
+          const host = String(window.location?.hostname || "").trim();
+          const port = String(window.location?.port || "").trim();
+
+          if ((protocol === "http:" || protocol === "https:") && origin && origin !== "null") out.push("");
+          if (host && port) out.push(`http://${host}:${port}`);
+          if (host) out.push(`http://${host}:8010`, `http://${host}:8000`);
+        } catch {
+          // ignore
+        }
+
+        out.push("http://127.0.0.1:8010", "http://localhost:8010", "http://127.0.0.1:8000", "http://localhost:8000");
+        return Array.from(new Set(out.filter(Boolean)));
+      }
+
+      async function fetchChatApi(path, init) {
+        const safePath = String(path || "").startsWith("/") ? String(path) : `/${String(path || "")}`;
+        const orderedBases = chatState.apiBase
+          ? [chatState.apiBase, ...chatApiBases().filter((base) => base !== chatState.apiBase)]
+          : chatApiBases();
+
+        let lastErr = null;
+        for (const base of orderedBases) {
+          const url = base ? `${base}${safePath}` : safePath;
+          try {
+            const res = await fetch(url, init);
+            chatState.apiBase = base;
+            return res;
+          } catch (err) {
+            lastErr = err;
+          }
+        }
+
+        const msg = String(lastErr?.message || lastErr || "Could not reach local API.");
+        throw new Error(msg);
       }
 
       function renderChat() {
@@ -1680,7 +1722,7 @@
       async function refreshChatModel(options) {
         const quiet = Boolean(options && options.quiet);
         try {
-          const res = await fetch("/api/tags", { cache: "no-store" });
+          const res = await fetchChatApi("/api/tags", { cache: "no-store" });
           if (!res.ok) throw new Error(await readApiError(res));
           const data = await res.json();
           const models = Array.isArray(data?.models) ? data.models : [];
@@ -1708,7 +1750,7 @@
         };
         if (chatState.model) payload.model = chatState.model;
 
-        let res = await fetch("/api/chat", {
+        let res = await fetchChatApi("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
@@ -1721,7 +1763,7 @@
           const model = await refreshChatModel({ quiet: true });
           if (model) {
             payload.model = model;
-            res = await fetch("/api/chat", {
+            res = await fetchChatApi("/api/chat", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(payload)
