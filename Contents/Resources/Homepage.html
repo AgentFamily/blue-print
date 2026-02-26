@@ -875,6 +875,81 @@
         font-size: 0.75rem;
       }
 
+      .quote-card {
+        margin: 24px 0;
+      }
+
+      .quote-grid {
+        display: grid;
+        gap: 10px;
+      }
+
+      .quote-row {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .quote-grid label {
+        display: grid;
+        gap: 6px;
+        color: var(--text-dim);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.76rem;
+      }
+
+      .quote-grid input,
+      .quote-grid select,
+      .quote-grid button {
+        border: 1px solid rgba(126, 207, 255, 0.28);
+        border-radius: 10px;
+        background: rgba(4, 21, 40, 0.72);
+        color: var(--text-main);
+        padding: 9px 10px;
+        font-family: "IBM Plex Mono", monospace;
+      }
+
+      .quote-grid button {
+        cursor: pointer;
+      }
+
+      .quote-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .quote-status {
+        color: var(--accent);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.75rem;
+      }
+
+      .quote-output {
+        border: 1px solid rgba(126, 207, 255, 0.26);
+        border-radius: 10px;
+        background: rgba(4, 22, 40, 0.72);
+        padding: 10px;
+        display: grid;
+        gap: 6px;
+      }
+
+      .quote-summary {
+        margin: 0;
+        font-size: 1rem;
+      }
+
+      .quote-breakdown {
+        margin: 0;
+        padding-left: 18px;
+        color: var(--text-dim);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.72rem;
+        line-height: 1.45;
+        display: grid;
+        gap: 4px;
+      }
+
       .browser-card {
         margin: 24px 0;
       }
@@ -1043,6 +1118,10 @@
         }
 
         .chat-llm-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .quote-row {
           grid-template-columns: 1fr;
         }
 
@@ -1287,6 +1366,61 @@
                     <div class="browser-status" id="browser_status">Browser ready.</div>
                     <div class="browser-frame-wrap">
                       <iframe id="browser_frame" class="browser-frame" loading="lazy" referrerpolicy="no-referrer"></iframe>
+                    </div>
+                  </div>
+                </section>
+
+                <section id="standard-pricing-agent" class="blueprint-card quote-card">
+                  <h3>Standard Pricing Valuation Agent</h3>
+                  <div class="quote-grid">
+                    <div class="quote-row">
+                      <label for="quote_service_select">Service
+                        <select id="quote_service_select">
+                          <option value="website_build">Website Build</option>
+                          <option value="seo_growth">SEO Growth</option>
+                          <option value="paid_ads">Paid Ads</option>
+                          <option value="automation_ops">Automation Ops</option>
+                          <option value="ai_agent_build">AI Agent Build</option>
+                          <option value="maintenance_retainer">Maintenance Retainer</option>
+                        </select>
+                      </label>
+                      <label for="quote_complexity_select">Complexity
+                        <select id="quote_complexity_select">
+                          <option value="standard">Standard</option>
+                          <option value="light">Light</option>
+                          <option value="advanced">Advanced</option>
+                          <option value="enterprise">Enterprise</option>
+                        </select>
+                      </label>
+                      <label for="quote_urgency_select">Urgency
+                        <select id="quote_urgency_select">
+                          <option value="standard">Standard</option>
+                          <option value="priority">Priority</option>
+                          <option value="rush">Rush</option>
+                        </select>
+                      </label>
+                    </div>
+
+                    <div class="quote-row">
+                      <label for="quote_hours_input">Estimated Hours
+                        <input id="quote_hours_input" type="number" min="1" step="1" value="24" />
+                      </label>
+                      <label for="quote_assets_input">Channels / Assets
+                        <input id="quote_assets_input" type="number" min="1" step="1" value="3" />
+                      </label>
+                      <label for="quote_budget_cap_input">Budget Cap (optional USD)
+                        <input id="quote_budget_cap_input" type="number" min="0" step="50" placeholder="e.g. 5000" />
+                      </label>
+                    </div>
+
+                    <div class="quote-actions">
+                      <button id="quote_generate_btn" type="button">Generate Standard Quote</button>
+                      <button id="quote_weekly_update_btn" type="button">Run Weekly Update</button>
+                    </div>
+
+                    <div class="quote-status" id="quote_status">Pricing model loading…</div>
+                    <div class="quote-output" id="quote_output">
+                      <p class="quote-summary">Quote output will appear here.</p>
                     </div>
                   </div>
                 </section>
@@ -3832,6 +3966,304 @@
       }
 
       initBrowser();
+
+      const STANDARD_QUOTE_MODEL_KEY = "atlasStandardQuoteModelV1";
+      const STANDARD_QUOTE_SERVICES = {
+        website_build: { label: "Website Build", center: 5500, hourly: 110, floor: 3200, step: 50, assetsIncluded: 4 },
+        seo_growth: { label: "SEO Growth", center: 2800, hourly: 95, floor: 1600, step: 50, assetsIncluded: 3 },
+        paid_ads: { label: "Paid Ads", center: 3200, hourly: 105, floor: 1800, step: 50, assetsIncluded: 3 },
+        automation_ops: { label: "Automation Ops", center: 4200, hourly: 120, floor: 2400, step: 50, assetsIncluded: 4 },
+        ai_agent_build: { label: "AI Agent Build", center: 6800, hourly: 135, floor: 3800, step: 50, assetsIncluded: 5 },
+        maintenance_retainer: { label: "Maintenance Retainer", center: 1900, hourly: 90, floor: 1200, step: 25, assetsIncluded: 3 }
+      };
+      const STANDARD_QUOTE_COMPLEXITY = {
+        light: 0.88,
+        standard: 1,
+        advanced: 1.22,
+        enterprise: 1.45
+      };
+      const STANDARD_QUOTE_URGENCY = {
+        standard: 1,
+        priority: 1.14,
+        rush: 1.28
+      };
+
+      const standardQuoteState = {
+        model: null
+      };
+
+      function quoteEl(id) {
+        return document.getElementById(id);
+      }
+
+      function quoteEsc(value) {
+        return String(value == null ? "" : value).replace(/[&<>"']/g, (ch) => (
+          { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]
+        ));
+      }
+
+      function quoteStatus(text, isError) {
+        const node = quoteEl("quote_status");
+        if (!node) return;
+        node.textContent = String(text || "");
+        node.style.color = isError ? "#ffb0b0" : "var(--accent)";
+      }
+
+      function quoteIsoWeekKey(dateInput) {
+        const d = dateInput instanceof Date ? dateInput : new Date();
+        const utc = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+        const day = utc.getUTCDay() || 7;
+        utc.setUTCDate(utc.getUTCDate() + 4 - day);
+        const yearStart = new Date(Date.UTC(utc.getUTCFullYear(), 0, 1));
+        const weekNo = Math.ceil((((utc - yearStart) / 86400000) + 1) / 7);
+        return `${utc.getUTCFullYear()}-W${String(weekNo).padStart(2, "0")}`;
+      }
+
+      function quoteWeekMarketFactor(weekKey) {
+        const key = String(weekKey || "");
+        let hash = 2166136261 >>> 0;
+        for (let i = 0; i < key.length; i += 1) {
+          hash ^= key.charCodeAt(i);
+          hash = Math.imul(hash, 16777619) >>> 0;
+        }
+        const bucket = (hash % 9) - 4; // -4..4
+        return 1 + (bucket * 0.005); // -2.0% .. +2.0%
+      }
+
+      function quoteReadStoredModel() {
+        try {
+          const raw = String(localStorage.getItem(STANDARD_QUOTE_MODEL_KEY) || "").trim();
+          if (!raw) return null;
+          const parsed = JSON.parse(raw);
+          if (!parsed || typeof parsed !== "object") return null;
+          const weekKey = String(parsed.weekKey || "").trim();
+          const marketFactor = Number(parsed.marketFactor || 1);
+          const revision = Number(parsed.revision || 1);
+          const updatedAt = Number(parsed.updatedAt || 0);
+          if (!/^\d{4}-W\d{2}$/.test(weekKey)) return null;
+          if (!Number.isFinite(marketFactor) || marketFactor <= 0) return null;
+          if (!Number.isFinite(revision) || revision <= 0) return null;
+          if (!Number.isFinite(updatedAt) || updatedAt <= 0) return null;
+          return {
+            weekKey,
+            marketFactor,
+            revision,
+            updatedAt
+          };
+        } catch {
+          return null;
+        }
+      }
+
+      function quotePersistModel(model) {
+        const payload = {
+          weekKey: String(model?.weekKey || ""),
+          marketFactor: Number(model?.marketFactor || 1),
+          revision: Number(model?.revision || 1),
+          updatedAt: Number(model?.updatedAt || Date.now())
+        };
+        try {
+          localStorage.setItem(STANDARD_QUOTE_MODEL_KEY, JSON.stringify(payload));
+        } catch {
+          // ignore
+        }
+      }
+
+      function quoteEnsureModel(options) {
+        const force = Boolean(options?.force);
+        const weekKey = quoteIsoWeekKey(new Date());
+        const stored = quoteReadStoredModel();
+        if (stored && !force && stored.weekKey === weekKey) {
+          standardQuoteState.model = stored;
+          return { model: stored, refreshed: false };
+        }
+        const model = {
+          weekKey,
+          marketFactor: quoteWeekMarketFactor(weekKey),
+          revision: Math.max(1, Number(stored?.revision || 0) + 1),
+          updatedAt: Date.now()
+        };
+        quotePersistModel(model);
+        standardQuoteState.model = model;
+        return { model, refreshed: true };
+      }
+
+      function quoteRound(value, step) {
+        const n = Number(value || 0);
+        const s = Math.max(1, Number(step || 25));
+        return Math.round(n / s) * s;
+      }
+
+      function quoteUsd(value) {
+        const n = Number(value || 0);
+        return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(Math.max(0, n));
+      }
+
+      function quoteReadInputs() {
+        const serviceKeyRaw = String(quoteEl("quote_service_select")?.value || "ai_agent_build").trim();
+        const serviceKey = Object.prototype.hasOwnProperty.call(STANDARD_QUOTE_SERVICES, serviceKeyRaw) ? serviceKeyRaw : "ai_agent_build";
+        const complexityRaw = String(quoteEl("quote_complexity_select")?.value || "standard").trim();
+        const complexityKey = Object.prototype.hasOwnProperty.call(STANDARD_QUOTE_COMPLEXITY, complexityRaw) ? complexityRaw : "standard";
+        const urgencyRaw = String(quoteEl("quote_urgency_select")?.value || "standard").trim();
+        const urgencyKey = Object.prototype.hasOwnProperty.call(STANDARD_QUOTE_URGENCY, urgencyRaw) ? urgencyRaw : "standard";
+
+        const hoursParsed = parseInt(String(quoteEl("quote_hours_input")?.value || "24"), 10);
+        const hours = Number.isFinite(hoursParsed) ? Math.min(480, Math.max(1, hoursParsed)) : 24;
+        const assetsParsed = parseInt(String(quoteEl("quote_assets_input")?.value || "3"), 10);
+        const assets = Number.isFinite(assetsParsed) ? Math.min(24, Math.max(1, assetsParsed)) : 3;
+
+        const budgetRaw = String(quoteEl("quote_budget_cap_input")?.value || "").trim();
+        const budgetNum = budgetRaw ? Number(budgetRaw) : NaN;
+        const budgetCap = Number.isFinite(budgetNum) && budgetNum > 0 ? budgetNum : 0;
+
+        return {
+          serviceKey,
+          complexityKey,
+          urgencyKey,
+          hours,
+          assets,
+          budgetCap
+        };
+      }
+
+      function quoteCompute(inputs, model) {
+        const service = STANDARD_QUOTE_SERVICES[inputs.serviceKey] || STANDARD_QUOTE_SERVICES.ai_agent_build;
+        const complexityFactor = STANDARD_QUOTE_COMPLEXITY[inputs.complexityKey] || 1;
+        const urgencyFactor = STANDARD_QUOTE_URGENCY[inputs.urgencyKey] || 1;
+        const marketFactor = Math.max(0.85, Number(model?.marketFactor || 1));
+        const assetsFactor = 1 + (Math.max(0, inputs.assets - service.assetsIncluded) * 0.045);
+
+        const center = service.center * complexityFactor * urgencyFactor * assetsFactor * marketFactor;
+        const labor = (service.hourly * inputs.hours) * complexityFactor * urgencyFactor * marketFactor;
+        const floor = service.floor * marketFactor;
+
+        let low = Math.max(floor, center * 0.84, labor * 0.86);
+        let high = Math.max(low + (service.step * 4), center * 1.18, labor * 1.12, floor * 1.18);
+        let recommended = Math.max(low, Math.min(high, (low + high) / 2));
+
+        low = quoteRound(low, service.step);
+        high = Math.max(low + service.step, quoteRound(high, service.step));
+        recommended = Math.max(low, Math.min(high, quoteRound(recommended, service.step)));
+
+        const marketPct = (marketFactor - 1) * 100;
+        const budgetCap = Math.max(0, Number(inputs.budgetCap || 0));
+        const budgetFit = budgetCap > 0 ? budgetCap >= low : null;
+
+        return {
+          service,
+          low,
+          high,
+          recommended,
+          marketPct,
+          marketFactor,
+          complexityFactor,
+          urgencyFactor,
+          assetsFactor,
+          hours: inputs.hours,
+          assets: inputs.assets,
+          budgetCap,
+          budgetFit
+        };
+      }
+
+      function quoteRenderOutput(result, model) {
+        const output = quoteEl("quote_output");
+        if (!output) return;
+        const marketSign = result.marketPct >= 0 ? "+" : "";
+        const notes = [];
+        if (result.budgetCap > 0) {
+          if (result.budgetFit) {
+            notes.push(`Budget cap ${quoteUsd(result.budgetCap)} is inside the standard range.`);
+          } else {
+            notes.push(`Budget cap ${quoteUsd(result.budgetCap)} is below the standard floor (${quoteUsd(result.low)}).`);
+          }
+        } else {
+          notes.push("No budget cap supplied.");
+        }
+
+        output.innerHTML = `
+          <p class="quote-summary"><strong>${quoteEsc(result.service.label)}:</strong> ${quoteEsc(quoteUsd(result.recommended))} recommended</p>
+          <p class="quote-summary">Standard range: <strong>${quoteEsc(quoteUsd(result.low))}</strong> to <strong>${quoteEsc(quoteUsd(result.high))}</strong></p>
+          <ul class="quote-breakdown">
+            <li>Snapshot: ${quoteEsc(String(model.weekKey || ""))} (rev ${quoteEsc(String(model.revision || 1))})</li>
+            <li>Weekly market factor: ${quoteEsc(`${marketSign}${result.marketPct.toFixed(1)}%`)}</li>
+            <li>Complexity factor: ${quoteEsc(result.complexityFactor.toFixed(2))}</li>
+            <li>Urgency factor: ${quoteEsc(result.urgencyFactor.toFixed(2))}</li>
+            <li>Assets factor: ${quoteEsc(result.assetsFactor.toFixed(2))} (${quoteEsc(String(result.assets))} assets)</li>
+            <li>Hours input: ${quoteEsc(String(result.hours))}h</li>
+            <li>${quoteEsc(notes.join(" "))}</li>
+          </ul>
+        `;
+      }
+
+      function quoteFormatDate(ts) {
+        const n = Number(ts || 0);
+        if (!Number.isFinite(n) || n <= 0) return "unknown";
+        try {
+          return new Date(n).toLocaleString();
+        } catch {
+          return "unknown";
+        }
+      }
+
+      function quoteGenerateAndRender(options) {
+        const silent = Boolean(options?.silent);
+        try {
+          const ensured = quoteEnsureModel({ force: false });
+          const model = ensured.model;
+          const inputs = quoteReadInputs();
+          const result = quoteCompute(inputs, model);
+          quoteRenderOutput(result, model);
+          if (!silent) {
+            const marketSign = result.marketPct >= 0 ? "+" : "";
+            quoteStatus(`STANDARD snapshot ${model.weekKey} | market ${marketSign}${result.marketPct.toFixed(1)}% | updated ${quoteFormatDate(model.updatedAt)}.`, false);
+          }
+        } catch (err) {
+          quoteStatus(`Quote generation failed: ${compactError(err?.message || err)}`, true);
+        }
+      }
+
+      function quoteRunWeeklyUpdate() {
+        try {
+          const { model } = quoteEnsureModel({ force: true });
+          const inputs = quoteReadInputs();
+          const result = quoteCompute(inputs, model);
+          quoteRenderOutput(result, model);
+          const marketSign = result.marketPct >= 0 ? "+" : "";
+          quoteStatus(`Weekly STANDARD update complete for ${model.weekKey} (market ${marketSign}${result.marketPct.toFixed(1)}%).`, false);
+        } catch (err) {
+          quoteStatus(`Weekly update failed: ${compactError(err?.message || err)}`, true);
+        }
+      }
+
+      function initStandardPricingAgent() {
+        const output = quoteEl("quote_output");
+        if (!output) return;
+        const refreshed = quoteEnsureModel({ force: false });
+        quoteEl("quote_generate_btn")?.addEventListener("click", () => {
+          quoteGenerateAndRender({ silent: false });
+        });
+        quoteEl("quote_weekly_update_btn")?.addEventListener("click", quoteRunWeeklyUpdate);
+
+        [
+          "quote_service_select",
+          "quote_complexity_select",
+          "quote_urgency_select",
+          "quote_hours_input",
+          "quote_assets_input",
+          "quote_budget_cap_input"
+        ].forEach((id) => {
+          quoteEl(id)?.addEventListener("change", () => quoteGenerateAndRender({ silent: true }));
+        });
+
+        quoteGenerateAndRender({ silent: !refreshed.refreshed });
+        if (refreshed.refreshed) {
+          const model = refreshed.model;
+          quoteStatus(`Weekly STANDARD model refreshed for ${model.weekKey}.`, false);
+        }
+      }
+
+      initStandardPricingAgent();
 
       const OPENCLAW_SPEC_POINTS = [
         {
