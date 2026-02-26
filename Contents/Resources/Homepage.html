@@ -425,6 +425,103 @@
         padding-bottom: 56px;
       }
 
+      .spec-board {
+        margin: 0 0 20px;
+      }
+
+      .spec-board-note {
+        margin: 0 0 10px;
+        color: var(--text-dim);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.74rem;
+        letter-spacing: 0.03em;
+      }
+
+      .spec-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .spec-card {
+        border: 1px solid rgba(128, 202, 248, 0.25);
+        border-radius: 11px;
+        background: rgba(4, 22, 40, 0.78);
+        padding: 10px;
+        display: grid;
+        gap: 8px;
+        cursor: pointer;
+        transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+      }
+
+      .spec-card:hover,
+      .spec-card:focus-visible,
+      .spec-card.active {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 1px rgba(101, 200, 252, 0.58), 0 8px 16px rgba(0, 0, 0, 0.25);
+        transform: translateY(-1px);
+        outline: none;
+      }
+
+      .spec-card-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      .spec-card-title {
+        margin: 0;
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .spec-card-sub {
+        margin: 0;
+        color: var(--text-dim);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.69rem;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+
+      .spec-card-detail {
+        margin: 0;
+        color: var(--text-main);
+        line-height: 1.4;
+        font-size: 0.96rem;
+      }
+
+      .spec-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border-radius: 999px;
+        border: 1px solid rgba(124, 207, 255, 0.31);
+        background: rgba(5, 29, 53, 0.6);
+        padding: 5px 9px;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.66rem;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        width: fit-content;
+      }
+
+      .spec-pill::before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--ok);
+        box-shadow: 0 0 0 4px rgba(74, 240, 191, 0.14);
+      }
+
+      .spec-pill.warn::before {
+        background: var(--warn);
+        box-shadow: 0 0 0 4px rgba(255, 224, 125, 0.2);
+      }
+
       .territories h3 {
         margin: 0 0 12px;
         font-size: 1.4rem;
@@ -793,6 +890,10 @@
         .territory-grid {
           grid-template-columns: repeat(2, minmax(0, 1fr));
         }
+
+        .spec-grid {
+          grid-template-columns: 1fr;
+        }
       }
 
       @media (max-width: 640px) {
@@ -820,6 +921,10 @@
 
         .chat-llm-grid {
           grid-template-columns: 1fr;
+        }
+
+        .spec-card {
+          padding: 9px;
         }
       }
 
@@ -1051,7 +1156,7 @@
                       <button id="browser_back_btn" type="button">Back</button>
                       <button id="browser_forward_btn" type="button">Forward</button>
                       <button id="browser_reload_btn" type="button">Reload</button>
-                      <button type="button" data-browser-url="https://chatgpt.com">ChatGPT</button>
+                      <button type="button" data-browser-url="https://a-i-agency.com">A-i-Agency</button>
                       <button type="button" data-browser-url="https://platform.openai.com">OpenAI</button>
                       <button type="button" data-browser-url="https://github.com">GitHub</button>
                       <button type="button" data-browser-url="https://www.google.com">Google</button>
@@ -1216,6 +1321,14 @@
         </div>
       </section>
 
+      <section class="blueprint-card spec-board" aria-label="All route specs">
+        <h3>All Route Specs</h3>
+        <p class="spec-board-note">
+          Every automation node and its full operational detail.
+        </p>
+        <div class="spec-grid" id="specGrid" aria-live="polite"></div>
+      </section>
+
       <section class="territories">
         <h3>Automation Territories</h3>
         <div class="territory-grid">
@@ -1245,16 +1358,59 @@
         const statusSignal = document.getElementById("statusSignal");
         const nodeTitle = document.getElementById("nodeTitle");
         const nodeDetail = document.getElementById("nodeDetail");
+        const specGrid = document.getElementById("specGrid");
+
+        const esc = (value) => String(value == null ? "" : value).replace(/[&<>"']/g, (ch) => (
+          { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]
+        ));
+
+        const nodeStatusText = (node) => (String(node?.dataset?.status || "").toLowerCase() === "monitor" ? "Monitor" : "Stable");
+        const nodeStatusWarn = (node) => String(node?.dataset?.status || "").toLowerCase() === "monitor";
+        const nodeTitleText = (node) => String(node?.dataset?.name || "").trim() || String(node?.querySelector("strong")?.textContent || "").trim();
+        const nodeSpecText = (node) => String(node?.querySelector("span")?.textContent || "").trim();
+
+        const syncSpecSelection = () => {
+          if (!specGrid) return;
+          const activeIndex = nodes.findIndex((item) => item.classList.contains("active"));
+          specGrid.querySelectorAll(".spec-card[data-node-index]").forEach((card) => {
+            const idx = Number(card.getAttribute("data-node-index"));
+            card.classList.toggle("active", Number.isInteger(idx) && idx === activeIndex);
+          });
+        };
+
+        const renderSpecGrid = () => {
+          if (!specGrid) return;
+          specGrid.innerHTML = nodes.map((node, index) => {
+            const status = nodeStatusText(node);
+            const warn = nodeStatusWarn(node);
+            const title = nodeTitleText(node);
+            const detail = String(node?.dataset?.detail || "").trim();
+            const sub = nodeSpecText(node);
+            return `
+              <article class="spec-card${node.classList.contains("active") ? " active" : ""}" data-node-index="${index}" tabindex="0">
+                <div class="spec-card-head">
+                  <h4 class="spec-card-title">${esc(title || `Node ${index + 1}`)}</h4>
+                  <span class="spec-pill${warn ? " warn" : ""}">${esc(status)}</span>
+                </div>
+                ${sub ? `<p class="spec-card-sub">${esc(sub)}</p>` : ""}
+                <p class="spec-card-detail">${esc(detail || "No description set.")}</p>
+              </article>
+            `;
+          }).join("");
+          syncSpecSelection();
+        };
 
         const selectNode = (node) => {
+          if (!node) return;
           nodes.forEach((item) => item.classList.remove("active"));
           node.classList.add("active");
           nodeTitle.textContent = node.dataset.name || "";
           nodeDetail.textContent = node.dataset.detail || "";
 
-          const monitor = node.dataset.status === "monitor";
+          const monitor = nodeStatusWarn(node);
           statusSignal.textContent = monitor ? "Monitor" : "Stable";
           statusSignal.classList.toggle("warn", monitor);
+          syncSpecSelection();
         };
 
         nodes.forEach((node) => {
@@ -1262,6 +1418,35 @@
           node.addEventListener("focus", () => selectNode(node));
           node.addEventListener("click", () => selectNode(node));
         });
+
+        specGrid?.addEventListener("click", (event) => {
+          const card = event.target?.closest?.(".spec-card[data-node-index]");
+          if (!card) return;
+          const index = Number(card.getAttribute("data-node-index"));
+          if (!Number.isInteger(index)) return;
+          const target = nodes[index];
+          if (!target) return;
+          selectNode(target);
+          try {
+            target.scrollIntoView({ behavior: "smooth", block: "center", inline: "center" });
+          } catch {
+            // ignore
+          }
+        });
+
+        specGrid?.addEventListener("keydown", (event) => {
+          if (event.key !== "Enter" && event.key !== " ") return;
+          const card = event.target?.closest?.(".spec-card[data-node-index]");
+          if (!card) return;
+          event.preventDefault();
+          const index = Number(card.getAttribute("data-node-index"));
+          if (!Number.isInteger(index)) return;
+          const target = nodes[index];
+          if (target) selectNode(target);
+        });
+
+        renderSpecGrid();
+        if (nodes.length) selectNode(nodes.find((item) => item.classList.contains("active")) || nodes[0]);
       })();
 
       /* End-of-day download helpers */
@@ -2956,6 +3141,7 @@
 
       const BROWSER_LAST_URL_KEY = "atlasBrowserLastUrlV1";
       const BROWSER_MODE_KEY = "atlasBrowserModeV1";
+      const BROWSER_HOME_URL = "https://a-i-agency.com";
       const browserState = {
         history: [],
         index: -1,
@@ -3363,13 +3549,6 @@
         const frame = browserEl("browser_frame");
         const modeSelect = browserEl("browser_mode_select");
 
-        const savedUrl = (() => {
-          try {
-            return String(localStorage.getItem(BROWSER_LAST_URL_KEY) || "");
-          } catch {
-            return "";
-          }
-        })();
         const savedMode = (() => {
           try {
             return String(localStorage.getItem(BROWSER_MODE_KEY) || "smart").trim().toLowerCase();
@@ -3379,7 +3558,8 @@
         })();
         if (modeSelect) modeSelect.value = savedMode === "live" || savedMode === "mirror" || savedMode === "reader" || savedMode === "safari" ? savedMode : "smart";
 
-        const startUrl = normalizeBrowserUrl(savedUrl) || "https://chatgpt.com";
+        const startUrl = normalizeBrowserUrl(BROWSER_HOME_URL) || "https://a-i-agency.com";
+        browserRememberLastUrl(startUrl);
         if (input) input.value = startUrl;
         if (modeSelect && modeSelect.value === "live" && browserLikelyBlockedHost(startUrl)) {
           modeSelect.value = "smart";
