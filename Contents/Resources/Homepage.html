@@ -889,6 +889,7 @@
                       <textarea id="chat_input" placeholder="Ask the assistant anything..." autocomplete="off"></textarea>
                       <div class="chat-actions">
                         <button id="chat_send_btn">Send</button>
+                        <button id="chat_fill_form_btn">Fill Form</button>
                         <button id="chat_clear_btn">Clear Chat</button>
                       </div>
                     </div>
@@ -1593,7 +1594,8 @@
         messages: [],
         model: "",
         modelChecked: false,
-        apiBase: ""
+        apiBase: "",
+        apiReady: false
       };
 
       function chatEl(id) {
@@ -1633,7 +1635,7 @@
           const port = String(window.location?.port || "").trim();
 
           if ((protocol === "http:" || protocol === "https:") && origin && origin !== "null") out.push("");
-          if (host && port) out.push(`http://${host}:${port}`);
+          if ((protocol === "http:" || protocol === "https:") && host && port) out.push(`${protocol}//${host}:${port}`);
           if (host) out.push(`http://${host}:8010`, `http://${host}:8000`);
         } catch {
           // ignore
@@ -1641,6 +1643,10 @@
 
         out.push("http://127.0.0.1:8010", "http://localhost:8010", "http://127.0.0.1:8000", "http://localhost:8000");
         return Array.from(new Set(out.filter(Boolean)));
+      }
+
+      function apiBaseLabel() {
+        return chatState.apiBase || "current origin";
       }
 
       async function fetchChatApi(path, init) {
@@ -1654,6 +1660,15 @@
           const url = base ? `${base}${safePath}` : safePath;
           try {
             const res = await fetch(url, init);
+            const ct = String(res.headers?.get?.("content-type") || "").toLowerCase();
+            if (res.status === 404 || res.status === 405 || res.status === 501) {
+              lastErr = new Error(`${url} returned HTTP ${res.status}`);
+              continue;
+            }
+            if (ct.includes("text/html") && safePath.startsWith("/api/")) {
+              lastErr = new Error(`${url} did not return API JSON`);
+              continue;
+            }
             chatState.apiBase = base;
             return res;
           } catch (err) {
@@ -1663,6 +1678,53 @@
 
         const msg = String(lastErr?.message || lastErr || "Could not reach local API.");
         throw new Error(msg);
+      }
+
+      async function readResponseBody(res) {
+        const raw = await res.text();
+        let json = null;
+        try {
+          json = raw ? JSON.parse(raw) : null;
+        } catch {
+          json = null;
+        }
+        return { raw, json };
+      }
+
+      function responseErrorText(res, body) {
+        const json = body?.json || null;
+        const raw = String(body?.raw || "").trim();
+        const direct = String(json?.error || "").trim();
+        if (direct) return direct;
+        const nested = String(json?.details?.error?.message || json?.details?.message || "").trim();
+        if (nested) return nested;
+        if (raw && raw.length < 300) return raw;
+        return `Request failed (${res.status})`;
+      }
+
+      function extractAssistantText(payload, rawFallback) {
+        const json = payload && typeof payload === "object" ? payload : {};
+        const candidates = [
+          json?.message?.content,
+          json?.response,
+          json?.text,
+          json?.open?.content,
+          json?.gateway?.content,
+          json?.choices?.[0]?.message?.content
+        ];
+        for (const value of candidates) {
+          const text = String(value || "").trim();
+          if (text) return text;
+        }
+        const fallback = String(rawFallback || "").trim();
+        if (fallback && fallback.length < 400) return fallback;
+        return "";
+      }
+
+      function compactError(text) {
+        const t = String(text || "").replace(/\s+/g, " ").trim();
+        if (!t) return "Unknown error";
+        return t.length > 180 ? `${t.slice(0, 177)}...` : t;
       }
 
       function renderChat() {
@@ -1687,9 +1749,11 @@
         }
 
         const sendBtn = chatEl("chat_send_btn");
+        const fillBtn = chatEl("chat_fill_form_btn");
         const clearBtn = chatEl("chat_clear_btn");
         const input = chatEl("chat_input");
         if (sendBtn) sendBtn.disabled = chatState.loading;
+        if (fillBtn) fillBtn.disabled = chatState.loading;
         if (clearBtn) clearBtn.disabled = chatState.loading || !list.length;
         if (input) input.disabled = chatState.loading;
 
@@ -1705,26 +1769,167 @@
         }
       }
 
-      async function readApiError(res) {
-        let payload = null;
-        try {
-          payload = await res.json();
-        } catch {
-          payload = null;
+      function parseJsonObjectFromText(text) {
+        const raw = String(text || "").trim();
+        if (!raw) return null;
+
+        const candidates = [raw];
+        const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/i);
+        if (fenced && fenced[1]) candidates.push(String(fenced[1]).trim());
+
+        const firstBrace = raw.indexOf("{");
+        const lastBrace = raw.lastIndexOf("}");
+        if (firstBrace >= 0 && lastBrace > firstBrace) {
+          candidates.push(raw.slice(firstBrace, lastBrace + 1).trim());
         }
-        const direct = String(payload?.error || "").trim();
-        if (direct) return direct;
-        const nested = String(payload?.details?.error?.message || payload?.details?.message || "").trim();
-        if (nested) return nested;
-        return `Request failed (${res.status})`;
+
+        for (const candidate of candidates) {
+          try {
+            const parsed = JSON.parse(candidate);
+            if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) return parsed;
+          } catch {
+            // ignore
+          }
+        }
+        return null;
+      }
+
+      function normalizeEodTasks(values) {
+        const allowed = ["Deployments", "DNS Updates", "Content Updates", "Other"];
+        const picked = new Set();
+        const list = Array.isArray(values) ? values : [];
+        for (const item of list) {
+          const low = String(item || "").trim().toLowerCase();
+          if (!low) continue;
+          if (low.includes("deploy")) picked.add("Deployments");
+          else if (low.includes("dns")) picked.add("DNS Updates");
+          else if (low.includes("content")) picked.add("Content Updates");
+          else if (low.includes("other")) picked.add("Other");
+          else {
+            const exact = allowed.find((v) => v.toLowerCase() === low);
+            if (exact) picked.add(exact);
+          }
+        }
+        return Array.from(picked);
+      }
+
+      function normalizeEodDraft(raw) {
+        const src = raw && typeof raw === "object" ? raw : {};
+        const toText = (value, maxLen) => String(value == null ? "" : value).trim().slice(0, maxLen);
+        const out = {
+          fullname: toText(src.fullname, 200),
+          email: toText(src.email, 200),
+          completed: normalizeEodTasks(src.completed),
+          completed_details: toText(src.completed_details, 4000),
+          pending: toText(src.pending, 4000),
+          hours: "",
+          signoff: toText(src.signoff, 200),
+          summary: toText(src.summary, 5000)
+        };
+
+        const rawHours = String(src.hours == null ? "" : src.hours).trim();
+        if (rawHours) {
+          const parsed = Number(rawHours.replace(/[^0-9.]/g, ""));
+          if (Number.isFinite(parsed)) out.hours = String(Math.max(0, parsed));
+        }
+
+        return out;
+      }
+
+      function setFieldIfPresent(id, value) {
+        const node = document.getElementById(id);
+        if (!node) return;
+        const text = String(value == null ? "" : value).trim();
+        if (!text) return;
+        node.value = text;
+      }
+
+      function applyEodDraft(draft) {
+        setFieldIfPresent("eod_fullname", draft.fullname);
+        setFieldIfPresent("eod_email", draft.email);
+        setFieldIfPresent("eod_completed_details", draft.completed_details);
+        setFieldIfPresent("eod_pending", draft.pending);
+        setFieldIfPresent("eod_hours", draft.hours);
+        setFieldIfPresent("eod_signoff", draft.signoff);
+        setFieldIfPresent("eod_summary", draft.summary);
+
+        if (Array.isArray(draft.completed) && draft.completed.length) {
+          const selected = new Set(draft.completed);
+          document.querySelectorAll('input[name="eod_tasks"]').forEach((box) => {
+            box.checked = selected.has(String(box.value || ""));
+          });
+        }
+      }
+
+      async function requestEodDraft(prompt) {
+        if (!chatState.modelChecked) await refreshChatModel({ quiet: true });
+        const current = collectEOD();
+        const strictPrompt = [
+          "Fill the End-of-Day form using the user request.",
+          "Return ONLY valid JSON (no markdown) with keys:",
+          "fullname,email,completed,completed_details,pending,hours,signoff,summary",
+          'completed must be an array using only: ["Deployments","DNS Updates","Content Updates","Other"]',
+          "Use empty strings or [] for unknown fields.",
+          "",
+          `User request: ${String(prompt || "").trim()}`,
+          `Current form state: ${JSON.stringify(current)}`
+        ].join("\n");
+
+        const errors = [];
+
+        const chatPayload = {
+          messages: [
+            { role: "system", content: "You output only JSON objects." },
+            { role: "user", content: strictPrompt }
+          ],
+          options: { temperature: 0.1 },
+          stream: false
+        };
+        if (chatState.model) chatPayload.model = chatState.model;
+
+        try {
+          const text = await callApiAndExtract("/api/chat", chatPayload);
+          const parsed = parseJsonObjectFromText(text);
+          if (parsed) return normalizeEodDraft(parsed);
+          errors.push("Could not parse JSON from /api/chat.");
+        } catch (err) {
+          errors.push(`/api/chat: ${compactError(err?.message || err)}`);
+        }
+
+        if (chatState.model) {
+          try {
+            const text = await callApiAndExtract("/api/generate", {
+              model: chatState.model,
+              prompt: strictPrompt,
+              stream: false
+            });
+            const parsed = parseJsonObjectFromText(text);
+            if (parsed) return normalizeEodDraft(parsed);
+            errors.push("Could not parse JSON from /api/generate.");
+          } catch (err) {
+            errors.push(`/api/generate: ${compactError(err?.message || err)}`);
+          }
+        }
+
+        try {
+          const text = await callApiAndExtract("/api/prompt", { prompt: strictPrompt });
+          const parsed = parseJsonObjectFromText(text);
+          if (parsed) return normalizeEodDraft(parsed);
+          errors.push("Could not parse JSON from /api/prompt.");
+        } catch (err) {
+          errors.push(`/api/prompt: ${compactError(err?.message || err)}`);
+        }
+
+        throw new Error(errors.join(" | "));
       }
 
       async function refreshChatModel(options) {
         const quiet = Boolean(options && options.quiet);
         try {
           const res = await fetchChatApi("/api/tags", { cache: "no-store" });
-          if (!res.ok) throw new Error(await readApiError(res));
-          const data = await res.json();
+          const body = await readResponseBody(res);
+          if (!res.ok) throw new Error(responseErrorText(res, body));
+          const data = body.json || {};
           const models = Array.isArray(data?.models) ? data.models : [];
           const next = models
             .map((item) => String(item?.name || item?.model || "").trim())
@@ -1742,37 +1947,87 @@
         }
       }
 
-      async function callChatApi() {
-        if (!chatState.modelChecked) await refreshChatModel({ quiet: true });
-        const payload = {
-          messages: chatMessagesForApi(),
-          options: { temperature: 0.2 }
-        };
-        if (chatState.model) payload.model = chatState.model;
-
-        let res = await fetchChatApi("/api/chat", {
+      async function callApiAndExtract(path, payload) {
+        const res = await fetchChatApi(path, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
+        const body = await readResponseBody(res);
+        if (!res.ok) throw new Error(responseErrorText(res, body));
+        const answer = extractAssistantText(body.json, body.raw);
+        if (!answer) throw new Error(`Empty assistant response from ${path}.`);
+        return answer;
+      }
 
-        if (res.ok) return res;
+      async function resolveAssistantReply(prompt) {
+        if (!chatState.modelChecked) await refreshChatModel({ quiet: true });
+        const historyPayload = {
+          messages: chatMessagesForApi(),
+          options: { temperature: 0.2 },
+          stream: false
+        };
+        if (chatState.model) historyPayload.model = chatState.model;
 
-        const firstError = await readApiError(res);
-        if (/model is required/i.test(firstError)) {
-          const model = await refreshChatModel({ quiet: true });
-          if (model) {
-            payload.model = model;
-            res = await fetchChatApi("/api/chat", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(payload)
-            });
-            if (res.ok) return res;
+        const errors = [];
+
+        try {
+          return await callApiAndExtract("/api/chat", historyPayload);
+        } catch (err) {
+          const msg = compactError(err?.message || err);
+          errors.push(`/api/chat: ${msg}`);
+          if (/model is required/i.test(msg) && !chatState.model) {
+            const refreshed = await refreshChatModel({ quiet: true });
+            if (refreshed) {
+              historyPayload.model = refreshed;
+              try {
+                return await callApiAndExtract("/api/chat", historyPayload);
+              } catch (retryErr) {
+                errors.push(`/api/chat (retry): ${compactError(retryErr?.message || retryErr)}`);
+              }
+            }
           }
         }
 
-        throw new Error(firstError);
+        if (chatState.model) {
+          try {
+            return await callApiAndExtract("/api/generate", {
+              model: chatState.model,
+              prompt: String(prompt || "").trim(),
+              stream: false
+            });
+          } catch (err) {
+            errors.push(`/api/generate: ${compactError(err?.message || err)}`);
+          }
+        }
+
+        try {
+          return await callApiAndExtract("/api/prompt", { prompt: String(prompt || "").trim() });
+        } catch (err) {
+          errors.push(`/api/prompt: ${compactError(err?.message || err)}`);
+        }
+
+        throw new Error(errors.join(" | "));
+      }
+
+      async function diagnoseChatTransport(options) {
+        const quiet = Boolean(options && options.quiet);
+        try {
+          const res = await fetchChatApi("/health", { cache: "no-store" });
+          const body = await readResponseBody(res);
+          if (!res.ok) throw new Error(responseErrorText(res, body));
+          const model = await refreshChatModel({ quiet: true });
+          chatState.apiReady = true;
+          if (!quiet) {
+            const suffix = model ? ` | model ${model}` : "";
+            chatStatus(`Connected via ${apiBaseLabel()}${suffix}`, false);
+          }
+          return true;
+        } catch (err) {
+          chatState.apiReady = false;
+          if (!quiet) chatStatus(String(err?.message || err || "API unavailable."), true);
+          return false;
+        }
       }
 
       async function sendChatPrompt() {
@@ -1792,14 +2047,43 @@
         renderChat();
 
         try {
-          const res = await callChatApi();
-          const data = await res.json();
-          const answer = String(data?.message?.content || "").trim();
-          if (!answer) throw new Error("Assistant returned an empty response.");
+          await diagnoseChatTransport({ quiet: true });
+          const answer = await resolveAssistantReply(prompt);
           appendChatMessage("assistant", answer);
-          chatStatus("Done.", false);
+          chatStatus(`Done via ${apiBaseLabel()}.`, false);
         } catch (err) {
           const message = String(err?.message || err || "Chat request failed.");
+          appendChatMessage("assistant", `Error: ${message}`);
+          chatStatus(message, true);
+        } finally {
+          chatState.loading = false;
+          renderChat();
+        }
+      }
+
+      async function fillFormFromPrompt() {
+        if (chatState.loading) return;
+        const input = chatEl("chat_input");
+        const prompt = String(input?.value || "").trim();
+        if (!prompt) {
+          chatStatus("Enter instructions in Prompt, then click Fill Form.", true);
+          input?.focus?.();
+          return;
+        }
+
+        appendChatMessage("user", `[Fill Form] ${prompt}`);
+        chatState.loading = true;
+        chatStatus("Generating form draft...", false);
+        renderChat();
+
+        try {
+          await diagnoseChatTransport({ quiet: true });
+          const draft = await requestEodDraft(prompt);
+          applyEodDraft(draft);
+          appendChatMessage("assistant", "Form updated.");
+          chatStatus(`Form filled via ${apiBaseLabel()}.`, false);
+        } catch (err) {
+          const message = String(err?.message || err || "Form fill failed.");
           appendChatMessage("assistant", `Error: ${message}`);
           chatStatus(message, true);
         } finally {
@@ -1817,6 +2101,7 @@
 
       function initChat() {
         chatEl("chat_send_btn")?.addEventListener("click", sendChatPrompt);
+        chatEl("chat_fill_form_btn")?.addEventListener("click", fillFormFromPrompt);
         chatEl("chat_clear_btn")?.addEventListener("click", clearChat);
         chatEl("chat_input")?.addEventListener("keydown", (event) => {
           if (event.key === "Enter" && !event.shiftKey) {
@@ -1825,7 +2110,7 @@
           }
         });
         renderChat();
-        refreshChatModel({ quiet: true }).catch(() => {});
+        diagnoseChatTransport({ quiet: false }).catch(() => {});
       }
 
       initChat();
