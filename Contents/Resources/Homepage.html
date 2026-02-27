@@ -834,6 +834,19 @@
       .chat-composer textarea {
         min-height: 96px;
         resize: vertical;
+        border: 1px solid rgba(126, 207, 255, 0.28);
+        border-radius: 14px;
+        background: linear-gradient(180deg, rgba(6, 28, 51, 0.92), rgba(4, 21, 40, 0.86));
+        color: var(--text-main);
+        padding: 11px 12px;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.88rem;
+        line-height: 1.45;
+        transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+      }
+
+      .chat-composer textarea::placeholder {
+        color: rgba(192, 224, 245, 0.66);
       }
 
       .chat-llm-grid {
@@ -850,11 +863,12 @@
       .chat-llm-grid select,
       .chat-llm-grid input {
         border: 1px solid rgba(126, 207, 255, 0.28);
-        border-radius: 10px;
-        background: rgba(4, 21, 40, 0.72);
+        border-radius: 12px;
+        background: linear-gradient(180deg, rgba(6, 28, 51, 0.9), rgba(4, 21, 40, 0.82));
         color: var(--text-main);
         padding: 9px 10px;
         font-family: "IBM Plex Mono", monospace;
+        transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
       }
 
       .chat-llm-hint {
@@ -978,11 +992,12 @@
       .browser-url input {
         width: 100%;
         border: 1px solid rgba(126, 207, 255, 0.28);
-        border-radius: 10px;
-        background: rgba(4, 21, 40, 0.72);
+        border-radius: 12px;
+        background: linear-gradient(180deg, rgba(6, 28, 51, 0.9), rgba(4, 21, 40, 0.82));
         color: var(--text-main);
         padding: 9px 10px;
         font-family: "IBM Plex Mono", monospace;
+        transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
       }
 
       .browser-row button {
@@ -1055,17 +1070,80 @@
       .strategy-task-editor select {
         width: 100%;
         border: 1px solid rgba(126, 207, 255, 0.26);
-        border-radius: 10px;
-        background: rgba(4, 21, 40, 0.72);
+        border-radius: 12px;
+        background: linear-gradient(180deg, rgba(6, 28, 51, 0.9), rgba(4, 21, 40, 0.82));
         color: var(--text-main);
         padding: 9px 10px;
         font-family: "IBM Plex Mono", monospace;
         font-size: 0.86rem;
+        transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
       }
 
       .strategy-plan textarea {
         min-height: 210px;
         resize: vertical;
+      }
+
+      .strategy-row input::placeholder,
+      .strategy-plan textarea::placeholder,
+      .strategy-task-editor input::placeholder,
+      .browser-url input::placeholder {
+        color: rgba(192, 224, 245, 0.64);
+      }
+
+      .chat-composer textarea:focus,
+      .chat-llm-grid input:focus,
+      .chat-llm-grid select:focus,
+      .browser-url input:focus,
+      .strategy-row input:focus,
+      .strategy-row select:focus,
+      .strategy-plan textarea:focus,
+      .strategy-task-editor input:focus,
+      .strategy-task-editor select:focus,
+      #end-of-day input[type="text"]:focus,
+      #end-of-day input[type="email"]:focus,
+      #end-of-day input[type="number"]:focus,
+      #end-of-day textarea:focus {
+        outline: none;
+        border-color: rgba(125, 228, 255, 0.72);
+        box-shadow: 0 0 0 3px rgba(81, 187, 255, 0.16), inset 0 0 0 1px rgba(125, 228, 255, 0.2);
+      }
+
+      #end-of-day input[type="text"],
+      #end-of-day input[type="email"],
+      #end-of-day input[type="number"],
+      #end-of-day textarea {
+        width: 100%;
+        border: 1px solid rgba(126, 207, 255, 0.26);
+        border-radius: 12px;
+        background: linear-gradient(180deg, rgba(6, 28, 51, 0.9), rgba(4, 21, 40, 0.82));
+        color: var(--text-main);
+        padding: 10px 11px;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.86rem;
+        transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+      }
+
+      #end-of-day textarea {
+        resize: vertical;
+      }
+
+      #end-of-day input::placeholder,
+      #end-of-day textarea::placeholder {
+        color: rgba(192, 224, 245, 0.64);
+      }
+
+      #end-of-day fieldset {
+        border: 1px solid rgba(126, 207, 255, 0.3) !important;
+        border-radius: 12px;
+        background: rgba(6, 28, 51, 0.36);
+      }
+
+      #end-of-day legend {
+        color: var(--text-dim);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.76rem;
+        letter-spacing: 0.06em;
       }
 
       .strategy-actions,
@@ -1368,7 +1446,7 @@
                   <h3>Chat Assistant</h3>
                   <div class="chat-shell">
                     <div class="chat-log" id="chat_log" aria-live="polite">
-                      <div class="chat-empty">Type a prompt below and click Send.</div>
+                      <div class="chat-empty">Describe the outcome, constraints, and format, then click Send.</div>
                     </div>
                     <div class="chat-composer">
                       <div class="chat-llm-grid">
@@ -1380,7 +1458,7 @@
                           </select>
                         </label>
                         <label for="chat_model_input">Model
-                          <input id="chat_model_input" type="text" list="chat_model_suggestions" placeholder="Model name" autocomplete="off" />
+                          <input id="chat_model_input" type="text" list="chat_model_suggestions" placeholder="Auto-detected or enter model id" autocomplete="off" />
                         </label>
                       </div>
                       <datalist id="chat_model_suggestions">
@@ -1394,7 +1472,7 @@
                       </datalist>
                       <div class="chat-llm-hint" id="chat_llm_hint">Source: Auto</div>
                       <label for="chat_input">Prompt</label>
-                      <textarea id="chat_input" placeholder="Ask the assistant anything..." autocomplete="off"></textarea>
+                      <textarea id="chat_input" placeholder="Example: Build a launch plan for X in 30 days, include owners, risks, and first 3 tasks." autocomplete="off"></textarea>
                       <div class="chat-actions">
                         <button id="chat_send_btn">Send</button>
                         <button id="chat_fill_form_btn">Fill Form</button>
@@ -1462,10 +1540,10 @@
                   <div class="strategy-grid">
                     <div class="strategy-row">
                       <label for="strategy_objective">Objective
-                        <input id="strategy_objective" type="text" placeholder="What are we building or fixing next?" autocomplete="off" />
+                        <input id="strategy_objective" type="text" placeholder="Target outcome and scope (what are we building or fixing?)" autocomplete="off" />
                       </label>
                       <label for="strategy_metric">Success Metric
-                        <input id="strategy_metric" type="text" placeholder="How we measure done (e.g. 30% faster turnaround)" autocomplete="off" />
+                        <input id="strategy_metric" type="text" placeholder="Success metric (e.g. reduce handoff time by 30%)" autocomplete="off" />
                       </label>
                       <label for="strategy_horizon">Time Horizon
                         <select id="strategy_horizon">
@@ -1479,10 +1557,10 @@
 
                     <div class="strategy-plan">
                       <label for="strategy_constraints">Constraints
-                        <textarea id="strategy_constraints" rows="3" placeholder="Budget, dependencies, compliance, team capacity, blockers..."></textarea>
+                        <textarea id="strategy_constraints" rows="3" placeholder="Constraints: budget, dependencies, compliance, team bandwidth, hard deadline, blockers."></textarea>
                       </label>
                       <label for="strategy_plan_output">Strategic Plan
-                        <textarea id="strategy_plan_output" placeholder="Click Build Strategic Plan to draft a plan we can execute together."></textarea>
+                        <textarea id="strategy_plan_output" placeholder="Plan appears here: phases, owners, timeline, risks, and immediate next actions."></textarea>
                       </label>
                     </div>
 
@@ -1494,7 +1572,7 @@
 
                     <div class="strategy-task-editor">
                       <label for="strategy_task_title">Execution Task
-                        <input id="strategy_task_title" type="text" placeholder="Add a concrete next action..." autocomplete="off" />
+                        <input id="strategy_task_title" type="text" placeholder="One concrete next action with a clear done condition..." autocomplete="off" />
                       </label>
                       <label for="strategy_task_owner">Owner
                         <select id="strategy_task_owner">
@@ -1537,7 +1615,7 @@
                         <option value="reader">Reader (Always works)</option>
                       </select>
                       <label class="browser-url" for="browser_url_input">
-                        <input id="browser_url_input" type="text" placeholder="https://example.com" autocomplete="off" />
+                        <input id="browser_url_input" type="text" placeholder="https://mail.google.com or https://example.com" autocomplete="off" />
                       </label>
                       <button id="browser_open_btn" type="button">Open</button>
                       <button id="browser_mirror_btn" type="button">Open Mirror</button>
@@ -1854,11 +1932,11 @@
           </fieldset>
 
           <label>Completed Tasks (details)
-            <textarea id="eod_completed_details" rows="4"></textarea>
+            <textarea id="eod_completed_details" rows="4" placeholder="List completed work with outcomes and links/tickets."></textarea>
           </label>
 
           <label>Pending Approvals (details)
-            <textarea id="eod_pending" rows="3" placeholder="List pending approvals or actions needed"></textarea>
+            <textarea id="eod_pending" rows="3" placeholder="Pending approvals, blockers, and actions required from others."></textarea>
           </label>
 
           <label>Hours Worked
@@ -1870,7 +1948,7 @@
           </label>
 
           <label>End-of-day Summary
-            <textarea id="eod_summary" rows="5" placeholder="Short summary of the day"></textarea>
+            <textarea id="eod_summary" rows="5" placeholder="Executive summary: what shipped, impact, and tomorrow's priority."></textarea>
           </label>
 
           <div style="display:flex;gap:8px;align-items:center">
@@ -3352,7 +3430,7 @@
         if (!log) return;
         const list = Array.isArray(chatState.messages) ? chatState.messages : [];
         if (!list.length) {
-          log.innerHTML = `<div class="chat-empty">Type a prompt below and click Send.</div>`;
+          log.innerHTML = `<div class="chat-empty">Describe the outcome, constraints, and format, then click Send.</div>`;
         } else {
           log.innerHTML = list
             .map((msg) => {
