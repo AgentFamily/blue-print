@@ -1,4 +1,4 @@
-# The Agent Family
+# AgentC App
 
 ⸻
 

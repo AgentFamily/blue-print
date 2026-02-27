@@ -4126,7 +4126,7 @@
 		        </details>
 		      </div>
 		      <div class="modal-foot">
-		        <button class="btn secondary" id="coinsStoreOpenAgentFamilyBtn" type="button">Open GitHub: The Agent Family</button>
+		        <button class="btn secondary" id="coinsStoreOpenAgentFamilyBtn" type="button">Open GitHub: AgentC App</button>
 		        <button class="btn secondary" id="coinsStoreSupportBtn" type="button">Support</button>
 		        <button class="btn primary" id="coinsStoreSignInBtn" type="button">Sign in</button>
 		      </div>
@@ -7591,13 +7591,13 @@ Boundaries and safety:
 	            }
 	          }
 
-	          function openTheAgentFamily() {
-	            return openExternalUrl("https://theagentfamily.com/");
-	          }
+		          function openTheAgentFamily() {
+		            return openExternalUrl("https://agentfamily.github.io/blue-print/");
+		          }
 
-	          function openTheAgentFamilyGit() {
-	            return openExternalUrl("https://github.com/AgentFamily/the-agent-family");
-	          }
+		          function openTheAgentFamilyGit() {
+		            return openExternalUrl("https://github.com/AgentFamily/blue-print");
+		          }
 
 	          function openAiRealtor() {
 	            return openExternalUrl("https://AiRealtor.UK");
@@ -10533,7 +10533,7 @@ Style rules:
 	          }
 	        }
 	
-	        const MEMORY_PACK_TYPE = "the-agent-family-memory-pack";
+	        const MEMORY_PACK_TYPE = "agentc-memory-pack";
 	        const MEMORY_PACK_VERSION = 1;
 	
 	        function pickProfileForMemoryPack(profile) {
@@ -10618,7 +10618,7 @@ Style rules:
 	          const p = pack && typeof pack === "object" ? pack : {};
 	          const profile = p.profile && typeof p.profile === "object" ? p.profile : {};
 	          const lines = [];
-	          lines.push("The Agent Family — Session Export");
+	          lines.push("AgentC — Session Export");
 	          lines.push(`Exported: ${String(p.exportedAt || "").trim() || new Date().toISOString()}`);
 	          const rev = String(p.uiRev || "").trim();
 	          if (rev) lines.push(`UI: ${rev}`);
@@ -10688,7 +10688,7 @@ Style rules:
 	        function openMailTo(to, subject, body) {
 	          const addr = String(to || "").trim();
 	          const qs = new URLSearchParams();
-	          qs.set("subject", String(subject || "The Agent Family — Session Export"));
+	          qs.set("subject", String(subject || "AgentC — Session Export"));
 	          qs.set("body", String(body || ""));
 	          const href = `mailto:${encodeURIComponent(addr)}?${qs.toString()}`;
 	          try {
@@ -12563,7 +12563,7 @@ Style rules:
 	            const pack = selected?.pack ? selected.pack : buildMemoryPack({ maxRounds: 24 });
 	            const to = String(el("memoryEmailToInput")?.value || "").trim();
 	            const body = memoryPackToPlainText(pack, { maxRounds: 8, maxChars: 8000 });
-	            const subject = `The Agent Family — Session Export (${new Date().toLocaleString()})`;
+	            const subject = `AgentC — Session Export (${new Date().toLocaleString()})`;
 	            openMailTo(to, subject, body);
 	          });
 	          el("uploadMemoryBtn")?.addEventListener("click", () => {

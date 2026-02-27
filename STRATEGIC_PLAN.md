@@ -333,4 +333,4 @@ Miss.Lead is positioned as the category-defining AI lead management platform for
 **Document Prepared By**: AI Development Team  
 **Date**: February 7, 2026  
 **Next Review**: Monthly Executive Review  
-**Repository**: AgentFamily/the-agent-family
+**Repository**: AgentFamily/blue-print
