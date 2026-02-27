@@ -1551,10 +1551,13 @@
                       <button id="browser_back_btn" type="button">Back</button>
                       <button id="browser_forward_btn" type="button">Forward</button>
                       <button id="browser_reload_btn" type="button">Reload</button>
+                      <button id="browser_mail_btn" type="button">Mail Login</button>
                       <button type="button" data-browser-url="https://a-i-agency.com">A-i-Agency</button>
                       <button type="button" data-browser-url="https://platform.openai.com">OpenAI</button>
                       <button type="button" data-browser-url="https://github.com">GitHub</button>
                       <button type="button" data-browser-url="https://www.google.com">Google</button>
+                      <button type="button" data-browser-url="https://mail.google.com">Gmail</button>
+                      <button type="button" data-browser-url="https://outlook.live.com/mail/">Outlook</button>
                     </div>
                     <div class="browser-status" id="browser_status">Browser ready.</div>
                     <div class="browser-frame-wrap">
@@ -4186,9 +4189,36 @@
             "openai.com",
             "platform.openai.com",
             "github.com",
-            "google.com"
+            "google.com",
+            "mail.google.com",
+            "gmail.com",
+            "outlook.live.com",
+            "login.live.com",
+            "mail.yahoo.com",
+            "proton.me"
           ];
           return blocked.some((d) => host === d || host.endsWith(`.${d}`));
+        } catch {
+          return false;
+        }
+      }
+
+      function browserRequiresExternalAuth(url) {
+        try {
+          const host = new URL(url).hostname.toLowerCase();
+          const authHosts = [
+            "mail.google.com",
+            "accounts.google.com",
+            "gmail.com",
+            "outlook.live.com",
+            "login.live.com",
+            "office.com",
+            "mail.yahoo.com",
+            "login.yahoo.com",
+            "proton.me",
+            "account.proton.me"
+          ];
+          return authHosts.some((d) => host === d || host.endsWith(`.${d}`));
         } catch {
           return false;
         }
@@ -4306,6 +4336,17 @@
         }
       }
 
+      async function browserOpenMailLogin(rawUrl) {
+        const fallback = "https://mail.google.com";
+        const target = normalizeBrowserUrl(rawUrl) || fallback;
+        const input = browserEl("browser_url_input");
+        if (input) input.value = target;
+        browserRemember(target);
+        browserStatus("Opening secure mail sign-in in Safari...", false);
+        await browserOpenSafari(target);
+        return true;
+      }
+
       function browserCurrentEntry() {
         if (browserState.index >= 0 && browserState.index < browserState.history.length) {
           return browserState.history[browserState.index] || null;
@@ -4410,6 +4451,27 @@
         browserRemember(url);
 
         const requestedMode = browserRequestedMode(forcedMode);
+        if (requestedMode !== "safari" && browserRequiresExternalAuth(url)) {
+          if (!fromHistory) {
+            const entry = { url, mode: "safari" };
+            if (replace && browserState.index >= 0) {
+              browserState.history[browserState.index] = entry;
+            } else {
+              const next = browserState.history.slice(0, browserState.index + 1);
+              next.push(entry);
+              browserState.history = next;
+              browserState.index = next.length - 1;
+            }
+          }
+          if (navToken !== browserState.navToken) return false;
+          browserState.currentMode = "safari";
+          browserState.loading = false;
+          browserRenderNav();
+          browserStatus("Secure mail login detected. Opened in Safari for sign-in.", false);
+          await browserOpenSafari(url);
+          return true;
+        }
+
         if (requestedMode === "safari") {
           if (!fromHistory) {
             const entry = { url, mode: "safari" };
@@ -4619,6 +4681,7 @@
         browserEl("browser_back_btn")?.addEventListener("click", browserBack);
         browserEl("browser_forward_btn")?.addEventListener("click", browserForward);
         browserEl("browser_reload_btn")?.addEventListener("click", browserReload);
+        browserEl("browser_mail_btn")?.addEventListener("click", () => { void browserOpenMailLogin(String(input?.value || "")); });
         browserEl("browser_external_btn")?.addEventListener("click", () => { void browserOpenExternal(String(input?.value || "")); });
         browserEl("browser_use_url_btn")?.addEventListener("click", browserUseUrlInPrompt);
         input?.addEventListener("keydown", (event) => {
@@ -5142,6 +5205,7 @@
           "browser_mode_select",
           "browser_url_input",
           "browser_open_btn",
+          "browser_mail_btn",
           "browser_frame",
           "browser_status"
         ];
