@@ -64,23 +64,6 @@
         margin: 0 auto;
       }
 
-      main.shell {
-        display: flex;
-        flex-direction: column;
-      }
-
-      main.shell > .atlas {
-        order: -30;
-      }
-
-      main.shell > .spec-board {
-        order: -29;
-      }
-
-      main.shell > .territories {
-        order: -28;
-      }
-
       .topbar {
         padding: 22px 0 12px;
         display: flex;
@@ -785,98 +768,61 @@
 
       .chat-shell {
         display: grid;
-        gap: 12px;
-        border: 1px solid rgba(126, 207, 255, 0.26);
-        border-radius: 18px;
-        background:
-          radial-gradient(circle at 8% 0%, rgba(153, 226, 255, 0.12), transparent 48%),
-          linear-gradient(180deg, rgba(8, 28, 50, 0.8), rgba(4, 18, 35, 0.78));
-        padding: 12px;
-        box-shadow:
-          inset 0 1px 0 rgba(180, 236, 255, 0.1),
-          0 18px 36px rgba(2, 10, 21, 0.32);
+        gap: 10px;
       }
 
       .chat-log {
-        border: 1px solid rgba(126, 207, 255, 0.3);
-        border-radius: 16px;
-        background:
-          linear-gradient(180deg, rgba(5, 24, 42, 0.84), rgba(5, 18, 34, 0.82));
+        border: 1px solid rgba(126, 207, 255, 0.26);
+        border-radius: 10px;
+        background: rgba(4, 22, 40, 0.72);
         min-height: 180px;
         max-height: 360px;
         overflow: auto;
-        padding: 12px;
+        padding: 10px;
         display: grid;
-        gap: 9px;
-        box-shadow: inset 0 1px 0 rgba(167, 232, 255, 0.08);
-      }
-
-      .chat-log::-webkit-scrollbar {
-        width: 9px;
-      }
-
-      .chat-log::-webkit-scrollbar-thumb {
-        border-radius: 999px;
-        border: 2px solid rgba(5, 26, 46, 0.9);
-        background: rgba(136, 220, 255, 0.32);
-      }
-
-      .chat-log::-webkit-scrollbar-track {
-        background: rgba(3, 20, 37, 0.55);
-        border-radius: 999px;
+        gap: 8px;
       }
 
       .chat-empty {
         color: var(--text-dim);
         font-family: "IBM Plex Mono", monospace;
         font-size: 0.76rem;
-        opacity: 0.92;
       }
 
       .chat-msg {
-        border: 1px solid rgba(126, 207, 255, 0.2);
-        border-radius: 14px;
-        background: linear-gradient(180deg, rgba(7, 28, 48, 0.74), rgba(6, 22, 40, 0.65));
-        padding: 10px 11px;
+        border: 1px solid rgba(126, 207, 255, 0.22);
+        border-radius: 10px;
+        background: rgba(4, 22, 40, 0.58);
+        padding: 8px 9px;
         display: grid;
-        gap: 5px;
-        box-shadow: inset 0 1px 0 rgba(170, 233, 255, 0.06);
+        gap: 4px;
       }
 
       .chat-msg.user {
-        border-color: rgba(74, 240, 191, 0.38);
-        background: linear-gradient(180deg, rgba(6, 42, 53, 0.74), rgba(5, 30, 41, 0.66));
+        border-color: rgba(74, 240, 191, 0.34);
       }
 
       .chat-msg.assistant {
-        border-color: rgba(125, 228, 255, 0.34);
-        background: linear-gradient(180deg, rgba(9, 34, 58, 0.72), rgba(7, 26, 46, 0.65));
+        border-color: rgba(125, 228, 255, 0.32);
       }
 
       .chat-msg-head {
         color: var(--accent);
         font-family: "IBM Plex Mono", monospace;
-        font-size: 0.66rem;
+        font-size: 0.68rem;
         letter-spacing: 0.06em;
         text-transform: uppercase;
-        opacity: 0.95;
       }
 
       .chat-msg-body {
         white-space: pre-wrap;
         word-break: break-word;
-        line-height: 1.48;
-        color: #e9f6ff;
+        line-height: 1.45;
       }
 
       .chat-composer {
         display: grid;
-        gap: 9px;
-        border: 1px solid rgba(126, 207, 255, 0.26);
-        border-radius: 16px;
-        background: linear-gradient(180deg, rgba(7, 28, 49, 0.72), rgba(5, 20, 37, 0.7));
-        padding: 11px;
-        box-shadow: inset 0 1px 0 rgba(158, 228, 255, 0.08);
+        gap: 8px;
       }
 
       .chat-composer label {
@@ -888,20 +834,6 @@
       .chat-composer textarea {
         min-height: 96px;
         resize: vertical;
-        border: 1px solid rgba(126, 207, 255, 0.3);
-        border-radius: 14px;
-        background: rgba(3, 20, 36, 0.82);
-        color: var(--text-main);
-        padding: 10px 11px;
-        font-family: "IBM Plex Mono", monospace;
-      }
-
-      .chat-composer textarea:focus,
-      .chat-llm-grid select:focus,
-      .chat-llm-grid input:focus {
-        outline: none;
-        border-color: rgba(154, 233, 255, 0.68);
-        box-shadow: 0 0 0 3px rgba(126, 207, 255, 0.16);
       }
 
       .chat-llm-grid {
@@ -918,7 +850,7 @@
       .chat-llm-grid select,
       .chat-llm-grid input {
         border: 1px solid rgba(126, 207, 255, 0.28);
-        border-radius: 12px;
+        border-radius: 10px;
         background: rgba(4, 21, 40, 0.72);
         color: var(--text-main);
         padding: 9px 10px;
@@ -937,32 +869,10 @@
         flex-wrap: wrap;
       }
 
-      .chat-actions button {
-        border: 1px solid rgba(147, 224, 255, 0.34);
-        border-radius: 999px;
-        background: linear-gradient(180deg, rgba(18, 55, 88, 0.85), rgba(10, 35, 62, 0.82));
-        color: #e8f7ff;
-        padding: 8px 14px;
-        font-family: "IBM Plex Mono", monospace;
-        cursor: pointer;
-        box-shadow: inset 0 1px 0 rgba(199, 241, 255, 0.12);
-        transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
-      }
-
-      .chat-actions button:hover {
-        transform: translateY(-1px);
-        border-color: rgba(170, 236, 255, 0.52);
-        background: linear-gradient(180deg, rgba(22, 65, 101, 0.9), rgba(12, 42, 72, 0.86));
-      }
-
       .chat-status {
         color: var(--accent);
         font-family: "IBM Plex Mono", monospace;
         font-size: 0.75rem;
-        border-radius: 12px;
-        padding: 6px 10px;
-        background: rgba(4, 22, 40, 0.5);
-        border: 1px solid rgba(126, 207, 255, 0.16);
       }
 
       .quote-card {
@@ -1281,79 +1191,6 @@
         color: var(--accent);
       }
 
-      .deployment-card {
-        margin: 24px 0;
-      }
-
-      .deployment-grid {
-        display: grid;
-        gap: 10px;
-      }
-
-      .deployment-row {
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 8px;
-      }
-
-      .deployment-grid label {
-        display: grid;
-        gap: 6px;
-        color: var(--text-dim);
-        font-family: "IBM Plex Mono", monospace;
-        font-size: 0.74rem;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-      }
-
-      .deployment-grid input,
-      .deployment-grid select,
-      .deployment-grid textarea {
-        border: 1px solid rgba(126, 207, 255, 0.28);
-        border-radius: 10px;
-        background: rgba(4, 21, 40, 0.72);
-        color: var(--text-main);
-        padding: 9px 10px;
-        font-family: "IBM Plex Mono", monospace;
-      }
-
-      .deployment-grid textarea {
-        min-height: 88px;
-        resize: vertical;
-      }
-
-      .deployment-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-      }
-
-      .deployment-actions button {
-        border: 1px solid rgba(126, 207, 255, 0.28);
-        border-radius: 10px;
-        background: rgba(4, 21, 40, 0.72);
-        color: var(--text-main);
-        padding: 8px 11px;
-        font-family: "IBM Plex Mono", monospace;
-        cursor: pointer;
-      }
-
-      .deployment-output {
-        border: 1px solid rgba(126, 207, 255, 0.24);
-        border-radius: 10px;
-        background: rgba(4, 22, 40, 0.66);
-        padding: 10px;
-        white-space: pre-wrap;
-        line-height: 1.5;
-        min-height: 170px;
-      }
-
-      .deployment-status {
-        color: var(--accent);
-        font-family: "IBM Plex Mono", monospace;
-        font-size: 0.74rem;
-      }
-
       .warn::before {
         background: var(--warn);
         box-shadow: 0 0 0 4px rgba(255, 224, 125, 0.2);
@@ -1454,10 +1291,6 @@
           grid-template-columns: 1fr;
         }
 
-        .deployment-row {
-          grid-template-columns: 1fr;
-        }
-
         .strategy-row {
           grid-template-columns: 1fr;
         }
@@ -1531,69 +1364,6 @@
         </aside>
       </section>
 
-                <section id="deployment-mapper" class="blueprint-card deployment-card">
-                  <h3>AI Business Deployment Mapper</h3>
-                  <div class="deployment-grid">
-                    <div class="deployment-row">
-                      <label for="dep_business_name">Business Name
-                        <input id="dep_business_name" type="text" placeholder="e.g. LegalMemory AI" autocomplete="off" />
-                      </label>
-                      <label for="dep_niche">Niche
-                        <input id="dep_niche" type="text" placeholder="e.g. legal ops, real estate, fitness" autocomplete="off" />
-                      </label>
-                      <label for="dep_customer">Ideal Customer
-                        <input id="dep_customer" type="text" placeholder="e.g. solo founders, agencies, SMEs" autocomplete="off" />
-                      </label>
-                      <label for="dep_offer_type">Offer Type
-                        <select id="dep_offer_type">
-                          <option value="ai_agent">AI Agent Service</option>
-                          <option value="workflow">Automated Workflow</option>
-                          <option value="productized">Productized Service</option>
-                          <option value="micro_saas">Micro SaaS</option>
-                        </select>
-                      </label>
-                    </div>
-
-                    <div class="deployment-row">
-                      <label for="dep_channel">Acquisition Channel
-                        <select id="dep_channel">
-                          <option value="inbound">Inbound (SEO + content)</option>
-                          <option value="outbound">Outbound (email + DM)</option>
-                          <option value="paid">Paid ads</option>
-                          <option value="partner">Partnership / referral</option>
-                        </select>
-                      </label>
-                      <label for="dep_price_point">Price Point (USD)
-                        <input id="dep_price_point" type="number" min="0" step="50" placeholder="e.g. 1500" />
-                      </label>
-                      <label for="dep_launch_horizon">Launch Horizon
-                        <select id="dep_launch_horizon">
-                          <option value="14">14 days</option>
-                          <option value="30" selected>30 days</option>
-                          <option value="60">60 days</option>
-                        </select>
-                      </label>
-                      <label for="dep_geo_focus">Geo Focus
-                        <input id="dep_geo_focus" type="text" placeholder="e.g. UK, US, Global" autocomplete="off" />
-                      </label>
-                    </div>
-
-                    <label for="dep_constraints">Constraints
-                      <textarea id="dep_constraints" placeholder="Budget, compliance, team size, tool limits, launch blockers..."></textarea>
-                    </label>
-
-                    <div class="deployment-actions">
-                      <button id="dep_generate_btn" type="button">Generate Deployment Map</button>
-                      <button id="dep_to_chat_btn" type="button">Send Map to Chat</button>
-                      <button id="dep_to_workbench_btn" type="button">Send Map to Workbench</button>
-                      <button id="dep_toggle_advanced_btn" type="button">Show Advanced Panels</button>
-                    </div>
-
-                    <div id="dep_output" class="deployment-output">Define the business profile, then click Generate Deployment Map.</div>
-                    <div id="dep_status" class="deployment-status">Simplified view active.</div>
-                  </div>
-                </section>
-
                 <section id="assistant-chat" class="blueprint-card chat-card">
                   <h3>Chat Assistant</h3>
                   <div class="chat-shell">
@@ -1635,7 +1405,7 @@
                   </div>
                 </section>
 
-                <section id="vault" class="blueprint-card vault-card advanced-panel">
+                <section id="vault" class="blueprint-card vault-card">
                   <h3>Secure Vault</h3>
                   <div class="vault-grid">
                     <div class="vault-row inline">
@@ -1793,7 +1563,7 @@
                   </div>
                 </section>
 
-                <section id="standard-pricing-agent" class="blueprint-card quote-card advanced-panel">
+                <section id="standard-pricing-agent" class="blueprint-card quote-card">
                   <h3>Standard Pricing Valuation Agent</h3>
                   <div class="quote-grid">
                     <div class="quote-row">
@@ -1848,7 +1618,7 @@
                   </div>
                 </section>
 
-                <section id="openclaw-verify" class="blueprint-card verify-card advanced-panel">
+                <section id="openclaw-verify" class="blueprint-card verify-card">
                   <h3>OpenClaw Spec Verification</h3>
                   <div class="verify-grid">
                     <p class="spec-board-note">
@@ -2061,7 +1831,7 @@
       </section>
 
       <!-- End of the Day section -->
-      <section id="end-of-day" class="blueprint-card advanced-panel" style="margin:24px 0;">
+      <section id="end-of-day" class="blueprint-card" style="margin:24px 0;">
         <h3>End of the Day</h3>
         <div style="display:grid;gap:10px;">
           <label>Agent Full Name
@@ -2234,27 +2004,6 @@
         URL.revokeObjectURL(url);
       }
 
-      function openPrintableHtml(html) {
-        try {
-          const w = window.open("", "_blank", "noopener,noreferrer");
-          if (!w) return false;
-          w.document.open();
-          w.document.write(String(html || ""));
-          w.document.close();
-          w.focus();
-          window.setTimeout(() => {
-            try {
-              w.print();
-            } catch {
-              // ignore
-            }
-          }, 220);
-          return true;
-        } catch {
-          return false;
-        }
-      }
-
       document.getElementById('eod_download_json').addEventListener('click', ()=>{
         const data = collectEOD();
         downloadBlob(`end-of-day-${(new Date()).toISOString().replace(/[:.]/g,'-')}.json`, JSON.stringify(data, null, 2), 'application/json');
@@ -2273,287 +2022,11 @@
         const html = `<!doctype html><html><head><meta charset="utf-8"><title>End of Day - ${data.fullname}</title></head><body><h1>End of Day Report</h1><p><strong>Agent:</strong> ${escapeHtml(data.fullname)} &lt;${escapeHtml(data.email)}&gt;</p><p><strong>Timestamp:</strong> ${escapeHtml(data.timestamp)}</p><h2>Summary</h2><pre>${escapeHtml(data.summary)}</pre><h2>Completed Tasks</h2><ul>${data.completed.map(x=>'<li>'+escapeHtml(x)+'</li>').join('')}</ul><h3>Details</h3><pre>${escapeHtml(data.completed_details)}</pre><h2>Pending Approvals</h2><pre>${escapeHtml(data.pending)}</pre><p><strong>Hours worked:</strong> ${escapeHtml(String(data.hours))}</p><p><strong>Sign-off:</strong> ${escapeHtml(data.signoff)}</p></body></html>`;
         try{
           const res = await fetch('/eod/pdf',{method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({html, filename:`end-of-day-${(new Date()).toISOString().replace(/[:.]/g,'-')}.pdf`})});
-          const j = await res.json().catch(() => ({}));
-          if (res.ok) {
-            alert('Saved PDF to: '+j.result);
-            return;
-          }
-
-          const status = Number(res.status || 0);
-          const errText = String(j?.error || "");
-          if (status === 404 || /^not found\b/i.test(errText)) {
-            const opened = openPrintableHtml(html);
-            if (opened) {
-              alert("Server PDF route is unavailable. Print dialog opened; choose 'Save as PDF'.");
-              return;
-            }
-            downloadBlob(`end-of-day-${(new Date()).toISOString().replace(/[:.]/g,'-')}.html`, html, 'text/html');
-            alert("Server PDF route is unavailable. Downloaded HTML fallback.");
-            return;
-          }
-          alert('Failed: '+(j.error||JSON.stringify(j)));
-        }catch(e){
-          const opened = openPrintableHtml(html);
-          if (opened) {
-            alert("PDF request failed. Print dialog opened; choose 'Save as PDF'.");
-            return;
-          }
-          downloadBlob(`end-of-day-${(new Date()).toISOString().replace(/[:.]/g,'-')}.html`, html, 'text/html');
-          alert('PDF request failed. Downloaded HTML fallback.');
-        }
+          const j = await res.json();
+          if(res.ok){ alert('Saved PDF to: '+j.result); }
+          else{ alert('Failed: '+(j.error||JSON.stringify(j))); }
+        }catch(e){ alert('Request failed: '+e); }
       });
-
-      const DEPLOYMENT_STORE_KEY = "atlasDeploymentMapV1";
-      const DASHBOARD_VIEW_STORE_KEY = "atlasDashboardViewV1";
-      let dashboardAdvancedVisible = false;
-
-      function depEl(id) {
-        return document.getElementById(id);
-      }
-
-      function depStatus(text, isError) {
-        const node = depEl("dep_status");
-        if (!node) return;
-        node.textContent = String(text || "");
-        node.style.color = isError ? "#ffb0b0" : "var(--accent)";
-      }
-
-      function depClean(value, maxLen) {
-        const limit = Number(maxLen) > 0 ? Number(maxLen) : 220;
-        return String(value || "").replace(/\s+/g, " ").trim().slice(0, limit);
-      }
-
-      function depReadDraft() {
-        return {
-          business: depClean(depEl("dep_business_name")?.value || "", 140),
-          niche: depClean(depEl("dep_niche")?.value || "", 120),
-          customer: depClean(depEl("dep_customer")?.value || "", 140),
-          offer: depClean(depEl("dep_offer_type")?.value || "ai_agent", 32),
-          channel: depClean(depEl("dep_channel")?.value || "inbound", 32),
-          price: depClean(depEl("dep_price_point")?.value || "", 24),
-          horizon: depClean(depEl("dep_launch_horizon")?.value || "30", 8),
-          geo: depClean(depEl("dep_geo_focus")?.value || "", 80),
-          constraints: String(depEl("dep_constraints")?.value || "").trim()
-        };
-      }
-
-      function depWriteDraft(draft) {
-        if (!draft || typeof draft !== "object") return;
-        if (depEl("dep_business_name")) depEl("dep_business_name").value = depClean(draft.business || "", 140);
-        if (depEl("dep_niche")) depEl("dep_niche").value = depClean(draft.niche || "", 120);
-        if (depEl("dep_customer")) depEl("dep_customer").value = depClean(draft.customer || "", 140);
-        if (depEl("dep_offer_type")) depEl("dep_offer_type").value = depClean(draft.offer || "ai_agent", 32);
-        if (depEl("dep_channel")) depEl("dep_channel").value = depClean(draft.channel || "inbound", 32);
-        if (depEl("dep_price_point")) depEl("dep_price_point").value = depClean(draft.price || "", 24);
-        if (depEl("dep_launch_horizon")) depEl("dep_launch_horizon").value = depClean(draft.horizon || "30", 8);
-        if (depEl("dep_geo_focus")) depEl("dep_geo_focus").value = depClean(draft.geo || "", 80);
-        if (depEl("dep_constraints")) depEl("dep_constraints").value = String(draft.constraints || "");
-      }
-
-      function depSetAdvancedVisibility(showAdvanced) {
-        dashboardAdvancedVisible = Boolean(showAdvanced);
-        document.querySelectorAll(".advanced-panel").forEach((node) => {
-          node.hidden = !dashboardAdvancedVisible;
-        });
-        const btn = depEl("dep_toggle_advanced_btn");
-        if (btn) btn.textContent = dashboardAdvancedVisible ? "Hide Advanced Panels" : "Show Advanced Panels";
-        depStatus(dashboardAdvancedVisible ? "Advanced panels visible." : "Simplified view active.", false);
-      }
-
-      function depSave(mapText) {
-        try {
-          localStorage.setItem(
-            DEPLOYMENT_STORE_KEY,
-            JSON.stringify({
-              draft: depReadDraft(),
-              mapText: String(mapText || depEl("dep_output")?.textContent || ""),
-              updatedAt: Date.now()
-            })
-          );
-          localStorage.setItem(DASHBOARD_VIEW_STORE_KEY, dashboardAdvancedVisible ? "advanced" : "simple");
-        } catch {
-          // ignore
-        }
-      }
-
-      function depLoad() {
-        try {
-          const raw = String(localStorage.getItem(DEPLOYMENT_STORE_KEY) || "");
-          if (raw) {
-            const parsed = JSON.parse(raw);
-            depWriteDraft(parsed?.draft || {});
-            const text = String(parsed?.mapText || "").trim();
-            if (text && depEl("dep_output")) depEl("dep_output").textContent = text;
-          }
-        } catch {
-          // ignore
-        }
-        try {
-          depSetAdvancedVisibility(String(localStorage.getItem(DASHBOARD_VIEW_STORE_KEY) || "simple") === "advanced");
-        } catch {
-          depSetAdvancedVisibility(false);
-        }
-      }
-
-      function depBuildMap(draft) {
-        const business = depClean(draft.business || "", 140) || "AI Business";
-        const niche = depClean(draft.niche || "", 120) || "target niche";
-        const customer = depClean(draft.customer || "", 140) || "ideal customers";
-        const geo = depClean(draft.geo || "", 80) || "priority region";
-        const price = depClean(draft.price || "", 24) || "TBD";
-        const horizon = Number.parseInt(String(draft.horizon || "30"), 10) || 30;
-        const offer = depClean(draft.offer || "ai_agent", 32);
-        const channel = depClean(draft.channel || "inbound", 32);
-        const constraints = String(draft.constraints || "").trim() || "No constraints captured.";
-
-        const offerLabelMap = {
-          ai_agent: "AI Agent Service",
-          workflow: "Automated Workflow",
-          productized: "Productized Service",
-          micro_saas: "Micro SaaS"
-        };
-        const channelLabelMap = {
-          inbound: "Inbound (SEO + content)",
-          outbound: "Outbound (email + DM)",
-          paid: "Paid ads",
-          partner: "Partnership / referral"
-        };
-
-        const offerLabel = offerLabelMap[offer] || "AI Offer";
-        const channelLabel = channelLabelMap[channel] || "Primary channel";
-        const stackHint = offer === "micro_saas"
-          ? "Landing page + onboarding + billing + support bot."
-          : offer === "productized"
-            ? "Offer page + qualification + booking + fulfillment automation."
-            : "Chat intake + qualification + workflow automations + human approval checkpoints.";
-
-        return [
-          "AI Business Deployment Map",
-          `Business: ${business}`,
-          `Niche: ${niche}`,
-          `Ideal Customer: ${customer}`,
-          `Offer: ${offerLabel}`,
-          `Channel: ${channelLabel}`,
-          `Geo Focus: ${geo}`,
-          `Price Point: ${price}`,
-          `Launch Horizon: ${horizon} days`,
-          `Constraints: ${constraints}`,
-          "",
-          "Deployment Pipeline",
-          "1) Demand Capture:",
-          `- Build one clear offer page for ${customer} in ${niche}.`,
-          `- Launch acquisition through ${channelLabel}.`,
-          "2) Qualification:",
-          "- Route leads through chat + form triage (budget, urgency, fit).",
-          "- Apply pass/fail rules before sales handoff.",
-          "3) Conversion:",
-          "- Present scoped offer, timeline, and checkout/booking CTA.",
-          "- Require human approval before risky outbound actions.",
-          "4) Fulfillment:",
-          "- Trigger delivery workflow with milestones, owner, and SLA.",
-          "- Sync status updates into the dashboard and task board.",
-          "5) Retention & Expansion:",
-          "- Capture proof/results weekly and feed upsell pipeline.",
-          "- Run post-delivery review + reactivation loops.",
-          "",
-          "Recommended Initial Stack",
-          `- ${stackHint}`,
-          "- Vault for secrets, Browser for context capture, Chat for operator control."
-        ].join("\n");
-      }
-
-      function depGenerateMap() {
-        const draft = depReadDraft();
-        if (!draft.business) {
-          depStatus("Business name is required.", true);
-          depEl("dep_business_name")?.focus?.();
-          return;
-        }
-        const mapText = depBuildMap(draft);
-        if (depEl("dep_output")) depEl("dep_output").textContent = mapText;
-        depSave(mapText);
-        depStatus("Deployment map generated.", false);
-      }
-
-      function depSendToChat() {
-        const mapText = String(depEl("dep_output")?.textContent || "").trim();
-        if (!mapText || mapText.startsWith("Define the business profile")) {
-          depStatus("Generate deployment map first.", true);
-          return;
-        }
-        const input = document.getElementById("chat_input");
-        if (!input) {
-          depStatus("Chat input unavailable.", true);
-          return;
-        }
-        input.value = `Execute this AI business deployment map:\n\n${mapText}\n\nReturn immediate next actions for Me and Codex.`;
-        try {
-          input.focus();
-          input.selectionStart = input.selectionEnd = input.value.length;
-        } catch {
-          // ignore
-        }
-        depStatus("Deployment map moved to Chat prompt.", false);
-      }
-
-      function depSendToWorkbench() {
-        const mapText = String(depEl("dep_output")?.textContent || "").trim();
-        const draft = depReadDraft();
-        if (!mapText || mapText.startsWith("Define the business profile")) {
-          depStatus("Generate deployment map first.", true);
-          return;
-        }
-
-        const objective = document.getElementById("strategy_objective");
-        const metric = document.getElementById("strategy_metric");
-        const horizon = document.getElementById("strategy_horizon");
-        const constraints = document.getElementById("strategy_constraints");
-        const plan = document.getElementById("strategy_plan_output");
-        if (objective) objective.value = `${draft.business || "AI Business"} deployment in ${draft.niche || "target niche"}`;
-        if (metric) metric.value = "Leads qualified, conversions closed, and first delivery cycle completed.";
-        if (horizon) horizon.value = String(draft.horizon || "30");
-        if (constraints) constraints.value = String(draft.constraints || "");
-        if (plan) plan.value = mapText;
-
-        try {
-          strategySave();
-          strategyRenderTasks();
-        } catch {
-          // ignore
-        }
-        depStatus("Deployment map pushed to Strategic Workbench.", false);
-      }
-
-      function initDeploymentMapper() {
-        const root = depEl("deployment-mapper");
-        if (!root) return;
-        depLoad();
-
-        depEl("dep_generate_btn")?.addEventListener("click", depGenerateMap);
-        depEl("dep_to_chat_btn")?.addEventListener("click", depSendToChat);
-        depEl("dep_to_workbench_btn")?.addEventListener("click", depSendToWorkbench);
-        depEl("dep_toggle_advanced_btn")?.addEventListener("click", () => {
-          depSetAdvancedVisibility(!dashboardAdvancedVisible);
-          depSave();
-        });
-
-        [
-          "dep_business_name",
-          "dep_niche",
-          "dep_customer",
-          "dep_offer_type",
-          "dep_channel",
-          "dep_price_point",
-          "dep_launch_horizon",
-          "dep_geo_focus",
-          "dep_constraints"
-        ].forEach((id) => {
-          depEl(id)?.addEventListener("input", () => depSave());
-          depEl(id)?.addEventListener("change", () => depSave());
-        });
-      }
-
-      initDeploymentMapper();
 
       const STRATEGY_STORE_KEY = "atlasStrategicWorkbenchV1";
       const STRATEGY_MAX_TASKS = 120;
