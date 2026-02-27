@@ -455,7 +455,7 @@ def _reader_render_html(src_url: str, status: int, final_url: str, content_type:
     return body
 
 
-def _mirror_rewrite_links(html_text: str, base_url: str) -> str:
+def _mirror_rewrite_links(html_text: str, base_url: str, *, allow_scripts: bool = False) -> str:
     source = str(html_text or "")
 
     def _rewrite_anchor_tag(match: re.Match[str]) -> str:
@@ -473,7 +473,8 @@ def _mirror_rewrite_links(html_text: str, base_url: str) -> str:
             norm = _normalize_browser_url(full)
             if not norm:
                 return str(attr_match.group(0) or "")
-            proxy_href = f"/browser/mirror?url={quote(norm, safe='')}"
+            scripts_flag = "1" if allow_scripts else "0"
+            proxy_href = f"/browser/mirror?url={quote(norm, safe='')}&scripts={scripts_flag}"
             return f"href={quote_char}{proxy_href}{quote_char}"
 
         rewritten = re.sub(r'(?is)\bhref\s*=\s*(["\'])(.*?)\1', _rewrite_href, tag, count=1)
@@ -483,7 +484,9 @@ def _mirror_rewrite_links(html_text: str, base_url: str) -> str:
     return re.sub(r"(?is)<a\b[^>]*>", _rewrite_anchor_tag, source)
 
 
-def _mirror_render_html(src_url: str, status: int, final_url: str, content_type: str, raw_html: str) -> str:
+def _mirror_render_html(
+    src_url: str, status: int, final_url: str, content_type: str, raw_html: str, *, allow_scripts: bool = False
+) -> str:
     target = final_url or src_url
     if not target:
         target = src_url
@@ -496,18 +499,24 @@ def _mirror_render_html(src_url: str, status: int, final_url: str, content_type:
         fallback = _reader_render_html(src_url, status, final_url, content_type, raw_html)
         return fallback
 
-    # Mirror mode removes active scripts, then rewrites links through /browser/mirror.
-    # This keeps navigation in-app while avoiding most script-origin breakages.
-    html_text = re.sub(r"(?is)<script\b[^>]*>[\s\S]*?</script>", "", html_text)
-    html_text = re.sub(r"(?is)<script\b[^>]*/\s*>", "", html_text)
+    # In lite mode we remove active scripts to maximize reliability.
+    if not allow_scripts:
+        html_text = re.sub(r"(?is)<script\b[^>]*>[\s\S]*?</script>", "", html_text)
+        html_text = re.sub(r"(?is)<script\b[^>]*/\s*>", "", html_text)
     html_text = re.sub(r'(?is)<meta[^>]+http-equiv\s*=\s*["\']content-security-policy["\'][^>]*>', "", html_text)
-    html_text = _mirror_rewrite_links(html_text, target)
+    html_text = _mirror_rewrite_links(html_text, target, allow_scripts=allow_scripts)
+
+    scripts_flag = "1" if allow_scripts else "0"
+    toggle_flag = "0" if allow_scripts else "1"
+    toggle_label = "Mirror Lite" if allow_scripts else "Mirror Interactive"
+    mode_label = "Mirror Interactive" if allow_scripts else "Mirror Mode"
 
     toolbar = (
         '<div id="agentc-mirror-toolbar">'
-        '<strong>Mirror Mode</strong>'
+        f"<strong>{mode_label}</strong>"
         f'<span class="meta">Source: <a href="{_reader_escape(target)}" target="_blank" rel="noopener noreferrer">{_reader_escape(target)}</a> | HTTP {int(status)} | {_reader_escape(content_type or "unknown")}</span>'
         '<span class="actions">'
+        f'<a href="/browser/mirror?url={quote(target, safe="")}&scripts={toggle_flag}" target="_self">{toggle_label}</a>'
         f'<a href="/browser/read?url={quote(target, safe="")}" target="_self">Reader</a>'
         f'<a href="{_reader_escape(target)}" target="_blank" rel="noopener noreferrer">Open Site</a>'
         "</span>"
@@ -522,6 +531,18 @@ def _mirror_render_html(src_url: str, status: int, final_url: str, content_type:
   #agentc-mirror-toolbar .actions{margin-left:auto;display:inline-flex;gap:10px}
 </style>
 """
+    mode_hint = (
+        "Interactive keeps site scripts enabled for fuller rendering."
+        if allow_scripts
+        else "Lite mode strips scripts for reliability if interactive rendering fails."
+    )
+    mode_hint_block = (
+        f'<div id="agentc-mirror-mode-hint" data-agentc-mirror-scripts="{scripts_flag}" '
+        'style="font:11px/1.35 -apple-system,BlinkMacSystemFont,&quot;Segoe UI&quot;,sans-serif;'
+        'color:#8db9d7;background:rgba(7,28,51,.88);padding:6px 12px;border-bottom:1px solid rgba(127,202,248,.2)">'
+        f"{_reader_escape(mode_hint)}"
+        "</div>"
+    )
 
     if re.search(r"(?is)<head\b", html_text):
         html_text = re.sub(r"(?is)<head\b[^>]*>", lambda m: str(m.group(0)) + f'<base href="{_reader_escape(target)}" />' + style_block, html_text, count=1)
@@ -529,9 +550,9 @@ def _mirror_render_html(src_url: str, status: int, final_url: str, content_type:
         html_text = f"<head><base href=\"{_reader_escape(target)}\" />{style_block}</head>" + html_text
 
     if re.search(r"(?is)<body\b", html_text):
-        html_text = re.sub(r"(?is)<body\b[^>]*>", lambda m: str(m.group(0)) + toolbar, html_text, count=1)
+        html_text = re.sub(r"(?is)<body\b[^>]*>", lambda m: str(m.group(0)) + toolbar + mode_hint_block, html_text, count=1)
     else:
-        html_text += toolbar
+        html_text += toolbar + mode_hint_block
 
     return html_text
 
@@ -1733,7 +1754,7 @@ def build_handler(*, upstream: str, tool_token: str):
                 host_only = host_only[1:].split("]", 1)[0]
             else:
                 host_only = host_only.split(":", 1)[0]
-            if host_only in ("127.0.0.1", "::1") and path in ("/", "/Homepage", "/Homepage.html"):
+            if host_only in ("127.0.0.1", "::1") and path in ("/", "/Homepage", "/Homepage.html", "/Contents/Resources/Homepage.html"):
                 try:
                     _, port = self.server.server_address[:2]
                 except Exception:
@@ -1744,7 +1765,7 @@ def build_handler(*, upstream: str, tool_token: str):
                 self.send_header("Cache-Control", "no-store")
                 self.end_headers()
                 return
-            if path in ("/Homepage.html", "/Homepage"):
+            if path in ("/Homepage.html", "/Homepage", "/Contents/Resources/Homepage.html", "/public/Contents/Resources/Homepage.html"):
                 loc = "/" + (("?" + parsed.query) if parsed.query else "")
                 self.send_response(302)
                 self.send_header("Location", loc)
@@ -1838,10 +1859,17 @@ def build_handler(*, upstream: str, tool_token: str):
             if path == "/browser/mirror":
                 params = parse_qs(parsed.query or "")
                 raw_url = ""
+                allow_scripts = True
                 try:
                     raw_url = str((params.get("url") or [""])[0] or "").strip()
                 except Exception:
                     raw_url = ""
+                try:
+                    raw_scripts = str((params.get("scripts") or ["1"])[0] or "1").strip().lower()
+                except Exception:
+                    raw_scripts = "1"
+                if raw_scripts in {"0", "false", "off", "no"}:
+                    allow_scripts = False
                 target_url = _normalize_browser_url(raw_url)
                 if not target_url:
                     _text_response(
@@ -1852,7 +1880,9 @@ def build_handler(*, upstream: str, tool_token: str):
                     )
                     return
                 status, final_url, content_type, raw_html = _reader_fetch(target_url, max_bytes=2_500_000)
-                html = _mirror_render_html(target_url, status, final_url, content_type, raw_html)
+                html = _mirror_render_html(
+                    target_url, status, final_url, content_type, raw_html, allow_scripts=allow_scripts
+                )
                 _text_response(self, 200, html, "text/html; charset=utf-8")
                 return
 

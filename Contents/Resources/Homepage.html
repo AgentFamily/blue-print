@@ -1025,6 +1025,172 @@
         background: #fff;
       }
 
+      .strategy-grid {
+        display: grid;
+        gap: 10px;
+      }
+
+      .strategy-row {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .strategy-row label,
+      .strategy-plan label,
+      .strategy-task-editor label {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        font-size: 0.78rem;
+        letter-spacing: 0.04em;
+        color: var(--text-soft);
+        text-transform: uppercase;
+      }
+
+      .strategy-row input,
+      .strategy-row select,
+      .strategy-plan textarea,
+      .strategy-task-editor input,
+      .strategy-task-editor select {
+        width: 100%;
+        border: 1px solid rgba(126, 207, 255, 0.26);
+        border-radius: 10px;
+        background: rgba(4, 21, 40, 0.72);
+        color: var(--text-main);
+        padding: 9px 10px;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.86rem;
+      }
+
+      .strategy-plan textarea {
+        min-height: 210px;
+        resize: vertical;
+      }
+
+      .strategy-actions,
+      .strategy-task-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .strategy-actions button,
+      .strategy-task-actions button {
+        border: 1px solid rgba(126, 207, 255, 0.28);
+        border-radius: 10px;
+        background: rgba(4, 21, 40, 0.72);
+        color: var(--text-main);
+        padding: 8px 12px;
+        font-family: "IBM Plex Mono", monospace;
+        cursor: pointer;
+      }
+
+      .strategy-task-editor {
+        display: grid;
+        grid-template-columns: minmax(0, 1.9fr) minmax(120px, 0.8fr) minmax(140px, 0.8fr) auto;
+        gap: 8px;
+        align-items: end;
+      }
+
+      .strategy-progress-track {
+        width: 100%;
+        height: 8px;
+        border-radius: 999px;
+        background: rgba(126, 207, 255, 0.16);
+        overflow: hidden;
+      }
+
+      .strategy-progress-bar {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, #7ecfff, #b7f2ff);
+        transition: width 180ms ease;
+      }
+
+      .strategy-progress-meta {
+        margin-top: 6px;
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.75rem;
+        color: var(--text-soft);
+      }
+
+      .strategy-task-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 8px;
+      }
+
+      .strategy-task-item {
+        border: 1px solid rgba(126, 207, 255, 0.24);
+        border-radius: 10px;
+        background: rgba(4, 22, 40, 0.7);
+        padding: 10px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .strategy-task-item.done {
+        opacity: 0.72;
+      }
+
+      .strategy-task-main {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        min-width: 0;
+      }
+
+      .strategy-task-main input[type="checkbox"] {
+        margin-top: 2px;
+      }
+
+      .strategy-task-text {
+        display: grid;
+        gap: 4px;
+      }
+
+      .strategy-task-title {
+        font-family: "IBM Plex Sans", sans-serif;
+        color: var(--text-main);
+        font-size: 0.9rem;
+        word-break: break-word;
+      }
+
+      .strategy-task-item.done .strategy-task-title {
+        text-decoration: line-through;
+        color: var(--text-soft);
+      }
+
+      .strategy-task-meta {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.75rem;
+        color: var(--text-soft);
+      }
+
+      .strategy-task-remove {
+        border: 1px solid rgba(255, 128, 128, 0.42);
+        border-radius: 10px;
+        background: rgba(50, 7, 16, 0.55);
+        color: #ffc6c6;
+        padding: 7px 10px;
+        font-family: "IBM Plex Mono", monospace;
+        cursor: pointer;
+      }
+
+      .strategy-status {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.75rem;
+        color: var(--accent);
+      }
+
       .warn::before {
         background: var(--warn);
         box-shadow: 0 0 0 4px rgba(255, 224, 125, 0.2);
@@ -1125,6 +1291,14 @@
           grid-template-columns: 1fr;
         }
 
+        .strategy-row {
+          grid-template-columns: 1fr;
+        }
+
+        .strategy-task-editor {
+          grid-template-columns: 1fr;
+        }
+
         .spec-card {
           padding: 9px;
         }
@@ -1190,52 +1364,44 @@
         </aside>
       </section>
 
-                <!-- End of the Day section -->
-                <section id="end-of-day" class="blueprint-card" style="margin:24px 0;">
-                  <h3>End of the Day</h3>
-                  <div style="display:grid;gap:10px;">
-                    <label>Agent Full Name
-                      <input type="text" id="eod_fullname" placeholder="First Last" />
-                    </label>
-
-                    <label>Agent Email
-                      <input type="email" id="eod_email" placeholder="agent@example.com" />
-                    </label>
-
-                    <fieldset style="border:1px solid #ddd;padding:8px">
-                      <legend>Today's Completed Tasks</legend>
-                      <label><input type="checkbox" name="eod_tasks" value="Deployments"/> Deployments</label>
-                      <label><input type="checkbox" name="eod_tasks" value="DNS Updates"/> DNS Updates</label>
-                      <label><input type="checkbox" name="eod_tasks" value="Content Updates"/> Content Updates</label>
-                      <label><input type="checkbox" name="eod_tasks" value="Other"/> Other</label>
-                    </fieldset>
-
-                    <label>Completed Tasks (details)
-                      <textarea id="eod_completed_details" rows="4"></textarea>
-                    </label>
-
-                    <label>Pending Approvals (details)
-                      <textarea id="eod_pending" rows="3" placeholder="List pending approvals or actions needed"></textarea>
-                    </label>
-
-                    <label>Hours Worked
-                      <input type="number" id="eod_hours" min="0" step="0.25" value="8" />
-                    </label>
-
-                    <label>Sign-off (name)
-                      <input type="text" id="eod_signoff" placeholder="Signer name" />
-                    </label>
-
-                    <label>End-of-day Summary
-                      <textarea id="eod_summary" rows="5" placeholder="Short summary of the day"></textarea>
-                    </label>
-
-                    <div style="display:flex;gap:8px;align-items:center">
-                      <button id="eod_download_html">Download Form (HTML)</button>
-                      <button id="eod_download_json">Download Form (JSON)</button>
-                      <button id="eod_download_pdf">Download PDF to Desktop</button>
-                      <span id="eod_saved_msg" style="color:var(--ok);margin-left:8px;display:none">Saved</span>
+                <section id="assistant-chat" class="blueprint-card chat-card">
+                  <h3>Chat Assistant</h3>
+                  <div class="chat-shell">
+                    <div class="chat-log" id="chat_log" aria-live="polite">
+                      <div class="chat-empty">Type a prompt below and click Send.</div>
                     </div>
+                    <div class="chat-composer">
+                      <div class="chat-llm-grid">
+                        <label for="chat_provider_select">LLM Source
+                          <select id="chat_provider_select">
+                            <option value="auto">Auto</option>
+                            <option value="local">Local (Ollama)</option>
+                            <option value="api">API (OpenAI/Gateway)</option>
+                          </select>
+                        </label>
+                        <label for="chat_model_input">Model
+                          <input id="chat_model_input" type="text" list="chat_model_suggestions" placeholder="Model name" autocomplete="off" />
+                        </label>
+                      </div>
+                      <datalist id="chat_model_suggestions">
+                        <option value="gemma3:1b"></option>
+                        <option value="gemma3:4b"></option>
+                        <option value="llama3.2:3b"></option>
+                        <option value="mistral:7b"></option>
+                        <option value="qwen2.5:7b"></option>
+                        <option value="gpt-4o-mini"></option>
+                        <option value="gpt-4.1-mini"></option>
+                      </datalist>
+                      <div class="chat-llm-hint" id="chat_llm_hint">Source: Auto</div>
+                      <label for="chat_input">Prompt</label>
+                      <textarea id="chat_input" placeholder="Ask the assistant anything..." autocomplete="off"></textarea>
+                      <div class="chat-actions">
+                        <button id="chat_send_btn">Send</button>
+                        <button id="chat_fill_form_btn">Fill Form</button>
+                        <button id="chat_clear_btn">Clear Chat</button>
+                      </div>
+                    </div>
+                    <div class="chat-status" id="chat_status">Ready.</div>
                   </div>
                 </section>
 
@@ -1291,44 +1457,71 @@
                   </div>
                 </section>
 
-                <section id="assistant-chat" class="blueprint-card chat-card">
-                  <h3>Chat Assistant</h3>
-                  <div class="chat-shell">
-                    <div class="chat-log" id="chat_log" aria-live="polite">
-                      <div class="chat-empty">Type a prompt below and click Send.</div>
+                <section id="strategic-workbench" class="blueprint-card strategy-card">
+                  <h3>Strategic Workbench</h3>
+                  <div class="strategy-grid">
+                    <div class="strategy-row">
+                      <label for="strategy_objective">Objective
+                        <input id="strategy_objective" type="text" placeholder="What are we building or fixing next?" autocomplete="off" />
+                      </label>
+                      <label for="strategy_metric">Success Metric
+                        <input id="strategy_metric" type="text" placeholder="How we measure done (e.g. 30% faster turnaround)" autocomplete="off" />
+                      </label>
+                      <label for="strategy_horizon">Time Horizon
+                        <select id="strategy_horizon">
+                          <option value="14">14 days</option>
+                          <option value="30" selected>30 days</option>
+                          <option value="60">60 days</option>
+                          <option value="90">90 days</option>
+                        </select>
+                      </label>
                     </div>
-                    <div class="chat-composer">
-                      <div class="chat-llm-grid">
-                        <label for="chat_provider_select">LLM Source
-                          <select id="chat_provider_select">
-                            <option value="auto">Auto</option>
-                            <option value="local">Local (Ollama)</option>
-                            <option value="api">API (OpenAI/Gateway)</option>
-                          </select>
-                        </label>
-                        <label for="chat_model_input">Model
-                          <input id="chat_model_input" type="text" list="chat_model_suggestions" placeholder="Model name" autocomplete="off" />
-                        </label>
-                      </div>
-                      <datalist id="chat_model_suggestions">
-                        <option value="gemma3:1b"></option>
-                        <option value="gemma3:4b"></option>
-                        <option value="llama3.2:3b"></option>
-                        <option value="mistral:7b"></option>
-                        <option value="qwen2.5:7b"></option>
-                        <option value="gpt-4o-mini"></option>
-                        <option value="gpt-4.1-mini"></option>
-                      </datalist>
-                      <div class="chat-llm-hint" id="chat_llm_hint">Source: Auto</div>
-                      <label for="chat_input">Prompt</label>
-                      <textarea id="chat_input" placeholder="Ask the assistant anything..." autocomplete="off"></textarea>
-                      <div class="chat-actions">
-                        <button id="chat_send_btn">Send</button>
-                        <button id="chat_fill_form_btn">Fill Form</button>
-                        <button id="chat_clear_btn">Clear Chat</button>
+
+                    <div class="strategy-plan">
+                      <label for="strategy_constraints">Constraints
+                        <textarea id="strategy_constraints" rows="3" placeholder="Budget, dependencies, compliance, team capacity, blockers..."></textarea>
+                      </label>
+                      <label for="strategy_plan_output">Strategic Plan
+                        <textarea id="strategy_plan_output" placeholder="Click Build Strategic Plan to draft a plan we can execute together."></textarea>
+                      </label>
+                    </div>
+
+                    <div class="strategy-actions">
+                      <button id="strategy_generate_btn" type="button">Build Strategic Plan</button>
+                      <button id="strategy_send_chat_btn" type="button">Send Plan to Chat</button>
+                      <button id="strategy_reset_btn" type="button">Reset Workbench</button>
+                    </div>
+
+                    <div class="strategy-task-editor">
+                      <label for="strategy_task_title">Execution Task
+                        <input id="strategy_task_title" type="text" placeholder="Add a concrete next action..." autocomplete="off" />
+                      </label>
+                      <label for="strategy_task_owner">Owner
+                        <select id="strategy_task_owner">
+                          <option value="me">Me</option>
+                          <option value="codex">Codex</option>
+                        </select>
+                      </label>
+                      <label for="strategy_task_due">Due Date
+                        <input id="strategy_task_due" type="date" />
+                      </label>
+                      <div class="strategy-task-actions">
+                        <button id="strategy_add_task_btn" type="button">Add Task</button>
                       </div>
                     </div>
-                    <div class="chat-status" id="chat_status">Ready.</div>
+
+                    <div class="strategy-progress">
+                      <div class="strategy-progress-track">
+                        <div id="strategy_progress_bar" class="strategy-progress-bar"></div>
+                      </div>
+                      <div class="strategy-progress-meta">
+                        <span id="strategy_progress_label">0 / 0 tasks complete</span>
+                        <span id="strategy_next_actions">No tasks yet.</span>
+                      </div>
+                    </div>
+
+                    <ul id="strategy_task_list" class="strategy-task-list"></ul>
+                    <div id="strategy_status" class="strategy-status">Strategic workbench ready.</div>
                   </div>
                 </section>
 
@@ -1636,6 +1829,55 @@
           </article>
         </div>
       </section>
+
+      <!-- End of the Day section -->
+      <section id="end-of-day" class="blueprint-card" style="margin:24px 0;">
+        <h3>End of the Day</h3>
+        <div style="display:grid;gap:10px;">
+          <label>Agent Full Name
+            <input type="text" id="eod_fullname" placeholder="First Last" />
+          </label>
+
+          <label>Agent Email
+            <input type="email" id="eod_email" placeholder="agent@example.com" />
+          </label>
+
+          <fieldset style="border:1px solid #ddd;padding:8px">
+            <legend>Today's Completed Tasks</legend>
+            <label><input type="checkbox" name="eod_tasks" value="Deployments"/> Deployments</label>
+            <label><input type="checkbox" name="eod_tasks" value="DNS Updates"/> DNS Updates</label>
+            <label><input type="checkbox" name="eod_tasks" value="Content Updates"/> Content Updates</label>
+            <label><input type="checkbox" name="eod_tasks" value="Other"/> Other</label>
+          </fieldset>
+
+          <label>Completed Tasks (details)
+            <textarea id="eod_completed_details" rows="4"></textarea>
+          </label>
+
+          <label>Pending Approvals (details)
+            <textarea id="eod_pending" rows="3" placeholder="List pending approvals or actions needed"></textarea>
+          </label>
+
+          <label>Hours Worked
+            <input type="number" id="eod_hours" min="0" step="0.25" value="8" />
+          </label>
+
+          <label>Sign-off (name)
+            <input type="text" id="eod_signoff" placeholder="Signer name" />
+          </label>
+
+          <label>End-of-day Summary
+            <textarea id="eod_summary" rows="5" placeholder="Short summary of the day"></textarea>
+          </label>
+
+          <div style="display:flex;gap:8px;align-items:center">
+            <button id="eod_download_html">Download Form (HTML)</button>
+            <button id="eod_download_json">Download Form (JSON)</button>
+            <button id="eod_download_pdf">Download PDF to Desktop</button>
+            <span id="eod_saved_msg" style="color:var(--ok);margin-left:8px;display:none">Saved</span>
+          </div>
+        </div>
+      </section>
     </main>
 
     <script>
@@ -1785,6 +2027,450 @@
           else{ alert('Failed: '+(j.error||JSON.stringify(j))); }
         }catch(e){ alert('Request failed: '+e); }
       });
+
+      const STRATEGY_STORE_KEY = "atlasStrategicWorkbenchV1";
+      const STRATEGY_MAX_TASKS = 120;
+      const strategyState = {
+        tasks: []
+      };
+
+      function strategyEl(id) {
+        return document.getElementById(id);
+      }
+
+      function strategyEsc(value) {
+        return String(value == null ? "" : value).replace(/[&<>"']/g, (ch) => (
+          { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]
+        ));
+      }
+
+      function strategyStatus(text, isError) {
+        const node = strategyEl("strategy_status");
+        if (!node) return;
+        node.textContent = String(text || "");
+        node.style.color = isError ? "#ffb0b0" : "var(--accent)";
+      }
+
+      function strategySafeText(value, maxLen) {
+        const limit = Number(maxLen) > 0 ? Number(maxLen) : 240;
+        return String(value || "").replace(/\s+/g, " ").trim().slice(0, limit);
+      }
+
+      function strategyOwnerLabel(owner) {
+        return String(owner || "").toLowerCase() === "codex" ? "Codex" : "Me";
+      }
+
+      function strategyOwnerValue(owner) {
+        return String(owner || "").toLowerCase() === "codex" ? "codex" : "me";
+      }
+
+      function strategyClampHorizon(value) {
+        const n = Number.parseInt(String(value || ""), 10);
+        if (!Number.isFinite(n)) return 30;
+        if (n <= 14) return 14;
+        if (n <= 30) return 30;
+        if (n <= 60) return 60;
+        return 90;
+      }
+
+      function strategyIsoDate(offsetDays) {
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+        now.setDate(now.getDate() + Number(offsetDays || 0));
+        const y = now.getFullYear();
+        const m = String(now.getMonth() + 1).padStart(2, "0");
+        const d = String(now.getDate()).padStart(2, "0");
+        return `${y}-${m}-${d}`;
+      }
+
+      function strategyTaskId() {
+        return `strategy_${Date.now().toString(36)}_${Math.random().toString(16).slice(2, 9)}`;
+      }
+
+      function strategyNormalizeTask(raw) {
+        if (!raw || typeof raw !== "object") return null;
+        const title = strategySafeText(raw.title, 220);
+        if (!title) return null;
+        const owner = strategyOwnerValue(raw.owner);
+        const due = /^\d{4}-\d{2}-\d{2}$/.test(String(raw.due || "").trim()) ? String(raw.due).trim() : "";
+        return {
+          id: String(raw.id || strategyTaskId()),
+          title,
+          owner,
+          due,
+          done: Boolean(raw.done),
+          createdAt: Number.isFinite(Number(raw.createdAt)) ? Number(raw.createdAt) : Date.now()
+        };
+      }
+
+      function strategyNormalizeTasks(list) {
+        if (!Array.isArray(list)) return [];
+        const out = [];
+        for (const item of list) {
+          const normalized = strategyNormalizeTask(item);
+          if (!normalized) continue;
+          out.push(normalized);
+          if (out.length >= STRATEGY_MAX_TASKS) break;
+        }
+        out.sort((a, b) => Number(a.createdAt) - Number(b.createdAt));
+        return out;
+      }
+
+      function strategyReadDraft() {
+        return {
+          objective: strategySafeText(strategyEl("strategy_objective")?.value || "", 180),
+          metric: strategySafeText(strategyEl("strategy_metric")?.value || "", 180),
+          horizon: String(strategyClampHorizon(strategyEl("strategy_horizon")?.value || 30)),
+          constraints: String(strategyEl("strategy_constraints")?.value || "").trim(),
+          plan: String(strategyEl("strategy_plan_output")?.value || "").trim()
+        };
+      }
+
+      function strategyWriteDraft(draft) {
+        if (!draft || typeof draft !== "object") return;
+        const objective = strategyEl("strategy_objective");
+        const metric = strategyEl("strategy_metric");
+        const horizon = strategyEl("strategy_horizon");
+        const constraints = strategyEl("strategy_constraints");
+        const plan = strategyEl("strategy_plan_output");
+        if (objective) objective.value = strategySafeText(draft.objective || "", 180);
+        if (metric) metric.value = strategySafeText(draft.metric || "", 180);
+        if (horizon) horizon.value = String(strategyClampHorizon(draft.horizon || 30));
+        if (constraints) constraints.value = String(draft.constraints || "");
+        if (plan) plan.value = String(draft.plan || "");
+      }
+
+      function strategySave() {
+        try {
+          const payload = {
+            version: 1,
+            draft: strategyReadDraft(),
+            tasks: strategyNormalizeTasks(strategyState.tasks),
+            updatedAt: Date.now()
+          };
+          localStorage.setItem(STRATEGY_STORE_KEY, JSON.stringify(payload));
+        } catch {
+          // ignore storage failures
+        }
+      }
+
+      function strategyLoad() {
+        try {
+          const raw = String(localStorage.getItem(STRATEGY_STORE_KEY) || "");
+          if (!raw) return;
+          const parsed = JSON.parse(raw);
+          strategyWriteDraft(parsed?.draft || {});
+          strategyState.tasks = strategyNormalizeTasks(parsed?.tasks || []);
+        } catch {
+          strategyState.tasks = [];
+        }
+      }
+
+      function strategyRenderTasks() {
+        const list = strategyEl("strategy_task_list");
+        const progressBar = strategyEl("strategy_progress_bar");
+        const progressLabel = strategyEl("strategy_progress_label");
+        const nextActions = strategyEl("strategy_next_actions");
+        const tasks = strategyNormalizeTasks(strategyState.tasks);
+        strategyState.tasks = tasks;
+        if (!list) return;
+
+        if (!tasks.length) {
+          list.innerHTML = "";
+          if (progressBar) progressBar.style.width = "0%";
+          if (progressLabel) progressLabel.textContent = "0 / 0 tasks complete";
+          if (nextActions) nextActions.textContent = "No tasks yet.";
+          return;
+        }
+
+        list.innerHTML = tasks.map((task) => `
+          <li class="strategy-task-item${task.done ? " done" : ""}" data-task-id="${strategyEsc(task.id)}">
+            <div class="strategy-task-main">
+              <input type="checkbox" data-strategy-action="toggle" data-task-id="${strategyEsc(task.id)}" ${task.done ? "checked" : ""} />
+              <div class="strategy-task-text">
+                <div class="strategy-task-title">${strategyEsc(task.title)}</div>
+                <div class="strategy-task-meta">Owner: ${strategyEsc(strategyOwnerLabel(task.owner))}${task.due ? ` · Due: ${strategyEsc(task.due)}` : ""}</div>
+              </div>
+            </div>
+            <button class="strategy-task-remove" type="button" data-strategy-action="remove" data-task-id="${strategyEsc(task.id)}">Remove</button>
+          </li>
+        `).join("");
+
+        const completed = tasks.filter((task) => task.done).length;
+        const total = tasks.length;
+        const ratio = total > 0 ? (completed / total) * 100 : 0;
+        if (progressBar) progressBar.style.width = `${ratio.toFixed(2)}%`;
+        if (progressLabel) progressLabel.textContent = `${completed} / ${total} tasks complete`;
+
+        const nextMe = tasks.find((task) => !task.done && task.owner === "me");
+        const nextCodex = tasks.find((task) => !task.done && task.owner === "codex");
+        if (nextActions) {
+          const meText = nextMe ? `Me: ${nextMe.title}` : "Me: none";
+          const codexText = nextCodex ? `Codex: ${nextCodex.title}` : "Codex: none";
+          nextActions.textContent = `${meText} | ${codexText}`;
+        }
+      }
+
+      function strategyTemplateTasks(form) {
+        const objective = strategySafeText(form.objective || "Current initiative", 120);
+        const metric = strategySafeText(form.metric || "target KPI", 140);
+        const horizon = strategyClampHorizon(form.horizon || 30);
+        const phaseOne = Math.max(2, Math.round(horizon * 0.2));
+        const phaseTwo = Math.max(5, Math.round(horizon * 0.55));
+        const phaseThree = Math.max(8, horizon);
+
+        return strategyNormalizeTasks([
+          {
+            title: `Capture current baseline and blockers for "${objective}".`,
+            owner: "me",
+            due: strategyIsoDate(1)
+          },
+          {
+            title: "Convert objective into an implementation checklist with dependencies.",
+            owner: "codex",
+            due: strategyIsoDate(2)
+          },
+          {
+            title: "Implement the highest-leverage change in the app and verify behavior.",
+            owner: "codex",
+            due: strategyIsoDate(phaseOne)
+          },
+          {
+            title: `Measure progress against metric: ${metric}.`,
+            owner: "me",
+            due: strategyIsoDate(phaseTwo)
+          },
+          {
+            title: "Apply iteration patch based on validation data.",
+            owner: "codex",
+            due: strategyIsoDate(Math.max(phaseTwo + 1, horizon - 3))
+          },
+          {
+            title: "Ship, review outcomes, and lock the next objective.",
+            owner: "me",
+            due: strategyIsoDate(phaseThree)
+          }
+        ]);
+      }
+
+      function strategyBuildPlan(form) {
+        const objective = strategySafeText(form.objective || "", 180) || "Define the highest-impact objective for this cycle.";
+        const metric = strategySafeText(form.metric || "", 180) || "One measurable KPI with baseline and target.";
+        const horizon = strategyClampHorizon(form.horizon || 30);
+        const constraints = String(form.constraints || "").trim() || "No constraints captured yet.";
+
+        const start = strategyIsoDate(0);
+        const end = strategyIsoDate(horizon);
+        const phaseOneDays = Math.max(2, Math.round(horizon * 0.2));
+        const phaseTwoDays = Math.max(5, Math.round(horizon * 0.55));
+        const phaseOneEnd = strategyIsoDate(phaseOneDays);
+        const phaseTwoEnd = strategyIsoDate(phaseTwoDays);
+
+        return [
+          "Strategic Plan",
+          `Objective: ${objective}`,
+          `Success Metric: ${metric}`,
+          `Time Horizon: ${horizon} days (${start} to ${end})`,
+          `Constraints: ${constraints}`,
+          "",
+          "Phase 1 - Scope and Alignment",
+          `Window: ${start} to ${phaseOneEnd}`,
+          "- Me: lock scope, metric baseline, and non-negotiables.",
+          "- Codex: translate scope into buildable tasks and sequencing.",
+          "",
+          "Phase 2 - Build and Validate",
+          `Window: ${phaseOneEnd} to ${phaseTwoEnd}`,
+          "- Codex: implement highest-leverage changes and verify in-app behavior.",
+          "- Me: review quality, edge cases, and business fit.",
+          "",
+          "Phase 3 - Ship and Iterate",
+          `Window: ${phaseTwoEnd} to ${end}`,
+          "- Me: confirm KPI movement and collect feedback.",
+          "- Codex: patch gaps, harden flows, and finalize rollout notes.",
+          "",
+          "Execution Cadence",
+          "- Daily: check blockers and update task ownership.",
+          "- Twice weekly: verify KPI trend and adjust plan if needed.",
+          "- End of horizon: retro + next objective.",
+          "",
+          "Definition of Done",
+          `- KPI target met or exceeded: ${metric}`,
+          "- Work is documented, verified, and reusable for the next cycle."
+        ].join("\n");
+      }
+
+      function strategyGeneratePlan() {
+        const draft = strategyReadDraft();
+        if (!draft.objective) {
+          strategyStatus("Add an objective first.", true);
+          strategyEl("strategy_objective")?.focus?.();
+          return;
+        }
+        const plan = strategyBuildPlan(draft);
+        const out = strategyEl("strategy_plan_output");
+        if (out) out.value = plan;
+
+        const shouldReplaceTasks = !strategyState.tasks.length || confirm("Replace current task list with a generated execution plan?");
+        if (shouldReplaceTasks) strategyState.tasks = strategyTemplateTasks(draft);
+
+        strategyRenderTasks();
+        strategySave();
+        strategyStatus("Strategic plan generated. Assign/edit tasks and execute.", false);
+      }
+
+      function strategyAddTask() {
+        const titleInput = strategyEl("strategy_task_title");
+        const ownerInput = strategyEl("strategy_task_owner");
+        const dueInput = strategyEl("strategy_task_due");
+        const title = strategySafeText(titleInput?.value || "", 220);
+        if (!title) {
+          strategyStatus("Task title is required.", true);
+          titleInput?.focus?.();
+          return;
+        }
+        const task = strategyNormalizeTask({
+          id: strategyTaskId(),
+          title,
+          owner: strategyOwnerValue(ownerInput?.value || "me"),
+          due: String(dueInput?.value || "").trim(),
+          done: false,
+          createdAt: Date.now()
+        });
+        if (!task) {
+          strategyStatus("Could not add task.", true);
+          return;
+        }
+        strategyState.tasks = strategyNormalizeTasks([...strategyState.tasks, task]);
+        if (titleInput) titleInput.value = "";
+        strategyRenderTasks();
+        strategySave();
+        strategyStatus("Task added.", false);
+      }
+
+      function strategyToggleTask(taskId, done) {
+        const id = String(taskId || "").trim();
+        if (!id) return;
+        strategyState.tasks = strategyNormalizeTasks(strategyState.tasks.map((task) => (
+          String(task.id) === id ? { ...task, done: Boolean(done) } : task
+        )));
+        strategyRenderTasks();
+        strategySave();
+      }
+
+      function strategyRemoveTask(taskId) {
+        const id = String(taskId || "").trim();
+        if (!id) return;
+        strategyState.tasks = strategyNormalizeTasks(strategyState.tasks.filter((task) => String(task.id) !== id));
+        strategyRenderTasks();
+        strategySave();
+        strategyStatus("Task removed.", false);
+      }
+
+      function strategySendToChat() {
+        const plan = String(strategyEl("strategy_plan_output")?.value || "").trim();
+        if (!plan) {
+          strategyStatus("Generate or write a plan first.", true);
+          return;
+        }
+        const tasks = strategyNormalizeTasks(strategyState.tasks);
+        const nextMe = tasks.find((task) => !task.done && task.owner === "me");
+        const nextCodex = tasks.find((task) => !task.done && task.owner === "codex");
+        const prompt = [
+          "Let's execute this strategic plan together inside this workspace.",
+          `My next action: ${nextMe ? nextMe.title : "Please suggest my next highest-impact action."}`,
+          `Codex next action: ${nextCodex ? nextCodex.title : "Please take the first implementation step."}`,
+          "",
+          plan
+        ].join("\n");
+
+        const chatInput = document.getElementById("chat_input");
+        if (!chatInput) {
+          strategyStatus("Chat input not available.", true);
+          return;
+        }
+        chatInput.value = prompt;
+        try {
+          chatInput.focus();
+          chatInput.selectionStart = chatInput.selectionEnd = chatInput.value.length;
+        } catch {
+          // ignore
+        }
+        try {
+          document.getElementById("assistant-chat")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        } catch {
+          // ignore
+        }
+        strategyStatus("Plan copied into Chat prompt. Press Send.", false);
+      }
+
+      function strategyReset() {
+        if (!confirm("Reset strategic plan and tasks?")) return;
+        strategyState.tasks = [];
+        strategyWriteDraft({
+          objective: "",
+          metric: "",
+          horizon: "30",
+          constraints: "",
+          plan: ""
+        });
+        const taskDue = strategyEl("strategy_task_due");
+        const taskTitle = strategyEl("strategy_task_title");
+        const taskOwner = strategyEl("strategy_task_owner");
+        if (taskTitle) taskTitle.value = "";
+        if (taskOwner) taskOwner.value = "me";
+        if (taskDue) taskDue.value = strategyIsoDate(1);
+        strategyRenderTasks();
+        strategySave();
+        strategyStatus("Strategic workbench reset.", false);
+      }
+
+      function initStrategicWorkbench() {
+        const root = strategyEl("strategic-workbench");
+        if (!root) return;
+
+        strategyLoad();
+        const taskDue = strategyEl("strategy_task_due");
+        if (taskDue && !taskDue.value) taskDue.value = strategyIsoDate(1);
+        strategyRenderTasks();
+
+        strategyEl("strategy_generate_btn")?.addEventListener("click", strategyGeneratePlan);
+        strategyEl("strategy_send_chat_btn")?.addEventListener("click", strategySendToChat);
+        strategyEl("strategy_add_task_btn")?.addEventListener("click", strategyAddTask);
+        strategyEl("strategy_reset_btn")?.addEventListener("click", strategyReset);
+
+        strategyEl("strategy_task_title")?.addEventListener("keydown", (event) => {
+          if (event.key !== "Enter") return;
+          event.preventDefault();
+          strategyAddTask();
+        });
+
+        strategyEl("strategy_task_list")?.addEventListener("change", (event) => {
+          const toggle = event.target?.closest?.('input[data-strategy-action="toggle"][data-task-id]');
+          if (!toggle) return;
+          strategyToggleTask(toggle.getAttribute("data-task-id"), Boolean(toggle.checked));
+        });
+
+        strategyEl("strategy_task_list")?.addEventListener("click", (event) => {
+          const remove = event.target?.closest?.('button[data-strategy-action="remove"][data-task-id]');
+          if (!remove) return;
+          strategyRemoveTask(remove.getAttribute("data-task-id"));
+        });
+
+        [
+          "strategy_objective",
+          "strategy_metric",
+          "strategy_horizon",
+          "strategy_constraints",
+          "strategy_plan_output"
+        ].forEach((id) => {
+          strategyEl(id)?.addEventListener("input", strategySave);
+          strategyEl(id)?.addEventListener("change", strategySave);
+        });
+
+        strategyStatus("Strategic workbench ready. Build plan, assign tasks, execute.", false);
+      }
+
+      initStrategicWorkbench();
 
       const VAULT_STORE_KEY = "atlasVaultStoreV1";
       const VAULT_KDF_ITERATIONS = 210000;
@@ -2422,16 +3108,35 @@
 
       function extractPromptUrls(text, maxCount = CHAT_CONTEXT_MAX_URLS) {
         const source = String(text || "");
-        const matches = source.match(/https?:\/\/[^\s<>"'`]+/gi) || [];
         const out = [];
         const seen = new Set();
-        for (const raw of matches) {
+
+        const pushUrl = (raw) => {
           const trimmed = String(raw || "").replace(/[),.;!?]+$/g, "").trim();
+          if (!trimmed) return;
           const normalized = normalizeBrowserUrl(trimmed);
-          if (!normalized || seen.has(normalized)) continue;
+          if (!normalized || seen.has(normalized)) return;
           seen.add(normalized);
           out.push(normalized);
+        };
+
+        const absoluteMatches = source.match(/https?:\/\/[^\s<>"'`]+/gi) || [];
+        for (const raw of absoluteMatches) {
+          pushUrl(raw);
           if (out.length >= maxCount) break;
+        }
+
+        if (out.length < maxCount) {
+          const domainRegex = /\b([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+(?:\/[^\s<>"'`]+)?)/gi;
+          const domainMatches = source.matchAll(domainRegex);
+          for (const match of domainMatches) {
+            if (out.length >= maxCount) break;
+            const raw = String(match?.[1] || "").trim();
+            const idx = Number(match?.index || 0);
+            if (!raw) continue;
+            if (idx > 0 && source[idx - 1] === "@") continue;
+            pushUrl(`https://${raw}`);
+          }
         }
         return out;
       }
@@ -3435,7 +4140,8 @@
         currentMode: "live",
         navToken: 0,
         expectedSrc: "",
-        endpointBase: ""
+        endpointBase: "",
+        proxyAvailable: null
       };
 
       function browserEl(id) {
@@ -3511,6 +4217,17 @@
         return base ? `${base}${safePath}` : safePath;
       }
 
+      function browserErrorLooksLikeMissingEndpoint(message) {
+        const text = String(message || "").toLowerCase();
+        if (!text.includes("/browser/")) return false;
+        return (
+          text.includes("returned http 404") ||
+          text.includes("returned http 405") ||
+          text.includes("returned http 501") ||
+          text.includes("did not return json")
+        );
+      }
+
       async function browserFetchApi(routePath, options) {
         const expectJson = Boolean(options?.expectJson);
         const candidates = browserEndpointCandidates();
@@ -3534,13 +4251,16 @@
               continue;
             }
             browserState.endpointBase = base;
+            browserState.proxyAvailable = true;
             return { res, base, url };
           } catch (err) {
             lastErr = err;
           }
         }
 
-        throw new Error(String(lastErr?.message || lastErr || "Browser endpoint unavailable."));
+        const msg = String(lastErr?.message || lastErr || "Browser endpoint unavailable.");
+        if (browserErrorLooksLikeMissingEndpoint(msg)) browserState.proxyAvailable = false;
+        throw new Error(msg);
       }
 
       function browserReaderSrc(url, base) {
@@ -3549,7 +4269,7 @@
       }
 
       function browserMirrorSrc(url, base) {
-        const route = `/browser/mirror?url=${encodeURIComponent(url)}`;
+        const route = `/browser/mirror?url=${encodeURIComponent(url)}&scripts=1`;
         return browserUrlForBase(base || browserState.endpointBase || "", route);
       }
 
@@ -3729,17 +4449,33 @@
             }
           } catch (err) {
             reason = String(err?.message || err || "Compatibility check failed.");
-            mode = browserLikelyBlockedHost(url) ? "mirror" : "live";
+            if (browserErrorLooksLikeMissingEndpoint(reason)) {
+              browserState.proxyAvailable = false;
+              mode = "live";
+              reason = "Browser endpoint unavailable on this server.";
+            } else {
+              mode = browserLikelyBlockedHost(url) ? "mirror" : "live";
+            }
           }
         } else if (requestedMode === "mirror") {
-          mode = "mirror";
-          if (!endpointBase && (location.protocol === "http:" || location.protocol === "https:")) {
-            endpointBase = "";
+          if (browserState.proxyAvailable === false) {
+            mode = "live";
+            reason = "Mirror endpoint unavailable on this server.";
+          } else {
+            mode = "mirror";
+            if (!endpointBase && (location.protocol === "http:" || location.protocol === "https:")) {
+              endpointBase = "";
+            }
           }
         } else if (requestedMode === "reader") {
-          mode = "reader";
-          if (!endpointBase && (location.protocol === "http:" || location.protocol === "https:")) {
-            endpointBase = "";
+          if (browserState.proxyAvailable === false) {
+            mode = "live";
+            reason = "Reader endpoint unavailable on this server.";
+          } else {
+            mode = "reader";
+            if (!endpointBase && (location.protocol === "http:" || location.protocol === "https:")) {
+              endpointBase = "";
+            }
           }
         } else {
           mode = "live";
@@ -3764,6 +4500,20 @@
         else if (mode === "reader") targetSrc = browserReaderSrc(url, endpointBase);
         browserState.currentMode = mode;
         browserState.expectedSrc = targetSrc;
+        try {
+          if (mode === "mirror") {
+            frame.setAttribute(
+              "sandbox",
+              "allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"
+            );
+          } else if (mode === "reader") {
+            frame.setAttribute("sandbox", "allow-same-origin");
+          } else {
+            frame.removeAttribute("sandbox");
+          }
+        } catch {
+          // ignore
+        }
         frame.src = targetSrc;
 
         if (mode === "mirror") {
@@ -3780,6 +4530,8 @@
           }
         } else if (requestedMode === "smart" && reason) {
           browserStatus(`Smart mode stayed Live (${reason}). If blank, click Open Mirror, Open Reader, or Open Safari.`, false);
+        } else if (mode === "live" && reason) {
+          browserStatus(`${reason} Loading live page... If blank, click Open Safari or Open External.`, false);
         } else {
           browserStatus("Loading live page... If blank, click Open Mirror, Open Reader, Open Safari, or Open External.", false);
         }
@@ -3896,20 +4648,18 @@
             if (/^not found\b/i.test(readerText)) {
               const bases = browserEndpointCandidates();
               const nextBase = bases.find((base) => base !== browserState.endpointBase);
-              const current = browserCurrentUrl();
-              if (nextBase !== undefined && current) {
+              const currentUrl = browserCurrentUrl();
+              if (nextBase !== undefined && currentUrl) {
                 browserState.endpointBase = nextBase;
                 browserStatus("Browser endpoint missing on this origin. Trying local server...", false);
-                void browserNavigate(current, { replace: true, mode });
+                void browserNavigate(currentUrl, { replace: true, mode });
                 return;
               }
-              if (mode === "mirror") {
-                const current = browserCurrentUrl();
-                if (current) {
-                  browserStatus("Mirror endpoint unavailable. Switching to Reader mode...", false);
-                  void browserNavigate(current, { replace: true, mode: "reader" });
-                  return;
-                }
+              browserState.proxyAvailable = false;
+              if (currentUrl) {
+                browserStatus("Browser endpoint unavailable on this server. Switching to Live mode...", false);
+                void browserNavigate(currentUrl, { replace: true, mode: "live" });
+                return;
               }
               browserStatus("Browser endpoint not found. Use Open Safari or Open External.", true);
               return;
@@ -3931,6 +4681,10 @@
             if (stayedBlank) {
               const current = browserCurrentUrl();
               if (current) {
+                if (browserState.proxyAvailable === false) {
+                  browserStatus("Live frame stayed blank and Browser endpoint is unavailable. Use Open Safari or Open External.", true);
+                  return;
+                }
                 browserStatus("Live frame stayed blank. Switching to Mirror mode.", false);
                 void browserNavigate(current, { replace: true, mode: "mirror" });
                 return;
@@ -3945,6 +4699,10 @@
           if (browserState.currentMode === "live") {
             const current = browserCurrentUrl();
             if (current) {
+              if (browserState.proxyAvailable === false) {
+                browserStatus("Live load failed and Browser endpoint is unavailable. Use Open Safari or Open External.", true);
+                return;
+              }
               browserStatus("Live load failed. Switching to Mirror mode.", false);
               void browserNavigate(current, { replace: true, mode: "mirror" });
               return;
