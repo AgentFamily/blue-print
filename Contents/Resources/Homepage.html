@@ -889,6 +889,120 @@
         font-size: 0.75rem;
       }
 
+      .signal-mail-card {
+        margin: 24px 0;
+      }
+
+      .signal-mail-grid {
+        display: grid;
+        gap: 10px;
+      }
+
+      .signal-mail-row {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: 1fr;
+      }
+
+      .signal-mail-row.inline {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .signal-mail-grid label {
+        display: grid;
+        gap: 6px;
+        color: var(--text-dim);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.76rem;
+      }
+
+      .signal-mail-grid input,
+      .signal-mail-grid textarea,
+      .signal-mail-grid button {
+        border: 1px solid rgba(126, 207, 255, 0.28);
+        border-radius: 10px;
+        background: rgba(4, 21, 40, 0.72);
+        color: var(--text-main);
+        padding: 9px 10px;
+        font-family: "IBM Plex Mono", monospace;
+      }
+
+      .signal-mail-grid button {
+        cursor: pointer;
+      }
+
+      .signal-mail-grid textarea {
+        min-height: 84px;
+        resize: vertical;
+      }
+
+      .signal-mail-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .signal-mail-status {
+        color: var(--accent);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.75rem;
+      }
+
+      .signal-mail-log {
+        border: 1px solid rgba(126, 207, 255, 0.26);
+        border-radius: 10px;
+        background: rgba(4, 22, 40, 0.72);
+        min-height: 84px;
+        max-height: 240px;
+        overflow: auto;
+        padding: 9px;
+        display: grid;
+        gap: 8px;
+      }
+
+      .signal-mail-empty {
+        color: var(--text-dim);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.74rem;
+      }
+
+      .signal-mail-item {
+        border: 1px solid rgba(126, 207, 255, 0.24);
+        border-radius: 10px;
+        background: rgba(4, 22, 40, 0.6);
+        padding: 8px 9px;
+        display: grid;
+        gap: 4px;
+      }
+
+      .signal-mail-item-head {
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .signal-mail-item-title {
+        color: var(--accent);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.68rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .signal-mail-item-meta {
+        color: var(--text-dim);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.68rem;
+      }
+
+      .signal-mail-item-body {
+        white-space: pre-wrap;
+        word-break: break-word;
+        line-height: 1.4;
+        font-size: 0.84rem;
+      }
+
       .quote-card {
         margin: 24px 0;
       }
@@ -1019,6 +1133,26 @@
         font-family: "IBM Plex Mono", monospace;
       }
 
+      .browser-lock-stack {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+      }
+
+      .browser-lock-stack button[disabled] {
+        cursor: not-allowed;
+        opacity: 0.62;
+      }
+
+      .browser-lock-note {
+        margin: 0;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.66rem;
+        line-height: 1.1;
+        color: var(--text-dim);
+      }
+
       .browser-status {
         color: var(--accent);
         font-family: "IBM Plex Mono", monospace;
@@ -1144,6 +1278,126 @@
         font-family: "IBM Plex Mono", monospace;
         font-size: 0.76rem;
         letter-spacing: 0.06em;
+      }
+
+      .eod-density-panel {
+        border: 1px solid rgba(126, 207, 255, 0.3);
+        border-radius: 12px;
+        background: rgba(6, 28, 51, 0.42);
+        padding: 10px;
+        display: grid;
+        gap: 10px;
+      }
+
+      .eod-density-head {
+        display: grid;
+        grid-template-columns: minmax(0, 0.9fr) minmax(0, 0.9fr) minmax(0, 1.8fr) auto;
+        gap: 8px;
+        align-items: end;
+      }
+
+      .eod-density-head label {
+        display: grid;
+        gap: 6px;
+        color: var(--text-dim);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.76rem;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+
+      #end-of-day .eod-density-head select,
+      #end-of-day .eod-density-head input,
+      #end-of-day .eod-density-head button {
+        border: 1px solid rgba(126, 207, 255, 0.28);
+        border-radius: 10px;
+        background: rgba(4, 21, 40, 0.72);
+        color: var(--text-main);
+        padding: 8px 10px;
+        font-family: "IBM Plex Mono", monospace;
+      }
+
+      #end-of-day .eod-density-head button {
+        cursor: pointer;
+      }
+
+      .eod-density-status {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.75rem;
+        color: var(--accent);
+      }
+
+      .eod-density-cards {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .eod-density-card {
+        border: 1px solid rgba(126, 207, 255, 0.24);
+        border-radius: 10px;
+        background: rgba(4, 22, 40, 0.68);
+        padding: 8px;
+        display: grid;
+        gap: 4px;
+      }
+
+      .eod-density-card h4 {
+        margin: 0;
+        font-size: 0.78rem;
+        letter-spacing: 0.04em;
+        color: var(--text-soft);
+        text-transform: uppercase;
+      }
+
+      .eod-density-card strong {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 1rem;
+        color: var(--text-main);
+      }
+
+      .eod-density-card .formula {
+        margin: 0;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.7rem;
+        color: var(--text-dim);
+      }
+
+      .eod-density-timeline-wrap {
+        border: 1px solid rgba(126, 207, 255, 0.22);
+        border-radius: 10px;
+        background: rgba(4, 22, 40, 0.64);
+        padding: 8px;
+      }
+
+      .eod-density-timeline {
+        width: 100%;
+        min-height: 190px;
+        display: block;
+      }
+
+      .eod-density-recent {
+        border: 1px solid rgba(126, 207, 255, 0.2);
+        border-radius: 10px;
+        background: rgba(4, 22, 40, 0.6);
+        padding: 8px;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.72rem;
+        color: var(--text-dim);
+      }
+
+      .eod-density-recent ul {
+        margin: 6px 0 0;
+        padding-left: 16px;
+        display: grid;
+        gap: 4px;
+      }
+
+      .eod-density-tip {
+        margin: 8px 0 0;
+        color: var(--text-soft);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.7rem;
       }
 
       .strategy-actions,
@@ -1361,6 +1615,10 @@
           grid-template-columns: 1fr;
         }
 
+        .signal-mail-row.inline {
+          grid-template-columns: 1fr;
+        }
+
         .chat-llm-grid {
           grid-template-columns: 1fr;
         }
@@ -1374,6 +1632,14 @@
         }
 
         .strategy-task-editor {
+          grid-template-columns: 1fr;
+        }
+
+        .eod-density-head {
+          grid-template-columns: 1fr;
+        }
+
+        .eod-density-cards {
           grid-template-columns: 1fr;
         }
 
@@ -1480,6 +1746,39 @@
                       </div>
                     </div>
                     <div class="chat-status" id="chat_status">Ready.</div>
+                  </div>
+                </section>
+
+                <section id="mail-memory-signal" class="blueprint-card signal-mail-card">
+                  <h3>Mail Memory + Signaling</h3>
+                  <div class="signal-mail-grid">
+                    <div class="signal-mail-row inline">
+                      <label>User Mail
+                        <input type="email" id="signal_user_email" placeholder="user@example.com" autocomplete="off" />
+                      </label>
+                      <label>Bot Mail
+                        <input type="email" id="signal_bot_email" placeholder="bot@example.com" autocomplete="off" />
+                      </label>
+                      <label>Channel
+                        <input type="text" id="signal_channel" maxlength="80" placeholder="agentc-memory" autocomplete="off" />
+                      </label>
+                    </div>
+                    <div class="signal-mail-row">
+                      <label>Memory / Signal Payload
+                        <textarea id="signal_payload" maxlength="1600" placeholder="Store memory notes or send a signal event for this user and bot link."></textarea>
+                      </label>
+                    </div>
+                    <div class="signal-mail-actions">
+                      <button id="signal_connect_btn" type="button">Connect Mails</button>
+                      <button id="signal_memory_btn" type="button">Store Memory</button>
+                      <button id="signal_emit_btn" type="button">Send Signal</button>
+                      <button id="signal_prompt_btn" type="button">Use in Prompt</button>
+                      <button id="signal_clear_btn" type="button">Clear Log</button>
+                    </div>
+                    <div class="signal-mail-status" id="signal_status">Connect user and bot mail identities to enable memory signaling.</div>
+                    <div class="signal-mail-log" id="signal_log">
+                      <div class="signal-mail-empty">No memory or signals yet.</div>
+                    </div>
                   </div>
                 </section>
 
@@ -1632,7 +1931,11 @@
                       <button id="browser_mail_btn" type="button">Mail Login</button>
                       <button type="button" data-browser-url="https://a-i-agency.com">A-i-Agency</button>
                       <button type="button" data-browser-url="https://platform.openai.com">OpenAI</button>
-                      <button type="button" data-browser-url="https://github.com">GitHub</button>
+                      <div class="browser-lock-stack" aria-label="GitHub Blue locked">
+                        <button type="button" data-browser-url="https://github.com" data-locked="true" disabled aria-disabled="true">GitHub Blue</button>
+                        <p class="browser-lock-note">🅿️arking</p>
+                        <p class="browser-lock-note">loading....</p>
+                      </div>
                       <button type="button" data-browser-url="https://www.google.com">Google</button>
                       <button type="button" data-browser-url="https://mail.google.com">Gmail</button>
                       <button type="button" data-browser-url="https://outlook.live.com/mail/">Outlook</button>
@@ -1951,6 +2254,36 @@
             <textarea id="eod_summary" rows="5" placeholder="Executive summary: what shipped, impact, and tomorrow's priority."></textarea>
           </label>
 
+          <div class="eod-density-panel">
+            <div class="eod-density-head">
+              <label for="eod_density_role">Report Context
+                <select id="eod_density_role">
+                  <option value="user" selected>User</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </label>
+              <label for="eod_density_period">Timeline Period
+                <select id="eod_density_period">
+                  <option value="24h">Last 24 hours</option>
+                  <option value="7d" selected>Last 7 days</option>
+                  <option value="30d">Last 30 days</option>
+                  <option value="90d">Last 90 days</option>
+                  <option value="all">All time</option>
+                </select>
+              </label>
+              <label for="eod_density_context">Memory Context (saved per role)
+                <input id="eod_density_context" type="text" placeholder="Optional context seed (constraints, legal framing, required terms)." />
+              </label>
+              <button id="eod_density_run" type="button">Run 7-Letter Density</button>
+            </div>
+            <div id="eod_density_status" class="eod-density-status">7-letter density ready. Context memory is role-aware (user/admin).</div>
+            <div id="eod_density_cards" class="eod-density-cards"></div>
+            <div class="eod-density-timeline-wrap">
+              <svg id="eod_density_timeline" class="eod-density-timeline" viewBox="0 0 760 220" role="img" aria-label="Seven-letter density timeline"></svg>
+            </div>
+            <div id="eod_density_recent" class="eod-density-recent"></div>
+          </div>
+
           <div style="display:flex;gap:8px;align-items:center">
             <button id="eod_download_html">Download Form (HTML)</button>
             <button id="eod_download_json">Download Form (JSON)</button>
@@ -2059,18 +2392,739 @@
       })();
 
       /* End-of-day download helpers */
-      function collectEOD() {
+      const EOD_DENSITY_HISTORY_KEY = "atlasEodLetterDensityHistoryV1";
+      const EOD_DENSITY_CONTEXT_KEY = "atlasEodLetterDensityContextV1";
+      const EOD_DENSITY_ROLE_KEY = "atlasEodLetterDensityRoleV1";
+      const EOD_DENSITY_PERIOD_KEY = "atlasEodLetterDensityPeriodV1";
+      const EOD_DENSITY_MAX_HISTORY = 260;
+      const EOD_DENSITY_RECENT = 7;
+      const EOD_DENSITY_PERIODS = {
+        "24h": 24 * 60 * 60 * 1000,
+        "7d": 7 * 24 * 60 * 60 * 1000,
+        "30d": 30 * 24 * 60 * 60 * 1000,
+        "90d": 90 * 24 * 60 * 60 * 1000,
+        all: 0
+      };
+      const EOD_DENSITY_ROLE_DEFAULTS = {
+        user: "consent timeline receipt evidence refund request",
+        admin: "compliance audit escalation os2 os3 regulatory authority evidence chain"
+      };
+      const EOD_DENSITY_DEFS = [
+        { key: "precision", title: "L1 Standard Letter Density", short: "Text Precision", formula: "Precision = (Exact Words / Total Words) × 100" },
+        { key: "fidelity", title: "L2 Constraint Density", short: "Visual Fidelity", formula: "Fidelity = (Constraint Words / Style Words) × 100" },
+        { key: "logic", title: "L3 Format Density", short: "Structural Logic", formula: "Logic = (Schema Words / Total Prompt) × 100" },
+        { key: "intent", title: "L4 Intent Density", short: "Intent Anchor", formula: "Intent = (Intent Words / Total Words) × 100" },
+        { key: "evidence", title: "L5 Evidence Density", short: "Proof Integrity", formula: "Evidence = (Evidence Words / Total Words) × 100" },
+        { key: "compliance", title: "L6 Compliance Density", short: "Legal Readiness", formula: "Compliance = (Compliance Words / Total Words) × 100" },
+        { key: "action", title: "L7 Action Density", short: "Execution Signal", formula: "Action = (Action Words / Total Words) × 100" }
+      ];
+
+      const EOD_DENSITY_LEXICONS = {
+        exact: ["unaltered", "unmodified", "exact", "verbatim", "unchanged", "without", "alteration", "locked", "no", "blur", "misspellings", "preserve", "keep", "literal"],
+        constraint: ["must", "mustn't", "no", "not", "without", "never", "only", "require", "required", "locked", "preserve", "unaltered", "exact", "strict"],
+        style: ["visual", "style", "cinematic", "aesthetic", "design", "color", "colour", "lighting", "scene", "image", "video", "photo", "realistic", "dramatic"],
+        schema: ["json", "schema", "format", "structure", "field", "timeline", "date", "time", "status", "summary", "platform", "receipt", "evidence", "action", "owner", "due", "os0", "os1", "os2", "os3", "t1", "t7", "t14", "t30"],
+        intent: ["intent", "refund", "chargeback", "request", "resolution", "resolve", "consent", "eligible", "violation", "misfire", "failure", "notified"],
+        evidence: ["evidence", "receipt", "screenshot", "timestamp", "proof", "log", "record", "email", "transaction", "history", "audit", "bundle"],
+        compliance: ["consumer", "rights", "law", "legal", "regulatory", "ombudsman", "adr", "compliance", "terms", "policy", "escalation", "authority"],
+        action: ["send", "file", "escalate", "notify", "follow", "review", "update", "track", "classify", "prepare", "issue", "resolve", "draft", "submit"]
+      };
+
+      function densityEl(id) {
+        return document.getElementById(id);
+      }
+
+      function densityEsc(value) {
+        return String(value == null ? "" : value).replace(/[&<>"']/g, (ch) => (
+          { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]
+        ));
+      }
+
+      function densityRoleValue(raw) {
+        return String(raw || "").trim().toLowerCase() === "admin" ? "admin" : "user";
+      }
+
+      function densityActiveRole() {
+        return densityRoleValue(densityEl("eod_density_role")?.value || "user");
+      }
+
+      function densitySaveRole(role) {
+        try {
+          localStorage.setItem(EOD_DENSITY_ROLE_KEY, densityRoleValue(role));
+        } catch {
+          // ignore
+        }
+      }
+
+      function densityLoadRole() {
+        try {
+          return densityRoleValue(localStorage.getItem(EOD_DENSITY_ROLE_KEY) || "user");
+        } catch {
+          return "user";
+        }
+      }
+
+      function densityPeriodValue(raw) {
+        const key = String(raw || "").trim().toLowerCase();
+        return Object.prototype.hasOwnProperty.call(EOD_DENSITY_PERIODS, key) ? key : "7d";
+      }
+
+      function densitySavePeriod(period) {
+        try {
+          localStorage.setItem(EOD_DENSITY_PERIOD_KEY, densityPeriodValue(period));
+        } catch {
+          // ignore
+        }
+      }
+
+      function densityLoadPeriod() {
+        try {
+          return densityPeriodValue(localStorage.getItem(EOD_DENSITY_PERIOD_KEY) || "7d");
+        } catch {
+          return "7d";
+        }
+      }
+
+      function densityPeriodMs(period) {
+        const key = densityPeriodValue(period);
+        return Number(EOD_DENSITY_PERIODS[key] || 0);
+      }
+
+      function densityReadContextMap() {
+        try {
+          const raw = String(localStorage.getItem(EOD_DENSITY_CONTEXT_KEY) || "").trim();
+          if (!raw) return {};
+          const parsed = JSON.parse(raw);
+          return parsed && typeof parsed === "object" ? parsed : {};
+        } catch {
+          return {};
+        }
+      }
+
+      function densityWriteContextMap(map) {
+        try {
+          localStorage.setItem(EOD_DENSITY_CONTEXT_KEY, JSON.stringify(map || {}));
+        } catch {
+          // ignore
+        }
+      }
+
+      function densityContextForRole(role) {
+        const key = densityRoleValue(role);
+        const map = densityReadContextMap();
+        const saved = String(map?.[key] || "").trim();
+        if (saved) return saved.slice(0, 360);
+        return String(EOD_DENSITY_ROLE_DEFAULTS[key] || "").trim().slice(0, 360);
+      }
+
+      function densitySetContextForRole(role, value) {
+        const key = densityRoleValue(role);
+        const map = densityReadContextMap();
+        const next = String(value || "").trim().slice(0, 360);
+        map[key] = next;
+        densityWriteContextMap(map);
+      }
+
+      function densityReadHistory() {
+        try {
+          const raw = String(localStorage.getItem(EOD_DENSITY_HISTORY_KEY) || "").trim();
+          if (!raw) return [];
+          const parsed = JSON.parse(raw);
+          return Array.isArray(parsed) ? parsed : [];
+        } catch {
+          return [];
+        }
+      }
+
+      function densityWriteHistory(list) {
+        try {
+          localStorage.setItem(EOD_DENSITY_HISTORY_KEY, JSON.stringify(Array.isArray(list) ? list.slice(0, EOD_DENSITY_MAX_HISTORY) : []));
+        } catch {
+          // ignore
+        }
+      }
+
+      function densityTokenize(text) {
+        return String(text || "").toLowerCase().match(/[a-z0-9]+(?:'[a-z0-9]+)?/g) || [];
+      }
+
+      function densityScore(numerator, denominator) {
+        const n = Number(numerator || 0);
+        const d = Number(denominator || 0);
+        if (!Number.isFinite(n) || !Number.isFinite(d) || d <= 0) return 0;
+        return Math.max(0, Math.min(100, (n / d) * 100));
+      }
+
+      function densityCount(tokens, terms) {
+        if (!Array.isArray(tokens) || !tokens.length || !Array.isArray(terms) || !terms.length) return 0;
+        const set = new Set(terms.map((term) => String(term || "").toLowerCase()).filter(Boolean));
+        let count = 0;
+        for (const token of tokens) {
+          if (set.has(String(token || "").toLowerCase())) count += 1;
+        }
+        return count;
+      }
+
+      function densityHash(text) {
+        let h = 2166136261 >>> 0;
+        const s = String(text || "");
+        for (let i = 0; i < s.length; i += 1) {
+          h ^= s.charCodeAt(i);
+          h = Math.imul(h, 16777619) >>> 0;
+        }
+        return h.toString(16).padStart(8, "0");
+      }
+
+      function densityFormatStamp(value) {
+        const ts = Number(value || 0);
+        if (!Number.isFinite(ts) || ts <= 0) return "unknown";
+        try {
+          return new Date(ts).toLocaleString();
+        } catch {
+          return "unknown";
+        }
+      }
+
+      function collectEODBase() {
         const obj = {};
-        obj.fullname = document.getElementById('eod_fullname').value || '';
-        obj.email = document.getElementById('eod_email').value || '';
-        obj.completed = Array.from(document.querySelectorAll('input[name="eod_tasks"]:checked')).map(x=>x.value);
-        obj.completed_details = document.getElementById('eod_completed_details').value || '';
-        obj.pending = document.getElementById('eod_pending').value || '';
-        obj.hours = document.getElementById('eod_hours').value || '';
-        obj.signoff = document.getElementById('eod_signoff').value || '';
-        obj.summary = document.getElementById('eod_summary').value || '';
+        obj.fullname = document.getElementById("eod_fullname")?.value || "";
+        obj.email = document.getElementById("eod_email")?.value || "";
+        obj.completed = Array.from(document.querySelectorAll('input[name="eod_tasks"]:checked')).map((x) => x.value);
+        obj.completed_details = document.getElementById("eod_completed_details")?.value || "";
+        obj.pending = document.getElementById("eod_pending")?.value || "";
+        obj.hours = document.getElementById("eod_hours")?.value || "";
+        obj.signoff = document.getElementById("eod_signoff")?.value || "";
+        obj.summary = document.getElementById("eod_summary")?.value || "";
         obj.timestamp = new Date().toISOString();
         return obj;
+      }
+
+      function densityBuildSnapshot(data, role, contextSeed) {
+        const roleKey = densityRoleValue(role);
+        const contextText = String(contextSeed || "").trim();
+        const contentText = [
+          String(data?.fullname || "").trim(),
+          String(data?.email || "").trim(),
+          Array.isArray(data?.completed) ? data.completed.join(" ") : "",
+          String(data?.completed_details || "").trim(),
+          String(data?.pending || "").trim(),
+          String(data?.summary || "").trim(),
+          String(data?.signoff || "").trim(),
+          String(data?.hours || "").trim(),
+          contextText
+        ].filter(Boolean).join(" ");
+
+        const tokens = densityTokenize(contentText);
+        const total = Math.max(1, tokens.length);
+
+        const roleIntent = roleKey === "admin" ? ["regulatory", "authority", "enforcement", "audit", "compliance"] : ["consent", "refund", "timeline", "request", "evidence"];
+        const roleAction = roleKey === "admin" ? ["escalate", "enforce", "review", "file"] : ["track", "prepare", "send", "follow"];
+        const roleCompliance = roleKey === "admin" ? ["ombudsman", "adr", "regulatory", "law"] : ["terms", "policy", "rights", "legal"];
+
+        const exactCount = densityCount(tokens, EOD_DENSITY_LEXICONS.exact);
+        const constraintCount = densityCount(tokens, EOD_DENSITY_LEXICONS.constraint);
+        const styleCount = densityCount(tokens, EOD_DENSITY_LEXICONS.style);
+        const schemaCount = densityCount(tokens, EOD_DENSITY_LEXICONS.schema);
+        const intentCount = densityCount(tokens, [...EOD_DENSITY_LEXICONS.intent, ...roleIntent]);
+        const evidenceCount = densityCount(tokens, EOD_DENSITY_LEXICONS.evidence);
+        const complianceCount = densityCount(tokens, [...EOD_DENSITY_LEXICONS.compliance, ...roleCompliance]);
+        const actionCount = densityCount(tokens, [...EOD_DENSITY_LEXICONS.action, ...roleAction]);
+
+        const precision = densityScore(exactCount, total);
+        const fidelity = densityScore(constraintCount, Math.max(1, styleCount || total));
+        const logic = densityScore(schemaCount, total);
+        const intent = densityScore(intentCount, total);
+        const evidence = densityScore(evidenceCount, total);
+        const compliance = densityScore(complianceCount, total);
+        const action = densityScore(actionCount, total);
+
+        const metrics = { precision, fidelity, logic, intent, evidence, compliance, action };
+        const values = Object.values(metrics);
+        const composite = values.reduce((sum, value) => sum + Number(value || 0), 0) / values.length;
+
+        const fingerprint = densityHash(JSON.stringify({
+          role: roleKey,
+          context: contextText,
+          fullname: String(data?.fullname || ""),
+          email: String(data?.email || ""),
+          completed: Array.isArray(data?.completed) ? data.completed : [],
+          completed_details: String(data?.completed_details || ""),
+          pending: String(data?.pending || ""),
+          summary: String(data?.summary || ""),
+          hours: String(data?.hours || ""),
+          signoff: String(data?.signoff || "")
+        }));
+
+        return {
+          id: `letter_${Date.now().toString(36)}_${Math.random().toString(16).slice(2, 8)}`,
+          at: Date.now(),
+          role: roleKey,
+          context: contextText,
+          fingerprint,
+          total_words: total,
+          composite: Number(composite.toFixed(2)),
+          metrics: {
+            precision: Number(precision.toFixed(2)),
+            fidelity: Number(fidelity.toFixed(2)),
+            logic: Number(logic.toFixed(2)),
+            intent: Number(intent.toFixed(2)),
+            evidence: Number(evidence.toFixed(2)),
+            compliance: Number(compliance.toFixed(2)),
+            action: Number(action.toFixed(2))
+          },
+          sample: String(data?.summary || data?.completed_details || data?.pending || "").trim().slice(0, 220)
+        };
+      }
+
+      function densityHistoryByRole(role, period) {
+        const roleKey = densityRoleValue(role);
+        const maxAge = densityPeriodMs(period);
+        const now = Date.now();
+        return densityReadHistory()
+          .filter((entry) => densityRoleValue(entry?.role || "user") === roleKey)
+          .filter((entry) => {
+            const at = Number(entry?.at || 0);
+            if (!Number.isFinite(at) || at <= 0) return false;
+            if (maxAge <= 0) return true;
+            return (now - at) <= maxAge;
+          });
+      }
+
+      function densityRecentByRole(role, limit, period) {
+        const max = Number.isFinite(Number(limit)) ? Math.max(1, Number(limit)) : EOD_DENSITY_RECENT;
+        return densityHistoryByRole(role, period).slice(0, max);
+      }
+
+      function densityContextStats(role, period) {
+        const scoped = densityHistoryByRole(role, period);
+        if (!scoped.length) {
+          return {
+            entries: 0,
+            chars: 0,
+            last10: "",
+            top10: []
+          };
+        }
+
+        const chronological = scoped.slice().sort((a, b) => Number(a?.at || 0) - Number(b?.at || 0));
+        const source = chronological.map((entry) => String(entry?.context || "")).join(" ");
+        const chars = source.match(/[A-Za-z0-9]/g) || [];
+        const counts = new Map();
+        for (const ch of chars) {
+          const key = String(ch || "");
+          if (!key) continue;
+          counts.set(key, Number(counts.get(key) || 0) + 1);
+        }
+        const top10 = Array.from(counts.entries())
+          .sort((a, b) => Number(b[1]) - Number(a[1]) || String(a[0]).localeCompare(String(b[0])))
+          .slice(0, 10)
+          .map(([char, count]) => ({ char: String(char), count: Number(count || 0) }));
+
+        return {
+          entries: scoped.length,
+          chars: chars.length,
+          last10: chars.slice(-10).join(""),
+          top10
+        };
+      }
+
+      function densityRenderCards(snapshot) {
+        const root = densityEl("eod_density_cards");
+        if (!root) return;
+        if (!snapshot || typeof snapshot !== "object") {
+          root.innerHTML = "";
+          return;
+        }
+        root.innerHTML = EOD_DENSITY_DEFS.map((def) => {
+          const score = Number(snapshot?.metrics?.[def.key] || 0);
+          return `
+            <article class="eod-density-card">
+              <h4>${densityEsc(def.title)}</h4>
+              <strong>${densityEsc(score.toFixed(2))}%</strong>
+              <p class="formula">${densityEsc(def.formula)}</p>
+            </article>
+          `;
+        }).join("");
+      }
+
+      function densityRenderTimeline(role, period) {
+        const svg = densityEl("eod_density_timeline");
+        if (!svg) return;
+        const recent = densityRecentByRole(role, EOD_DENSITY_RECENT, period).slice().reverse();
+        const W = 760;
+        const H = 220;
+        const padL = 44;
+        const padR = 14;
+        const padT = 16;
+        const padB = 34;
+        const width = W - padL - padR;
+        const height = H - padT - padB;
+
+        const yAt = (score) => padT + (height - (Math.max(0, Math.min(100, Number(score || 0))) / 100) * height);
+
+        const grid = [0, 25, 50, 75, 100].map((g) => {
+          const y = yAt(g);
+          return `<line x1="${padL}" y1="${y.toFixed(2)}" x2="${W - padR}" y2="${y.toFixed(2)}" stroke="rgba(126,207,255,0.16)" stroke-width="1" />` +
+            `<text x="${padL - 8}" y="${(y + 3).toFixed(2)}" fill="rgba(184,223,246,0.72)" font-size="10" text-anchor="end">${g}</text>`;
+        }).join("");
+
+        if (!recent.length) {
+          svg.innerHTML = `
+            ${grid}
+            <text x="${W / 2}" y="${H / 2}" fill="rgba(184,223,246,0.72)" font-size="13" text-anchor="middle">
+              No timeline yet. Run 7-Letter Density to create the first point.
+            </text>
+          `;
+          return;
+        }
+
+        const xStep = recent.length > 1 ? width / (recent.length - 1) : 0;
+        const points = recent.map((item, index) => {
+          const x = padL + (xStep * index);
+          const y = yAt(item?.composite || 0);
+          return { x, y, item };
+        });
+
+        const polyline = points.map((point) => `${point.x.toFixed(2)},${point.y.toFixed(2)}`).join(" ");
+        const circles = points.map((point) => `
+          <circle cx="${point.x.toFixed(2)}" cy="${point.y.toFixed(2)}" r="3.5" fill="#7ed8ff" stroke="#0f3356" stroke-width="1.2" />
+        `).join("");
+        const labels = points.map((point) => {
+          const stamp = densityFormatStamp(point?.item?.at || 0);
+          const short = stamp === "unknown" ? "?" : stamp.replace(",", "").split(" ").slice(0, 2).join(" ");
+          return `<text x="${point.x.toFixed(2)}" y="${(H - 10).toFixed(2)}" fill="rgba(184,223,246,0.75)" font-size="10" text-anchor="middle">${densityEsc(short)}</text>`;
+        }).join("");
+
+        svg.innerHTML = `
+          ${grid}
+          <polyline points="${polyline}" fill="none" stroke="rgba(126, 216, 255, 0.9)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
+          ${circles}
+          ${labels}
+          <text x="${W - padR}" y="${padT + 2}" fill="rgba(184,223,246,0.78)" font-size="10" text-anchor="end">
+            Composite 7-Letter Density (%)
+          </text>
+        `;
+      }
+
+      function densityRenderRecent(role, period) {
+        const root = densityEl("eod_density_recent");
+        if (!root) return;
+        const recent = densityRecentByRole(role, EOD_DENSITY_RECENT, period);
+        const stats = densityContextStats(role, period);
+        const top10Line = Array.isArray(stats?.top10) && stats.top10.length
+          ? stats.top10.map((item, index) => `#${index + 1} ${densityEsc(item.char)}×${densityEsc(String(item.count))}`).join(" · ")
+          : "none";
+        const last10 = String(stats?.last10 || "").trim() || "N/A";
+
+        if (!recent.length) {
+          root.innerHTML = `
+            <strong>Most recent 7 letters (${densityEsc(String(role).toUpperCase())})</strong>
+            <p>No records yet for this context in the selected timeline period.</p>
+            <p><strong>Top 10 most used (saved_context):</strong> ${top10Line}</p>
+            <p><strong>Last 10 (saved_context):</strong> <code>${densityEsc(last10)}</code></p>
+            <p class="eod-density-tip">tip-sources: saved_context filter:A-Z a-z 0-9 Only, Rule:Take the last 10, in a selective period of time (timeline)</p>
+          `;
+          return;
+        }
+        root.innerHTML = `
+          <strong>Most recent 7 letters (${densityEsc(String(role).toUpperCase())})</strong>
+          <p><strong>Top 10 most used (saved_context):</strong> ${top10Line}</p>
+          <p><strong>Last 10 (saved_context):</strong> <code>${densityEsc(last10)}</code></p>
+          <p class="eod-density-tip">tip-sources: saved_context filter:A-Z a-z 0-9 Only, Rule:Take the last 10, in a selective period of time (timeline)</p>
+          <ul>
+            ${recent.map((item, index) => {
+              const composite = Number(item?.composite || 0).toFixed(2);
+              const stamp = densityFormatStamp(item?.at || 0);
+              const sample = String(item?.sample || "").trim();
+              const sampleText = sample ? ` | ${densityEsc(sample)}` : "";
+              return `<li>#${index + 1} · ${densityEsc(stamp)} · Composite ${densityEsc(composite)}%${sampleText}</li>`;
+            }).join("")}
+          </ul>
+        `;
+      }
+
+      function densityStatus(text, isError) {
+        const node = densityEl("eod_density_status");
+        if (!node) return;
+        node.textContent = String(text || "");
+        node.style.color = isError ? "#ffb0b0" : "var(--accent)";
+      }
+
+      function densityRender(role, snapshot, period) {
+        densityRenderCards(snapshot);
+        densityRenderTimeline(role, period);
+        densityRenderRecent(role, period);
+      }
+
+      function densityEnsureSnapshotFromData(data, options) {
+        const persist = Boolean(options?.persist);
+        const forceRender = Boolean(options?.forceRender);
+        const role = densityRoleValue(options?.role || densityActiveRole());
+        const period = densityPeriodValue(options?.period || densityEl("eod_density_period")?.value || densityLoadPeriod());
+        const contextInput = densityEl("eod_density_context");
+        const rawContext = String(contextInput?.value || "").trim();
+        const context = rawContext || densityContextForRole(role);
+        if (contextInput && !rawContext && context) contextInput.value = context;
+        densitySetContextForRole(role, context);
+
+        const snapshot = densityBuildSnapshot(data, role, context);
+        let recent = densityRecentByRole(role, EOD_DENSITY_RECENT, period);
+
+        if (persist) {
+          const history = densityReadHistory();
+          const latestRole = history.find((entry) => densityRoleValue(entry?.role) === role);
+          const duplicate = latestRole && String(latestRole?.fingerprint || "") === String(snapshot.fingerprint || "");
+          if (!duplicate) {
+            history.unshift(snapshot);
+            densityWriteHistory(history);
+          }
+          recent = densityRecentByRole(role, EOD_DENSITY_RECENT, period);
+        }
+
+        if (forceRender || persist) {
+          densityRender(role, snapshot, period);
+        }
+
+        return {
+          current: snapshot,
+          recent,
+          period
+        };
+      }
+
+      function densityEnsureSnapshot(options) {
+        const base = collectEODBase();
+        return densityEnsureSnapshotFromData(base, options || {});
+      }
+
+      function initEodLetterDensity() {
+        const roleSelect = densityEl("eod_density_role");
+        const periodSelect = densityEl("eod_density_period");
+        const contextInput = densityEl("eod_density_context");
+        const runBtn = densityEl("eod_density_run");
+        if (!roleSelect || !periodSelect || !contextInput || !runBtn) return;
+
+        const bootRole = densityLoadRole();
+        const bootPeriod = densityLoadPeriod();
+        roleSelect.value = bootRole;
+        periodSelect.value = bootPeriod;
+        contextInput.value = densityContextForRole(bootRole);
+        densityRender(
+          bootRole,
+          densityRecentByRole(bootRole, 1, bootPeriod)[0] || densityBuildSnapshot(collectEODBase(), bootRole, contextInput.value),
+          bootPeriod
+        );
+
+        roleSelect.addEventListener("change", () => {
+          const role = densityRoleValue(roleSelect.value);
+          const period = densityPeriodValue(periodSelect.value);
+          densitySaveRole(role);
+          contextInput.value = densityContextForRole(role);
+          const latest = densityRecentByRole(role, 1, period)[0] || densityBuildSnapshot(collectEODBase(), role, contextInput.value);
+          densityRender(role, latest, period);
+          densityStatus(`Context switched to ${role.toUpperCase()} (${period}).`, false);
+        });
+
+        periodSelect.addEventListener("change", () => {
+          const role = densityRoleValue(roleSelect.value);
+          const period = densityPeriodValue(periodSelect.value);
+          densitySavePeriod(period);
+          const latest = densityRecentByRole(role, 1, period)[0] || densityBuildSnapshot(collectEODBase(), role, contextInput.value);
+          densityRender(role, latest, period);
+          densityStatus(`Timeline period set to ${period}.`, false);
+        });
+
+        contextInput.addEventListener("change", () => {
+          const role = densityActiveRole();
+          densitySetContextForRole(role, contextInput.value);
+          densityStatus(`Context memory updated for ${role.toUpperCase()}.`, false);
+        });
+
+        runBtn.addEventListener("click", () => {
+          const role = densityActiveRole();
+          const period = densityPeriodValue(periodSelect.value);
+          const pack = densityEnsureSnapshot({ persist: true, forceRender: true, role, period });
+          densityStatus(`7-letter density updated (${role.toUpperCase()}, ${period}) · composite ${Number(pack?.current?.composite || 0).toFixed(2)}%.`, false);
+        });
+      }
+
+      function eodContextTail10(data, role, period) {
+        const scoped = densityContextStats(role, period);
+        const fromHistory = String(scoped?.last10 || "").trim();
+        if (fromHistory) return fromHistory;
+        const context = String(data?.letter_density?.context || "").trim();
+        if (!context) return "";
+        const chars = context.match(/[A-Za-z0-9]/g) || [];
+        return chars.slice(-10).join("");
+      }
+
+      function collectEOD() {
+        const obj = collectEODBase();
+        const role = densityActiveRole();
+        const period = densityPeriodValue(densityEl("eod_density_period")?.value || densityLoadPeriod());
+        const pack = densityEnsureSnapshotFromData(obj, { persist: true, forceRender: false, role, period });
+        const stats = densityContextStats(role, period);
+        obj.letter_density = pack?.current || null;
+        obj.recent_7_letters = Array.isArray(pack?.recent) ? pack.recent : [];
+        obj.recent_7_letters_user = densityRecentByRole("user", EOD_DENSITY_RECENT, "all");
+        obj.recent_7_letters_admin = densityRecentByRole("admin", EOD_DENSITY_RECENT, "all");
+        obj.context_period = period;
+        obj.context_last10 = eodContextTail10(obj, role, period);
+        obj.context_top10_most_used = Array.isArray(stats?.top10) ? stats.top10 : [];
+        return obj;
+      }
+
+      function buildLetterDensityHtml(data) {
+        const current = data?.letter_density && typeof data.letter_density === "object" ? data.letter_density : null;
+        const role = densityRoleValue(current?.role || "user");
+        const recentRole = Array.isArray(data?.recent_7_letters) ? data.recent_7_letters : [];
+        const recentUser = Array.isArray(data?.recent_7_letters_user) ? data.recent_7_letters_user : [];
+        const recentAdmin = Array.isArray(data?.recent_7_letters_admin) ? data.recent_7_letters_admin : [];
+
+        const metricRows = current
+          ? EOD_DENSITY_DEFS.map((def) => {
+              const score = Number(current?.metrics?.[def.key] || 0).toFixed(2);
+              return `<tr><td>${escapeHtml(def.title)}</td><td>${escapeHtml(score)}%</td><td>${escapeHtml(def.formula)}</td></tr>`;
+            }).join("")
+          : "";
+
+        const listRows = (list) => list.map((item, idx) => {
+          const stamp = densityFormatStamp(item?.at || 0);
+          const composite = Number(item?.composite || 0).toFixed(2);
+          return `<li>#${idx + 1} · ${escapeHtml(stamp)} · Composite ${escapeHtml(composite)}%${item?.sample ? ` · ${escapeHtml(String(item.sample))}` : ""}</li>`;
+        }).join("");
+
+        if (!current && !recentRole.length && !recentUser.length && !recentAdmin.length) return "";
+
+        return `
+          <h2>7-Letter Density</h2>
+          ${current ? `<p><strong>Context:</strong> ${escapeHtml(role.toUpperCase())} | <strong>Composite:</strong> ${escapeHtml(Number(current.composite || 0).toFixed(2))}% | <strong>Total Words:</strong> ${escapeHtml(String(current.total_words || 0))}</p>` : ""}
+          ${metricRows ? `<table border="1" cellspacing="0" cellpadding="6"><thead><tr><th>Letter Metric</th><th>Score</th><th>Formula</th></tr></thead><tbody>${metricRows}</tbody></table>` : ""}
+          ${recentRole.length ? `<h3>Most Recent 7 Letters (${escapeHtml(role.toUpperCase())})</h3><ul>${listRows(recentRole)}</ul>` : ""}
+          ${recentUser.length ? `<h3>Most Recent 7 Letters (USER)</h3><ul>${listRows(recentUser)}</ul>` : ""}
+          ${recentAdmin.length ? `<h3>Most Recent 7 Letters (ADMIN)</h3><ul>${listRows(recentAdmin)}</ul>` : ""}
+        `;
+      }
+
+      function buildEodReportHtml(data) {
+        return `<!doctype html><html><head><meta charset="utf-8"><title>End of Day - ${data.fullname}</title></head><body><h1>End of Day Report</h1><p><strong>Agent:</strong> ${escapeHtml(data.fullname)} &lt;${escapeHtml(data.email)}&gt;</p><p><strong>Timestamp:</strong> ${escapeHtml(data.timestamp)}</p><h2>Summary</h2><pre>${escapeHtml(data.summary)}</pre><h2>Completed Tasks</h2><ul>${data.completed.map((x) => `<li>${escapeHtml(x)}</li>`).join("")}</ul><h3>Details</h3><pre>${escapeHtml(data.completed_details)}</pre><h2>Pending Approvals</h2><pre>${escapeHtml(data.pending)}</pre><p><strong>Hours worked:</strong> ${escapeHtml(String(data.hours))}</p><p><strong>Sign-off:</strong> ${escapeHtml(data.signoff)}</p>${buildLetterDensityHtml(data)}</body></html>`;
+      }
+
+      function buildEodContextThemeHtml(data) {
+        const role = densityRoleValue(data?.letter_density?.role || "user");
+        const period = densityPeriodValue(data?.context_period || "7d");
+        const tail = eodContextTail10(data, role, period);
+        const output = tail || "N/A";
+        const message = "Perfection is not garunteed, Mistakes do happen. Trust your Process. ♾️  ";
+        const stamp = escapeHtml(String(data?.timestamp || ""));
+        return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Context Output</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg: #071f3d;
+        --bg2: #0b2e56;
+        --line: #6ad8ff;
+        --line-soft: rgba(106, 216, 255, 0.35);
+        --text: #d7f1ff;
+        --muted: #9ec9df;
+      }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; min-height: 100%; }
+      body {
+        color: var(--text);
+        font-family: "IBM Plex Mono", monospace;
+        background:
+          linear-gradient(0deg, rgba(18,58,98,0.45) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(18,58,98,0.45) 1px, transparent 1px),
+          radial-gradient(circle at 20% 0%, rgba(122,210,255,0.16), transparent 42%),
+          linear-gradient(180deg, #061a34, #0a2a50);
+        background-size: 32px 32px, 32px 32px, 100% 100%, 100% 100%;
+        display: grid;
+        place-items: center;
+        padding: 18px;
+      }
+      .sheet {
+        width: min(980px, 100%);
+        border: 1px solid var(--line-soft);
+        border-radius: 14px;
+        background: linear-gradient(180deg, rgba(6, 28, 51, 0.92), rgba(5, 21, 40, 0.88));
+        box-shadow: 0 0 0 1px rgba(105, 211, 255, 0.18) inset, 0 28px 80px rgba(0, 0, 0, 0.45);
+        padding: 18px;
+      }
+      .banner {
+        border: 1px solid var(--line-soft);
+        border-radius: 12px;
+        background: rgba(7, 30, 55, 0.85);
+        padding: 14px 16px;
+      }
+      .title {
+        margin: 0;
+        font-family: "Rajdhani", sans-serif;
+        font-size: clamp(30px, 6vw, 56px);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .stamp {
+        margin: 6px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .panel {
+        margin-top: 16px;
+        border: 1px solid var(--line-soft);
+        border-radius: 12px;
+        background: rgba(7, 30, 55, 0.75);
+        padding: 16px;
+      }
+      .label {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+      .value {
+        margin: 8px 0 0;
+        padding: 12px 14px;
+        border: 1px solid var(--line-soft);
+        border-radius: 10px;
+        background: rgba(7, 24, 42, 0.78);
+        font-family: "Rajdhani", sans-serif;
+        font-size: clamp(38px, 10vw, 86px);
+        line-height: 1;
+        letter-spacing: 0.12em;
+        color: #e7f9ff;
+        text-align: center;
+      }
+      .note {
+        margin: 12px 0 0;
+        color: #b6dcf0;
+        font-size: clamp(12px, 2.4vw, 16px);
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="sheet">
+      <section class="banner">
+        <h1 class="title">Context Output</h1>
+        <p class="stamp">${stamp}</p>
+      </section>
+      <section class="panel">
+        <p class="label">Last 10 Digits/Letters Used In Context</p>
+        <p class="value">${escapeHtml(output)}</p>
+        <p class="note">${escapeHtml(message)}</p>
+      </section>
+    </main>
+  </body>
+</html>`;
       }
 
       function downloadBlob(filename, content, mime) {
@@ -2093,14 +3147,14 @@
 
       document.getElementById('eod_download_html').addEventListener('click', ()=>{
         const data = collectEOD();
-        const html = `<!doctype html><html><head><meta charset="utf-8"><title>End of Day - ${data.fullname}</title></head><body><h1>End of Day Report</h1><p><strong>Agent:</strong> ${escapeHtml(data.fullname)} &lt;${escapeHtml(data.email)}&gt;</p><p><strong>Timestamp:</strong> ${escapeHtml(data.timestamp)}</p><h2>Summary</h2><pre>${escapeHtml(data.summary)}</pre><h2>Completed Tasks</h2><ul>${data.completed.map(x=>'<li>'+escapeHtml(x)+'</li>').join('')}</ul><h3>Details</h3><pre>${escapeHtml(data.completed_details)}</pre><h2>Pending Approvals</h2><pre>${escapeHtml(data.pending)}</pre><p><strong>Hours worked:</strong> ${escapeHtml(String(data.hours))}</p><p><strong>Sign-off:</strong> ${escapeHtml(data.signoff)}</p></body></html>`;
+        const html = buildEodContextThemeHtml(data);
         downloadBlob(`end-of-day-${(new Date()).toISOString().replace(/[:.]/g,'-')}.html`, html, 'text/html');
         const msg = document.getElementById('eod_saved_msg'); msg.style.display='inline'; setTimeout(()=>msg.style.display='none',2000);
       });
 
       document.getElementById('eod_download_pdf').addEventListener('click', async ()=>{
         const data = collectEOD();
-        const html = `<!doctype html><html><head><meta charset="utf-8"><title>End of Day - ${data.fullname}</title></head><body><h1>End of Day Report</h1><p><strong>Agent:</strong> ${escapeHtml(data.fullname)} &lt;${escapeHtml(data.email)}&gt;</p><p><strong>Timestamp:</strong> ${escapeHtml(data.timestamp)}</p><h2>Summary</h2><pre>${escapeHtml(data.summary)}</pre><h2>Completed Tasks</h2><ul>${data.completed.map(x=>'<li>'+escapeHtml(x)+'</li>').join('')}</ul><h3>Details</h3><pre>${escapeHtml(data.completed_details)}</pre><h2>Pending Approvals</h2><pre>${escapeHtml(data.pending)}</pre><p><strong>Hours worked:</strong> ${escapeHtml(String(data.hours))}</p><p><strong>Sign-off:</strong> ${escapeHtml(data.signoff)}</p></body></html>`;
+        const html = buildEodReportHtml(data);
         try{
           const res = await fetch('/eod/pdf',{method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({html, filename:`end-of-day-${(new Date()).toISOString().replace(/[:.]/g,'-')}.pdf`})});
           const j = await res.json();
@@ -2108,6 +3162,8 @@
           else{ alert('Failed: '+(j.error||JSON.stringify(j))); }
         }catch(e){ alert('Request failed: '+e); }
       });
+
+      initEodLetterDensity();
 
       const STRATEGY_STORE_KEY = "atlasStrategicWorkbenchV1";
       const STRATEGY_MAX_TASKS = 120;
@@ -2117,6 +3173,19 @@
 
       function strategyEl(id) {
         return document.getElementById(id);
+      }
+
+      function strategyConstraintField() {
+        const direct = strategyEl("strategy_constraints");
+        if (direct) return direct;
+        const root = strategyEl("strategic-workbench") || document;
+        if (!root || typeof root.querySelector !== "function") return null;
+        return root.querySelector('#strategy_constraints, [name="strategy_constraints"], [name="constraints"], [data-strategy-constraints], textarea[id*="constraint"], input[id*="constraint"], textarea[name*="constraint"], input[name*="constraint"]');
+      }
+
+      function strategyConstraintValue() {
+        const field = strategyConstraintField();
+        return String(field?.value || "").trim();
       }
 
       function strategyEsc(value) {
@@ -2202,7 +3271,7 @@
           objective: strategySafeText(strategyEl("strategy_objective")?.value || "", 180),
           metric: strategySafeText(strategyEl("strategy_metric")?.value || "", 180),
           horizon: String(strategyClampHorizon(strategyEl("strategy_horizon")?.value || 30)),
-          constraints: String(strategyEl("strategy_constraints")?.value || "").trim(),
+          constraints: strategyConstraintValue(),
           plan: String(strategyEl("strategy_plan_output")?.value || "").trim()
         };
       }
@@ -2212,7 +3281,7 @@
         const objective = strategyEl("strategy_objective");
         const metric = strategyEl("strategy_metric");
         const horizon = strategyEl("strategy_horizon");
-        const constraints = strategyEl("strategy_constraints");
+        const constraints = strategyConstraintField();
         const plan = strategyEl("strategy_plan_output");
         if (objective) objective.value = strategySafeText(draft.objective || "", 180);
         if (metric) metric.value = strategySafeText(draft.metric || "", 180);
@@ -2338,7 +3407,7 @@
         const objective = strategySafeText(form.objective || "", 180) || "Define the highest-impact objective for this cycle.";
         const metric = strategySafeText(form.metric || "", 180) || "One measurable KPI with baseline and target.";
         const horizon = strategyClampHorizon(form.horizon || 30);
-        const constraints = String(form.constraints || "").trim() || "No constraints captured yet.";
+        const constraints = String(form.constraints || strategyConstraintValue() || "").trim() || "No constraints captured yet.";
 
         const start = strategyIsoDate(0);
         const end = strategyIsoDate(horizon);
@@ -2541,12 +3610,14 @@
           "strategy_objective",
           "strategy_metric",
           "strategy_horizon",
-          "strategy_constraints",
           "strategy_plan_output"
         ].forEach((id) => {
           strategyEl(id)?.addEventListener("input", strategySave);
           strategyEl(id)?.addEventListener("change", strategySave);
         });
+        const constraintField = strategyConstraintField();
+        constraintField?.addEventListener("input", strategySave);
+        constraintField?.addEventListener("change", strategySave);
 
         strategyStatus("Strategic workbench ready. Build plan, assign tasks, execute.", false);
       }
@@ -3034,6 +4105,347 @@
         return String(entry.secret || "").trim();
       }
 
+      const SIGNAL_MAIL_STORE_KEY = "atlasMailSignalMemoryV1";
+      const SIGNAL_MAIL_MAX_EVENTS = 80;
+      const SIGNAL_MAIL_MAX_PAYLOAD = 1600;
+
+      const signalMailState = {
+        userEmail: "",
+        botEmail: "",
+        channel: "agentc-memory",
+        events: []
+      };
+
+      function signalMailEl(id) {
+        return document.getElementById(id);
+      }
+
+      function signalMailEsc(value) {
+        return String(value == null ? "" : value).replace(/[&<>"']/g, (ch) => (
+          { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]
+        ));
+      }
+
+      function signalMailSafeText(value, maxLen) {
+        const limit = Number(maxLen) > 0 ? Number(maxLen) : 240;
+        return String(value || "").replace(/\s+/g, " ").trim().slice(0, limit);
+      }
+
+      function signalMailNormalizeEmail(value) {
+        return String(value || "").trim().toLowerCase();
+      }
+
+      function signalMailIsEmail(value) {
+        const v = signalMailNormalizeEmail(value);
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+      }
+
+      function signalMailStatus(text, isError) {
+        const node = signalMailEl("signal_status");
+        if (!node) return;
+        node.textContent = String(text || "");
+        node.style.color = isError ? "#ffb0b0" : "var(--accent)";
+      }
+
+      function signalMailTypeLabel(type) {
+        const t = String(type || "").toLowerCase();
+        if (t === "signal") return "Signal";
+        if (t === "user_prompt") return "User Prompt";
+        if (t === "assistant_reply") return "Bot Reply";
+        return "Memory";
+      }
+
+      function signalMailFormatStamp(ts) {
+        const n = Number(ts || 0);
+        if (!Number.isFinite(n) || n <= 0) return "unknown";
+        try {
+          return new Date(n).toLocaleString();
+        } catch {
+          return "unknown";
+        }
+      }
+
+      function signalMailNormalizeEvent(raw) {
+        if (!raw || typeof raw !== "object") return null;
+        const typeRaw = String(raw.type || "memory").trim().toLowerCase();
+        const allowedTypes = new Set(["memory", "signal", "user_prompt", "assistant_reply"]);
+        const type = allowedTypes.has(typeRaw) ? typeRaw : "memory";
+        const payload = signalMailSafeText(raw.payload, SIGNAL_MAIL_MAX_PAYLOAD);
+        if (!payload) return null;
+        const channel = signalMailSafeText(raw.channel || signalMailState.channel || "agentc-memory", 80) || "agentc-memory";
+        const created = Number(raw.createdAt || Date.now());
+        return {
+          id: String(raw.id || `signal_${Date.now().toString(36)}_${Math.random().toString(16).slice(2, 8)}`),
+          type,
+          from: signalMailNormalizeEmail(raw.from || ""),
+          to: signalMailNormalizeEmail(raw.to || ""),
+          channel,
+          payload,
+          createdAt: Number.isFinite(created) && created > 0 ? created : Date.now()
+        };
+      }
+
+      function signalMailNormalizeEvents(list) {
+        if (!Array.isArray(list)) return [];
+        const out = [];
+        for (const item of list) {
+          const normalized = signalMailNormalizeEvent(item);
+          if (!normalized) continue;
+          out.push(normalized);
+        }
+        out.sort((a, b) => Number(a.createdAt) - Number(b.createdAt));
+        return out.slice(-SIGNAL_MAIL_MAX_EVENTS);
+      }
+
+      function signalMailPersist() {
+        const payload = {
+          version: 1,
+          userEmail: signalMailNormalizeEmail(signalMailState.userEmail),
+          botEmail: signalMailNormalizeEmail(signalMailState.botEmail),
+          channel: signalMailSafeText(signalMailState.channel, 80) || "agentc-memory",
+          events: signalMailNormalizeEvents(signalMailState.events),
+          updatedAt: Date.now()
+        };
+        try {
+          localStorage.setItem(SIGNAL_MAIL_STORE_KEY, JSON.stringify(payload));
+        } catch {
+          // ignore storage failures
+        }
+      }
+
+      function signalMailLoad() {
+        try {
+          const raw = String(localStorage.getItem(SIGNAL_MAIL_STORE_KEY) || "").trim();
+          if (!raw) return;
+          const parsed = JSON.parse(raw);
+          signalMailState.userEmail = signalMailNormalizeEmail(parsed?.userEmail || "");
+          signalMailState.botEmail = signalMailNormalizeEmail(parsed?.botEmail || "");
+          signalMailState.channel = signalMailSafeText(parsed?.channel || "agentc-memory", 80) || "agentc-memory";
+          signalMailState.events = signalMailNormalizeEvents(parsed?.events || []);
+        } catch {
+          signalMailState.events = [];
+        }
+      }
+
+      function signalMailPushEvent(event, options) {
+        const normalized = signalMailNormalizeEvent(event);
+        if (!normalized) return null;
+        signalMailState.events = signalMailNormalizeEvents([...(signalMailState.events || []), normalized]);
+        signalMailPersist();
+        if (!options?.silent) signalMailRender();
+        return normalized;
+      }
+
+      function signalMailHasLink() {
+        return signalMailIsEmail(signalMailState.userEmail) && signalMailIsEmail(signalMailState.botEmail);
+      }
+
+      function signalMailBuildContext(options) {
+        const maxEvents = Math.max(1, Number(options?.maxEvents || 10));
+        const maxChars = Math.max(280, Number(options?.maxChars || 2800));
+        const lines = [];
+        const userEmail = signalMailNormalizeEmail(signalMailState.userEmail);
+        const botEmail = signalMailNormalizeEmail(signalMailState.botEmail);
+        const channel = signalMailSafeText(signalMailState.channel, 80) || "agentc-memory";
+        const events = signalMailNormalizeEvents(signalMailState.events || []).slice(-maxEvents);
+
+        if (!userEmail && !botEmail && !events.length) return "";
+
+        if (userEmail || botEmail) {
+          lines.push(`User Mail: ${userEmail || "unknown"}`);
+          lines.push(`Bot Mail: ${botEmail || "unknown"}`);
+          lines.push(`Channel: ${channel}`);
+        }
+
+        if (events.length) {
+          lines.push("Recent Events:");
+          events.forEach((event, idx) => {
+            const payload = signalMailSafeText(event.payload, 320);
+            const from = signalMailNormalizeEmail(event.from || "") || "unknown";
+            const to = signalMailNormalizeEmail(event.to || "") || "unknown";
+            lines.push(`${idx + 1}. [${signalMailTypeLabel(event.type)}] ${from} -> ${to} | ${payload}`);
+          });
+        }
+
+        let text = lines.join("\n").trim();
+        if (text.length > maxChars) text = `${text.slice(0, maxChars)}\n[Mail memory context truncated]`;
+        return text;
+      }
+
+      function signalMailRender() {
+        const userInput = signalMailEl("signal_user_email");
+        const botInput = signalMailEl("signal_bot_email");
+        const channelInput = signalMailEl("signal_channel");
+        const log = signalMailEl("signal_log");
+
+        if (userInput && document.activeElement !== userInput) userInput.value = signalMailState.userEmail || "";
+        if (botInput && document.activeElement !== botInput) botInput.value = signalMailState.botEmail || "";
+        if (channelInput && document.activeElement !== channelInput) channelInput.value = signalMailState.channel || "agentc-memory";
+
+        if (!log) return;
+        const events = signalMailNormalizeEvents(signalMailState.events || []).slice(-14).reverse();
+        if (!events.length) {
+          log.innerHTML = `<div class="signal-mail-empty">No memory or signals yet.</div>`;
+          return;
+        }
+        log.innerHTML = events.map((event) => `
+          <div class="signal-mail-item">
+            <div class="signal-mail-item-head">
+              <span class="signal-mail-item-title">${signalMailEsc(signalMailTypeLabel(event.type))}</span>
+              <span class="signal-mail-item-meta">${signalMailEsc(signalMailFormatStamp(event.createdAt))}</span>
+            </div>
+            <div class="signal-mail-item-meta">${signalMailEsc(signalMailNormalizeEmail(event.from || "") || "unknown")} -> ${signalMailEsc(signalMailNormalizeEmail(event.to || "") || "unknown")} | ${signalMailEsc(event.channel || "agentc-memory")}</div>
+            <div class="signal-mail-item-body">${signalMailEsc(event.payload || "")}</div>
+          </div>
+        `).join("");
+      }
+
+      function signalMailReadIdentityInputs() {
+        return {
+          userEmail: signalMailNormalizeEmail(signalMailEl("signal_user_email")?.value || signalMailState.userEmail),
+          botEmail: signalMailNormalizeEmail(signalMailEl("signal_bot_email")?.value || signalMailState.botEmail),
+          channel: signalMailSafeText(signalMailEl("signal_channel")?.value || signalMailState.channel || "agentc-memory", 80) || "agentc-memory"
+        };
+      }
+
+      function signalMailConnect() {
+        const next = signalMailReadIdentityInputs();
+        if (!signalMailIsEmail(next.userEmail)) {
+          signalMailStatus("Enter a valid user mail address.", true);
+          return;
+        }
+        if (!signalMailIsEmail(next.botEmail)) {
+          signalMailStatus("Enter a valid bot mail address.", true);
+          return;
+        }
+        signalMailState.userEmail = next.userEmail;
+        signalMailState.botEmail = next.botEmail;
+        signalMailState.channel = next.channel;
+        signalMailPersist();
+        signalMailRender();
+        signalMailStatus(`Mail link connected: ${next.userEmail} <-> ${next.botEmail} (${next.channel}).`, false);
+      }
+
+      function signalMailStoreMemory() {
+        if (!signalMailHasLink()) {
+          signalMailStatus("Connect user and bot mails first.", true);
+          return;
+        }
+        const payloadNode = signalMailEl("signal_payload");
+        const payload = signalMailSafeText(payloadNode?.value || "", SIGNAL_MAIL_MAX_PAYLOAD);
+        if (!payload) {
+          signalMailStatus("Add memory text first.", true);
+          payloadNode?.focus?.();
+          return;
+        }
+        signalMailPushEvent({
+          type: "memory",
+          from: signalMailState.userEmail,
+          to: signalMailState.botEmail,
+          channel: signalMailState.channel,
+          payload
+        });
+        if (payloadNode) payloadNode.value = "";
+        signalMailStatus("Memory saved.", false);
+      }
+
+      function signalMailSendSignal() {
+        if (!signalMailHasLink()) {
+          signalMailStatus("Connect user and bot mails first.", true);
+          return;
+        }
+        const payloadNode = signalMailEl("signal_payload");
+        const payload = signalMailSafeText(payloadNode?.value || "", SIGNAL_MAIL_MAX_PAYLOAD);
+        if (!payload) {
+          signalMailStatus("Add a signal payload first.", true);
+          payloadNode?.focus?.();
+          return;
+        }
+        signalMailPushEvent({
+          type: "signal",
+          from: signalMailState.userEmail,
+          to: signalMailState.botEmail,
+          channel: signalMailState.channel,
+          payload
+        });
+        if (payloadNode) payloadNode.value = "";
+        signalMailStatus("Signal sent to memory log.", false);
+      }
+
+      function signalMailUseInPrompt() {
+        const input = chatEl("chat_input");
+        if (!input) {
+          signalMailStatus("Prompt input is unavailable.", true);
+          return;
+        }
+        const context = signalMailBuildContext({ maxEvents: 8, maxChars: 1800 });
+        if (!context) {
+          signalMailStatus("No mail memory available yet. Connect mails first.", true);
+          return;
+        }
+        const before = String(input.value || "").trim();
+        const block = `Mail memory/signaling context:\n${context}`;
+        input.value = before ? `${before}\n\n${block}` : block;
+        try {
+          input.focus();
+          input.selectionStart = input.selectionEnd = input.value.length;
+        } catch {
+          // ignore
+        }
+        signalMailStatus("Mail memory context added to prompt.", false);
+      }
+
+      function signalMailClear() {
+        if (!signalMailState.events.length) {
+          signalMailStatus("Signal log is already empty.", false);
+          return;
+        }
+        if (!confirm("Clear all stored mail memory and signal events?")) return;
+        signalMailState.events = [];
+        signalMailPersist();
+        signalMailRender();
+        signalMailStatus("Mail memory log cleared.", false);
+      }
+
+      function signalMailRecordChat(role, content) {
+        if (!signalMailHasLink()) return;
+        const payload = signalMailSafeText(String(content || "").replace(/^\[Fill Form\]\s*/i, ""), 420);
+        if (!payload) return;
+        const normalizedRole = String(role || "").toLowerCase() === "assistant" ? "assistant" : "user";
+        const type = normalizedRole === "assistant" ? "assistant_reply" : "user_prompt";
+        const from = normalizedRole === "assistant" ? signalMailState.botEmail : signalMailState.userEmail;
+        const to = normalizedRole === "assistant" ? signalMailState.userEmail : signalMailState.botEmail;
+        signalMailPushEvent({ type, from, to, channel: signalMailState.channel, payload }, { silent: true });
+        signalMailRender();
+      }
+
+      function initSignalMailTool() {
+        signalMailLoad();
+        signalMailRender();
+        if (signalMailHasLink()) {
+          signalMailStatus(`Mail link ready: ${signalMailState.userEmail} <-> ${signalMailState.botEmail} (${signalMailState.channel}).`, false);
+        } else {
+          signalMailStatus("Connect user and bot mail identities to enable memory signaling.", false);
+        }
+
+        signalMailEl("signal_connect_btn")?.addEventListener("click", signalMailConnect);
+        signalMailEl("signal_memory_btn")?.addEventListener("click", signalMailStoreMemory);
+        signalMailEl("signal_emit_btn")?.addEventListener("click", signalMailSendSignal);
+        signalMailEl("signal_prompt_btn")?.addEventListener("click", signalMailUseInPrompt);
+        signalMailEl("signal_clear_btn")?.addEventListener("click", signalMailClear);
+        signalMailEl("signal_channel")?.addEventListener("change", () => {
+          signalMailState.channel = signalMailSafeText(signalMailEl("signal_channel")?.value || signalMailState.channel, 80) || "agentc-memory";
+          signalMailPersist();
+        });
+        signalMailEl("signal_payload")?.addEventListener("keydown", (event) => {
+          if (!(event.metaKey || event.ctrlKey) || event.key !== "Enter") return;
+          event.preventDefault();
+          signalMailSendSignal();
+        });
+      }
+
+      initSignalMailTool();
+
       function chatAuthSourceLabel(mode) {
         const m = normalizeProviderMode(mode);
         if (m === "local") return "Key: local mode";
@@ -3225,8 +4637,12 @@
       function withWebsiteContextPrompt(prompt, websiteContextText) {
         const base = String(prompt || "").trim();
         const context = String(websiteContextText || "").trim();
-        if (!context) return base;
-        return `${base}\n\nWebsite context fetched by app:\n${context}`;
+        const mailMemory = signalMailBuildContext({ maxEvents: 8, maxChars: 2200 });
+        const blocks = [];
+        if (base) blocks.push(base);
+        if (context) blocks.push(`Website context fetched by app:\n${context}`);
+        if (mailMemory) blocks.push(`Mail memory/signaling context:\n${mailMemory}`);
+        return blocks.join("\n\n").trim();
       }
 
       function formatWebsiteContextEntry(entry, index) {
@@ -3288,9 +4704,14 @@
           }))
           .filter((msg) => msg.content);
         const context = String(websiteContextText || "").trim();
+        const mailMemory = signalMailBuildContext({ maxEvents: 10, maxChars: 3200 });
         const systemParts = [
           "You are a concise assistant. Return direct answers."
         ];
+        if (mailMemory) {
+          systemParts.push("Mail memory/signaling context is provided by the app. Use it as trusted session memory for user and bot identity continuity.");
+          systemParts.push(`MAIL_SIGNAL_CONTEXT:\n${mailMemory}`);
+        }
         if (context) {
           systemParts.push("Website context blocks are provided by the app. Use that content directly and do not claim you cannot access the website when context exists.");
           systemParts.push(`WEBSITE_CONTEXT:\n${context}`);
@@ -3465,7 +4886,9 @@
       function appendChatMessage(role, content) {
         const text = String(content || "").trim();
         if (!text) return;
-        chatState.messages.push({ role: role === "assistant" ? "assistant" : "user", content: text });
+        const normalizedRole = role === "assistant" ? "assistant" : "user";
+        chatState.messages.push({ role: normalizedRole, content: text });
+        signalMailRecordChat(normalizedRole, text);
         if (chatState.messages.length > 40) {
           chatState.messages = chatState.messages.slice(-40);
         }
@@ -3800,6 +5223,7 @@
         const sourcePrompt = resolveFormSourceText(prompt);
         const contextPrompt = resolveFormContextText(prompt);
         const websiteContext = String(websiteContextText || "").trim();
+        const mailMemory = signalMailBuildContext({ maxEvents: 6, maxChars: 1800 });
         const fallbackSource = [sourcePrompt, contextPrompt].filter(Boolean).join("\n");
         const strictPrompt = [
           "Fill the End-of-Day form using the user request.",
@@ -3810,6 +5234,7 @@
           "",
           `User request: ${String(sourcePrompt || "").trim()}`,
           contextPrompt ? `Conversation context:\n${String(contextPrompt).slice(0, 3800)}` : "",
+          mailMemory ? `Mail memory/signaling context:\n${mailMemory}` : "",
           websiteContext ? `Website context:\n${websiteContext.slice(0, 8000)}` : "",
           `Current form state: ${JSON.stringify(current)}`
         ].filter(Boolean).join("\n");
@@ -3941,9 +5366,14 @@
           })
           .filter(Boolean);
         const context = String(websiteContextText || "").trim();
+        const mailMemory = signalMailBuildContext({ maxEvents: 10, maxChars: 3200 });
         const parts = [
           "You are a concise assistant. Continue the conversation."
         ];
+        if (mailMemory) {
+          parts.push("Mail memory/signaling context is provided by the app. Use it as trusted session memory for user and bot identity continuity.");
+          parts.push(`MAIL_SIGNAL_CONTEXT:\n${mailMemory}`);
+        }
         if (context) {
           parts.push("Website context blocks are provided by the app. Use that content directly and do not claim you cannot access the website when context exists.");
           parts.push(`WEBSITE_CONTEXT:\n${context}`);
@@ -4769,6 +6199,7 @@
         });
         document.querySelectorAll("[data-browser-url]").forEach((btn) => {
           btn.addEventListener("click", () => {
+            if (btn.disabled || btn.getAttribute("data-locked") === "true" || btn.getAttribute("aria-disabled") === "true") return;
             const url = String(btn.getAttribute("data-browser-url") || "").trim();
             if (input && url) input.value = url;
             void browserNavigate(url);
