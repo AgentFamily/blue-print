@@ -1,0 +1,118 @@
+// Minimal Blue-Print.AI schema aligned to the API architecture.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String                @id @default(cuid())
+  orgId        String
+  email        String                @unique
+  name         String
+  passwordHash String
+  createdAt    DateTime              @default(now())
+  sessions     Session[]
+  memberships  WorkspaceMembership[]
+  audits       AuditLog[]            @relation("AuditActor")
+}
+
+model Workspace {
+  id          String                @id @default(cuid())
+  orgId       String
+  name        String
+  createdAt   DateTime              @default(now())
+  memberships WorkspaceMembership[]
+  connections ConnectorConnection[]
+  vaultSecrets VaultSecret[]
+  audits      AuditLog[]
+}
+
+model WorkspaceMembership {
+  userId      String
+  workspaceId String
+  role        String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@id([userId, workspaceId])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ConnectorConnection {
+  id          String   @id @default(cuid())
+  workspaceId String
+  connectorId String
+  status      String
+  scopes      Json
+  fields      Json
+  createdBy   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+model VaultSecret {
+  id          String   @id @default(cuid())
+  workspaceId String
+  connectorId String
+  name        String
+  ciphertext  String
+  iv          String
+  tag         String
+  keyVersion  String
+  createdBy   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  lastUsedAt  DateTime?
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, connectorId, name])
+}
+
+model WidgetManifest {
+  widgetId           String   @id
+  name               String
+  version            String
+  requiredConnectors Json
+  runPolicy          Json
+  ui                 Json
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model AuditLog {
+  id          String    @id @default(cuid())
+  actorUserId String?
+  workspaceId String?
+  action      String
+  targetType  String
+  targetId    String
+  meta        Json
+  timestamp   DateTime  @default(now())
+  actor       User?     @relation("AuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+}
+
+model ConnectorRequestLog {
+  id               String   @id @default(cuid())
+  workspaceId      String
+  connectorId      String
+  connectionId     String
+  status           Int
+  latencyMs        Int
+  rateLimitHeaders Json
+  meta             Json
+  timestamp        DateTime @default(now())
+}
