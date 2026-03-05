@@ -1,5 +1,4 @@
 // simple OAuth callback handler – exchanges code, stores token reference.
-const fetch = require("node-fetch"); // if needed
 const { upsertAccount } = require("../_lib/accounts");
 const { getProviderConfig } = require("../_lib/providers");
 
