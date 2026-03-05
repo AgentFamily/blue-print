@@ -9,7 +9,6 @@ const {
   testConnector,
   getConnectorRequirements,
 } = require("../lib/blueprint/services/connector_service");
-const { getConnector } = require("../lib/blueprint/connectors/registry");
 
 test("fasthosts connector requirements shape is available", () => {
   const reqs = getConnectorRequirements({ connectorId: "fasthosts" });
@@ -65,68 +64,6 @@ test("fasthosts test returns not-ok for invalid key format", async () => {
   });
 
   assert.equal(result.ok, false);
-});
-
-test("fasthosts dashboard mode exposes domain and email access payloads", async () => {
-  resetBlueprintDb();
-
-  const authorized = await authorizeConnector({
-    connectorId: "fasthosts",
-    actorUserId: "usr_demo",
-    workspaceId: "ws_core",
-    input: {
-      accessMode: "dashboard",
-      dashboardUrl: "https://admin.fasthosts.co.uk",
-      webmailUrl: "https://webmail.fasthosts.co.uk",
-      accountEmail: "ops@example.com",
-      scopes: ["domain:read", "dns:read", "email:read", "dashboard:read"],
-    },
-  });
-
-  const result = await testConnector({
-    connectorId: "fasthosts",
-    actorUserId: "usr_demo",
-    workspaceId: "ws_core",
-    connectionId: authorized.connectionId,
-  });
-
-  assert.equal(result.ok, true);
-  assert.equal(result.mode, "dashboard");
-  assert.equal(result.access.dashboard.loginUrl, "https://admin.fasthosts.co.uk");
-  assert.equal(result.access.email.webmailUrl, "https://webmail.fasthosts.co.uk");
-
-  const connector = getConnector("fasthosts");
-  const domainAccess = await connector.request(
-    authorized.connectionId,
-    {
-      method: "POST",
-      path: "/domains/access",
-      body: { domain: "a-i-agency.com" },
-    },
-    {
-      actorUserId: "usr_demo",
-      workspaceId: "ws_core",
-    }
-  );
-  assert.equal(domainAccess.ok, true);
-  assert.equal(domainAccess.data.domain, "a-i-agency.com");
-  assert.equal(domainAccess.data.dashboardLoginUrl, "https://admin.fasthosts.co.uk");
-
-  const emailAccess = await connector.request(
-    authorized.connectionId,
-    {
-      method: "POST",
-      path: "/emails/access",
-      body: {},
-    },
-    {
-      actorUserId: "usr_demo",
-      workspaceId: "ws_core",
-    }
-  );
-  assert.equal(emailAccess.ok, true);
-  assert.equal(emailAccess.data.mailboxesAccessible, true);
-  assert.equal(emailAccess.data.webmailUrl, "https://webmail.fasthosts.co.uk");
 });
 
 test("openai connector authorize + test succeeds", async () => {

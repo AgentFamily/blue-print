@@ -1,5 +1,3 @@
-const { unlockVault, issueSessionToken, permissionForSecret } = require("../../lib/vault_broker");
-
 const readJsonBody = async (req) => {
   if (req?.body && typeof req.body === "object") return req.body;
   let raw = "";
@@ -113,38 +111,9 @@ module.exports = async (req, res) => {
 
   const secure = isSecureRequest(req);
   appendSetCookie(res, makeCookie(ADMIN_COOKIE, "1", { maxAgeSeconds: 60 * 60 * 24 * 30, secure }));
-  let broker = null;
-  try {
-    await unlockVault({ actorType: "human", actorId: "admin-login" });
-    const session = await issueSessionToken({
-      actorType: "human",
-      actorId: "admin-login",
-      botId: "chat-assistant",
-      ttlMs: 10 * 60 * 1000,
-      permissions: [permissionForSecret("OPENAI_API_KEY")],
-      oneTime: false,
-    });
-    appendSetCookie(
-      res,
-      makeCookie("agentc_vault_session", session.sessionToken, {
-        maxAgeSeconds: Math.max(1, Math.ceil(Number(session.ttlMs || 0) / 1000)),
-        secure,
-      })
-    );
-    broker = {
-      issued: true,
-      expiresAt: session.expiresAt,
-      ttlMs: session.ttlMs,
-      permissions: session.permissions,
-    };
-  } catch (err) {
-    broker = {
-      issued: false,
-      error: String(err?.message || err || "Vault broker unavailable"),
-    };
-  }
   res.statusCode = 200;
   res.setHeader("Content-Type", "application/json");
   res.setHeader("Cache-Control", "no-store");
-  res.end(JSON.stringify({ ok: true, broker }));
+  res.end(JSON.stringify({ ok: true }));
 };
+

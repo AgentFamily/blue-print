@@ -4,30 +4,6 @@
 
 1️⃣ Pipeline / framed version of the UK governing-law clause
 
-### Pipelines
-The engine is intentionally simplistic: sequentially dispatch nodes using a
-handler map (`api/_lib/pipeline_engine.js`).  Only `intake`, `qualify` and
-`crm_sync` are implemented, but adding new types is as easy as registering a
-function that receives `{ run, node }` and returns output.
-
-A simple workflow engine has been integrated.
-
-* Templates stored in KV under `pipe:def:{id}`. Nodes may include an optional `requires` array of provider names for connections (e.g. `["hubspot","stripe"]`).  Execution handlers live in `api/_lib/handlers.js` and are invoked by
-`api/_lib/pipeline_engine.js`.
-* Runs stored under `pipe:run:{runId}` with per-node state `pipe:run:{runId}:node:{node}`.
-* Routes:
-  * `GET/POST /api/pipelines` – list or create templates
-  * `POST /api/pipelines/run` – start a new run
-  * `GET /api/pipelines/run?runId=` – fetch run
-  * `GET /api/pipelines/runs` – list recent runs
-  * `POST /api/pipelines/cancel` – cancel run
-  * `POST /api/pipelines/retry` – retry failed node
-
-Dashboard exposes a "Pipelines" tab with run history and quick-create.
-An execution engine (`api/_lib/pipeline_engine.js`) processes nodes
-sequentially and supports retrying failed nodes.
-
-
 You can drop this anywhere (footer, modal, checkout, PDF):
 
 ┌───────────────────────────────────────────────────────────────┐
@@ -232,50 +208,6 @@ By continuing you accept all terms and conditions
 Do **not** put `sk_…` keys in frontend code. Configure `MAGIC_SECRET_KEY` in your hosting environment, then call the server route:
 
 - Endpoint: `POST /api/magic/identity_provider` (admin-only via `mk_admin=1` cookie)
-
-### Connected accounts
-
-New API routes have been added for managing external integrations.
-
-* `GET /api/accounts` – list connected providers
-* `POST /api/accounts/connect` – create connection (API key or OAuth)
-* `POST /api/accounts/disconnect` – remove connection
-* `POST /api/accounts/test` – health-check a provider
-* `GET /api/accounts/oauth_callback` – OAuth redirect target (stub)
-
-Providers are configured in `api/_lib/providers.js` with metadata and optional
-`test` helpers. OAuth entries declare `authorizeUrl`, `tokenUrl` and
-`defaultScopes`; API-key entries may provide a `validate` function.  At
-runtime the `/api/accounts/connect` route uses this registry to determine
-whether to redirect for OAuth or accept a key.
-
-OAuth flows use environment variables such as `HUBSPOT_CLIENT_ID`,
-`HUBSPOT_REDIRECT_URI`; the example implementation of
-`api/accounts/oauth_callback.js` simply fakes a vault token but shows where
-you would exchange a code for a token.
-
-Dashboard UI now includes a "Connected Accounts" tab under Settings where you
-can view, test and connect providers via quick prompts (future work: polished
-modals).  A "Connect new" button will walk through API key or OAuth flow.
-
-UI rendering helpers for these panels have been extracted into
-`public/Contents/Resources/settings_panels.js` for better organization.
-
-For deployments, set the appropriate redirect URIs pointing to
-`https://YOURDOMAIN/api/accounts/oauth_callback` and populate client IDs/secrets.
-
-#### Running the Node helpers
-
-Two utility scripts have been added under `tests/` that exercise the new code:
-
-```sh
-node tests/test_accounts.js   # simple CRUD against Upstash KV
-node tests/test_pipelines.js  # create a template and start a run
-```
-
-These are lightweight smoke tests and require a working `UPSTASH_REDIS_REST_URL`
-env variable to talk to your KV instance.
-
 - Env var: `MAGIC_SECRET_KEY=sk_…`
 
 Example (run locally from a secure terminal; replace placeholders):

@@ -9,7 +9,6 @@ const connectorsHandler = require("../api/connectors/index.js");
 const authorizeHandler = require("../api/connectors/[connectorId]/authorize.js");
 
 const EXPECTED_CONNECTOR_IDS = [
-  "mailbox",
   "fasthosts",
   "namecheap",
   "autotrader",

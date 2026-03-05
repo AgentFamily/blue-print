@@ -180,6 +180,7 @@ async function renderPipelinesPanel() {
   }
 }
 
+const VAULT_PANEL_PASSWORD = "ThisisnotMK";
 const VAULT_PASS_HEADER = "X-AgentC-Vault-Pass";
 const VAULT_RECORD_VERSION = 1;
 
@@ -476,8 +477,8 @@ async function vaultSaveFromEditor() {
 async function vaultUnlockFromInput() {
   const input = el("vaultPassphraseInput");
   const passphrase = String(input?.value || "");
-  if (!passphrase) {
-    vaultSetStatus("Enter your vault password.", true);
+  if (!passphrase || passphrase !== VAULT_PANEL_PASSWORD) {
+    vaultSetStatus("Vault password rejected.", true);
     input?.focus?.();
     return;
   }
@@ -492,13 +493,7 @@ async function vaultUnlockFromInput() {
     vaultSession.unlocked = false;
     vaultSession.passphrase = "";
     vaultSession.entries = [];
-    const msg = String(err?.message || err || "").trim();
-    if (/vault access denied/i.test(msg)) {
-      vaultSetStatus("Vault password rejected.", true);
-      input?.focus?.();
-    } else {
-      vaultSetStatus(msg || "Could not unlock vault.", true);
-    }
+    vaultSetStatus(String(err?.message || err) || "Could not unlock vault.", true);
     renderVaultPanel();
   }
 }
@@ -523,7 +518,7 @@ async function renderVaultPanel() {
           <input id="vaultPassphraseInput" type="password" autocomplete="off" placeholder="Enter vault password" />
           <button id="vaultUnlockBtn" class="btn tiny green" type="button">Unlock</button>
         </div>
-        <div class="hint">Vault stores usernames/passwords, API keys, and tokens.</div>
+        <div class="hint">Vault stores usernames/passwords, API keys, and tokens. Password: <code>${vaultEscapeHTML(VAULT_PANEL_PASSWORD)}</code></div>
       </div>
     `;
     el("vaultUnlockBtn")?.addEventListener("click", vaultUnlockFromInput);

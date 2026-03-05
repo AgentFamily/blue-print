@@ -29,8 +29,8 @@ cp -f "$RES_DIR/dev_server.py" "$CONTAINER_BIN/dev_server.py"
 cp -f "$RES_DIR/ollama_proxy.py" "$CONTAINER_ROOT/ollama_proxy.py"
 chmod 755 "$CONTAINER_BIN/dev_server.py" "$CONTAINER_ROOT/ollama_proxy.py" || true
 
-# Keep site assets in sync (icons, JSON palettes, and UI scripts).
-typeset -a SITE_ASSETS=("$RES_DIR"/*.(png|svg|json|js))
+# Keep site assets in sync (icons, JSON palettes, and future UI image drops).
+typeset -a SITE_ASSETS=("$RES_DIR"/*.(png|svg|json))
 for asset in "${SITE_ASSETS[@]}"; do
   [[ -f "$asset" ]] || continue
   base="$(basename "$asset")"

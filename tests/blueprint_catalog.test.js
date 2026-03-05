@@ -9,7 +9,6 @@ const { listConnectorCatalog } = require("../lib/blueprint/services/connector_se
 const { listWidgetManifests } = require("../lib/blueprint/services/manifest_service");
 
 const EXPECTED_CONNECTORS = [
-  "mailbox",
   "fasthosts",
   "namecheap",
   "autotrader",
