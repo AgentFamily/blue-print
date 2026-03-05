@@ -18,6 +18,7 @@ const readJsonBody = async (req) => {
 const { getMagicJwtFromRequest, magicUserEmailFromJwt, getMagicUserIdFromRequest } = require("../lib/magic_user");
 const { kvGetInt, kvIncrBy, kvSet, kvSetNX } = require("../lib/upstash_kv");
 const { creditTokens, spendTokens, tokenKey } = require("../lib/token");
+const { getSecret: vaultBrokerGetSecret, extractSessionTokenFromRequest } = require("../lib/vault_broker");
 const crypto = require("crypto");
 
 const firstEnv = (...names) => {
@@ -207,8 +208,26 @@ const getGatewayBootstrapUsage = async (scope, { increment = false } = {}) => {
   }
 };
 
+const normalizeHeaderToken = (raw) => {
+  let value = String(raw || "").trim();
+  if (!value) return "";
+  if (value.includes(",")) value = value.split(",")[0].trim();
+  if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+    value = value.slice(1, -1).trim();
+  }
+  return value.replace(/^bearer\s+/i, "").trim();
+};
+
+const normalizeOpenAIKey = (raw) => {
+  const value = normalizeHeaderToken(raw);
+  if (!value) return "";
+  const match = value.match(/sk-(?:proj-)?[a-z0-9._-]+/i);
+  if (match && match[0]) return String(match[0]).trim();
+  return value;
+};
+
 const looksLikeOpenAIKey = (apiKey) => {
-  const k = String(apiKey || "").trim();
+  const k = normalizeOpenAIKey(apiKey);
   if (!k) return false;
   return /^sk-(proj-)?/i.test(k);
 };
@@ -327,12 +346,30 @@ module.exports = async (req, res) => {
     }
   }
 
-  const headerOpenKey = String(req?.headers?.["x-agentc-openai-key"] || "")
-    .split(",")[0]
-    .trim();
-  const serverOpenKey = firstEnv("open", "OPEN", "OPENAI_API_KEY", "OPEN_AI_API_KEY", "OPEN_API_KEY", "OPENAI_KEY", "OPENAI_APIKEY");
-  const openKey = headerOpenKey || serverOpenKey;
-  const gatewayKey = firstEnv("AI_GATEWAY_API_KEY", "AI_GATEWAY_KEY", "VERCEL_AI_GATEWAY_API_KEY");
+  const botIdForBroker = String(req?.headers?.["x-agentc-bot-id"] || "chat-assistant").trim() || "chat-assistant";
+  const headerOpenKey = normalizeOpenAIKey(req?.headers?.["x-agentc-openai-key"]);
+  const vaultSessionToken = extractSessionTokenFromRequest(req);
+  let brokerOpenKey = "";
+  let brokerOpenKeyError = null;
+  if (!headerOpenKey && vaultSessionToken) {
+    try {
+      brokerOpenKey = normalizeOpenAIKey(
+        await vaultBrokerGetSecret("OPENAI_API_KEY", vaultSessionToken, {
+          botId: botIdForBroker,
+        })
+      );
+    } catch (err) {
+      brokerOpenKeyError = err;
+    }
+  }
+  const serverOpenKey = normalizeOpenAIKey(
+    firstEnv("open", "OPEN", "OPENAI_API_KEY", "OPEN_AI_API_KEY", "OPEN_API_KEY", "OPENAI_KEY", "OPENAI_APIKEY")
+  );
+  const openKey = headerOpenKey || brokerOpenKey || serverOpenKey;
+  const gatewayKey = normalizeHeaderToken(
+    req?.headers?.["x-agentc-gateway-key"] ||
+      firstEnv("AI_GATEWAY_API_KEY", "AI_GATEWAY_KEY", "VERCEL_AI_GATEWAY_API_KEY")
+  );
 
   if (!messages || messages.length === 0) {
     res.statusCode = 400;
@@ -342,6 +379,18 @@ module.exports = async (req, res) => {
   }
 
   if (!openKey && !gatewayKey) {
+    if (vaultSessionToken && brokerOpenKeyError) {
+      res.statusCode = brokerOpenKeyError?.status || 401;
+      res.setHeader("Content-Type", "application/json");
+      res.end(
+        JSON.stringify({
+          error: brokerOpenKeyError?.message || "Vault Broker session rejected.",
+          status: brokerOpenKeyError?.status,
+          details: brokerOpenKeyError?.details,
+        })
+      );
+      return;
+    }
     res.statusCode = 500;
     res.setHeader("Content-Type", "application/json");
     res.end(
@@ -355,14 +404,15 @@ module.exports = async (req, res) => {
     return;
   }
 
+  const requestedModel = String(body?.model || "").trim();
   const openBaseUrl = firstEnv("OPEN_BASE_URL", "OPENAI_BASE_URL") || "https://api.openai.com/v1";
-  const openModel = firstEnv("OPEN_MODEL", "OPENAI_MODEL") || "gpt-4o-mini";
+  const openModel = requestedModel || firstEnv("OPEN_MODEL", "OPENAI_MODEL") || "gpt-4o-mini";
 
   const gatewayBaseUrl =
     firstEnv("AI_GATEWAY_BASE_URL", "VERCEL_AI_GATEWAY_BASE_URL") ||
     (looksLikeOpenAIKey(gatewayKey) ? "https://api.openai.com/v1" : "https://gateway.ai.vercel.com/v1");
   const gatewayModelEnv = firstEnv("AI_GATEWAY_MODEL", "VERCEL_AI_GATEWAY_MODEL");
-  let gatewayModel = gatewayModelEnv || "gpt-4o-mini";
+  let gatewayModel = requestedModel || gatewayModelEnv || "gpt-4o-mini";
   if (!gatewayModelEnv && gatewayKey && !looksLikeOpenAIKey(gatewayKey) && !String(gatewayModel).includes("/")) {
     gatewayModel = `openai/${gatewayModel}`;
   }

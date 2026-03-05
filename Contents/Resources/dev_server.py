@@ -10,7 +10,9 @@ import mimetypes
 import os
 import re
 import secrets
+import shutil
 import socket
+import ssl
 import subprocess
 import sys
 import threading
@@ -59,13 +61,32 @@ def _first_env(*names: str) -> str:
     return ""
 
 
+def _normalize_openai_key(raw: Any) -> str:
+    text = str(raw or "").strip()
+    if not text:
+        return ""
+    if "," in text:
+        text = text.split(",", 1)[0].strip()
+    if (text.startswith('"') and text.endswith('"')) or (text.startswith("'") and text.endswith("'")):
+        text = text[1:-1].strip()
+    text = re.sub(r"^bearer\s+", "", text, flags=re.IGNORECASE).strip()
+    if not text:
+        return ""
+    match = re.search(r"sk-(?:proj-)?[A-Za-z0-9._-]+", text, flags=re.IGNORECASE)
+    if match:
+        return str(match.group(0)).strip()
+    return text
+
+
 def _open_api_key() -> str:
-    return _first_env("open", "OPEN", "OPENAI_API_KEY", "OPEN_AI_API_KEY", "OPEN_API_KEY", "OPENAI_KEY", "OPENAI_APIKEY")
+    return _normalize_openai_key(
+        _first_env("open", "OPEN", "OPENAI_API_KEY", "OPEN_AI_API_KEY", "OPEN_API_KEY", "OPENAI_KEY", "OPENAI_APIKEY")
+    )
 
 
 def _open_api_key_from_header(handler: http.server.BaseHTTPRequestHandler) -> str:
     try:
-        return str(handler.headers.get("X-AgentC-OpenAI-Key") or "").strip()
+        return _normalize_openai_key(handler.headers.get("X-AgentC-OpenAI-Key"))
     except Exception:
         return ""
 
@@ -75,14 +96,14 @@ def _effective_open_api_key(handler: http.server.BaseHTTPRequestHandler) -> str:
 
 
 def _gateway_api_key() -> str:
-    return _first_env("AI_GATEWAY_API_KEY", "AI_GATEWAY_KEY")
+    return _normalize_openai_key(_first_env("AI_GATEWAY_API_KEY", "AI_GATEWAY_KEY"))
 
 
 def _gateway_mode_enabled() -> bool:
     return bool(_open_api_key() and _gateway_api_key())
 
 def _looks_like_openai_key(api_key: str) -> bool:
-    raw = str(api_key or "").strip()
+    raw = _normalize_openai_key(api_key)
     if not raw:
         return False
     return bool(re.match(r"^sk-(proj-)?", raw, re.IGNORECASE))
@@ -581,6 +602,182 @@ def _browser_context_payload(target_url: str, max_chars: int = 12_000) -> Dict[s
     }
 
 
+def _clip_text(value: Any, max_chars: int = 1800) -> str:
+    text = str(value or "").strip()
+    if len(text) <= max_chars:
+        return text
+    return text[: max_chars - 1] + "…"
+
+
+def _run_cli_probe(cmd: list[str], timeout_s: float = 12.0) -> Dict[str, Any]:
+    command = [str(part) for part in (cmd or []) if str(part or "").strip()]
+    if not command:
+        return {
+            "ok": False,
+            "ran": False,
+            "exit_code": None,
+            "stdout": "",
+            "stderr": "No command provided.",
+            "json": None,
+        }
+    try:
+        proc = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            timeout=float(timeout_s),
+            check=False,
+        )
+    except FileNotFoundError:
+        return {
+            "ok": False,
+            "ran": False,
+            "exit_code": 127,
+            "stdout": "",
+            "stderr": f"Command not found: {command[0]}",
+            "json": None,
+        }
+    except subprocess.TimeoutExpired:
+        return {
+            "ok": False,
+            "ran": True,
+            "exit_code": 124,
+            "stdout": "",
+            "stderr": f"Command timed out after {timeout_s:.0f}s.",
+            "json": None,
+        }
+    except Exception as e:
+        return {
+            "ok": False,
+            "ran": False,
+            "exit_code": None,
+            "stdout": "",
+            "stderr": str(e),
+            "json": None,
+        }
+
+    stdout = _clip_text(proc.stdout or "", 2200)
+    stderr = _clip_text(proc.stderr or "", 2200)
+    parsed_json = None
+    if stdout:
+        try:
+            parsed_json = json.loads(stdout)
+        except Exception:
+            parsed_json = None
+
+    ok = int(proc.returncode) == 0
+    if isinstance(parsed_json, dict) and parsed_json.get("ok") is False:
+        ok = False
+
+    return {
+        "ok": bool(ok),
+        "ran": True,
+        "exit_code": int(proc.returncode),
+        "stdout": stdout,
+        "stderr": stderr,
+        "json": parsed_json,
+    }
+
+
+def _openclaw_gateway_signals(status_result: Dict[str, Any]) -> Dict[str, bool]:
+    payload = status_result.get("json")
+    if isinstance(payload, dict):
+        sample = json.dumps(payload, ensure_ascii=False).lower()
+    else:
+        sample = f"{status_result.get('stdout', '')} {status_result.get('stderr', '')}".lower()
+
+    runtime_running = (
+        ('"running": true' in sample)
+        or ('"runtime":"running"' in sample)
+        or ("runtime: running" in sample)
+        or ("runtime running" in sample)
+    )
+    rpc_probe_ok = (
+        ('"rpcprobe":"ok"' in sample)
+        or ('"rpc_probe":"ok"' in sample)
+        or ('"rpcprobeok":true' in sample)
+        or ('"rpc_ok":true' in sample)
+        or ("rpc probe: ok" in sample)
+    )
+    return {"runtime_running": bool(runtime_running), "rpc_probe_ok": bool(rpc_probe_ok)}
+
+
+def _openclaw_probe_payload() -> Dict[str, Any]:
+    configured_bin = _first_env("OPENCLAW_BIN")
+    resolved_bin = configured_bin or (shutil.which("openclaw") or "")
+    if configured_bin and not resolved_bin and os.path.isfile(configured_bin):
+        resolved_bin = configured_bin
+
+    gateway_url = _first_env("OPENCLAW_GATEWAY_URL") or "ws://127.0.0.1:18789/ws"
+    api_base = _first_env("OPENCLAW_API_BASE", "OPENCLAW_BASE_URL")
+
+    if not resolved_bin:
+        return {
+            "ok": False,
+            "installed": False,
+            "connectable": False,
+            "binary": "",
+            "gateway_url": gateway_url,
+            "api_base": api_base,
+            "checks": {},
+            "suggestions": [
+                "Install OpenClaw CLI and ensure `openclaw` is on PATH.",
+                "Run `openclaw config validate --json` to validate configuration.",
+                "Start gateway with `openclaw gateway start --daemon --json`.",
+            ],
+            "alternative": {
+                "name": "Gateway-first local API stack",
+                "summary": "Use local `/api/chat` + `/api/prompt` (OpenAI/Gateway/Ollama fallback) as primary path while OpenClaw remains optional.",
+            },
+        }
+
+    version_result = _run_cli_probe([resolved_bin, "--version"], timeout_s=8)
+    config_result = _run_cli_probe([resolved_bin, "config", "validate", "--json"], timeout_s=12)
+    gateway_result = _run_cli_probe([resolved_bin, "gateway", "status", "--json"], timeout_s=12)
+    health_result = _run_cli_probe([resolved_bin, "health", "--json"], timeout_s=12)
+    gateway_signals = _openclaw_gateway_signals(gateway_result)
+
+    config_ok = bool(config_result.get("ok"))
+    gateway_ok = bool(gateway_result.get("ok"))
+    health_ok = bool(health_result.get("ok"))
+    connectable = bool(
+        health_ok
+        and (gateway_signals["runtime_running"] or gateway_signals["rpc_probe_ok"] or gateway_ok)
+    )
+
+    suggestions: list[str] = []
+    if not config_ok:
+        suggestions.append("Run `openclaw config validate --json` and resolve reported config issues.")
+    if not gateway_ok or not gateway_signals["runtime_running"]:
+        suggestions.append("Run `openclaw gateway start --daemon --json` and re-check status.")
+    if not connectable:
+        suggestions.append("Run `openclaw health --json` to inspect failing probes.")
+    if not suggestions:
+        suggestions.append("OpenClaw appears healthy. Keep periodic `openclaw health --json` checks in your startup runbook.")
+
+    return {
+        "ok": True,
+        "installed": True,
+        "connectable": connectable,
+        "binary": resolved_bin,
+        "gateway_url": gateway_url,
+        "api_base": api_base,
+        "checks": {
+            "version": version_result,
+            "config_validate": config_result,
+            "gateway_status": gateway_result,
+            "health": health_result,
+            "gateway_runtime_running": gateway_signals["runtime_running"],
+            "gateway_rpc_probe_ok": gateway_signals["rpc_probe_ok"],
+        },
+        "suggestions": suggestions,
+        "alternative": {
+            "name": "Gateway-first local API stack",
+            "summary": "Use local `/api/chat` + `/api/prompt` (OpenAI/Gateway/Ollama fallback) as primary path while OpenClaw remains optional.",
+        },
+    }
+
+
 def _handle_gateway_chat(handler: http.server.BaseHTTPRequestHandler, body: bytes, open_key: str = "") -> None:
     open_key = str(open_key or _effective_open_api_key(handler)).strip()
     gateway_key = _gateway_api_key()
@@ -912,6 +1109,109 @@ def _handle_open_prompt(handler: http.server.BaseHTTPRequestHandler, body: bytes
 
     open_text = _extract_chat_content(open_json)
     _json_response(handler, 200, {"text": open_text, "open_text": open_text})
+
+
+def _normalize_image_size(raw: Any) -> str:
+    value = str(raw or "").strip().lower()
+    allowed = {"1024x1024", "1536x1024", "1024x1536"}
+    return value if value in allowed else "1536x1024"
+
+
+def _extract_generated_images(payload: Any) -> list[Dict[str, str]]:
+    out: list[Dict[str, str]] = []
+    data = payload.get("data") if isinstance(payload, dict) else None
+    if not isinstance(data, list):
+        return out
+
+    for item in data:
+        if not isinstance(item, dict):
+            continue
+        row: Dict[str, str] = {}
+        url = str(item.get("url") or "").strip()
+        b64 = str(item.get("b64_json") or "").strip()
+        revised_prompt = str(item.get("revised_prompt") or "").strip()
+        if url:
+            row["url"] = url
+        if b64:
+            row["data_url"] = f"data:image/png;base64,{b64}"
+        if revised_prompt:
+            row["revised_prompt"] = revised_prompt
+        if row:
+            out.append(row)
+    return out
+
+
+def _handle_open_image_generate(handler: http.server.BaseHTTPRequestHandler, body: bytes, open_key: str = "") -> None:
+    open_key = str(open_key or _effective_open_api_key(handler)).strip()
+    if not open_key:
+        _json_response(handler, 500, {"error": "Missing OpenAI key (set `open`/`OPENAI_API_KEY` or send `X-AgentC-OpenAI-Key`)."})
+        return
+
+    try:
+        payload = json.loads(body.decode("utf-8") if body else "{}")
+    except Exception:
+        _json_response(handler, 400, {"error": "Invalid JSON body."})
+        return
+
+    prompt_raw = payload.get("prompt") if isinstance(payload, dict) else ""
+    prompt = str(prompt_raw or "").strip()
+    if not prompt:
+        _json_response(handler, 400, {"error": "Missing prompt"})
+        return
+
+    requested_model = str((payload.get("model") if isinstance(payload, dict) else "") or "").strip()
+    image_model = requested_model or str(os.getenv("OPEN_IMAGE_MODEL") or "gpt-image-1").strip() or "gpt-image-1"
+    size = _normalize_image_size(payload.get("size") if isinstance(payload, dict) else "")
+    quality = "high"
+    n_raw = payload.get("n") if isinstance(payload, dict) else 1
+    try:
+        n = int(n_raw)
+    except Exception:
+        n = 1
+    n = min(4, max(1, n))
+
+    prompt_parts = [
+        "Generate a high-quality image that stays faithful to the user's idea and supports strong, consistent brand identity."
+    ]
+    prompt_parts.append(prompt)
+    final_prompt = "\n".join(part for part in prompt_parts if part).strip()
+
+    timeout_s = int(os.getenv("OPEN_TIMEOUT_S") or "45")
+    open_url = _open_base_url() + "/images/generations"
+    image_payload: Dict[str, Any] = {
+        "model": image_model,
+        "prompt": final_prompt,
+        "size": size,
+        "quality": quality,
+        "n": n,
+    }
+    open_status, open_raw = _post_json(
+        open_url,
+        image_payload,
+        headers={"Authorization": f"Bearer {open_key}"},
+        timeout_s=timeout_s,
+    )
+    try:
+        open_json = json.loads(open_raw.decode("utf-8") if open_raw else "{}")
+    except Exception:
+        open_json = {}
+    if open_status < 200 or open_status >= 300:
+        _json_response(handler, int(open_status), {"error": "OpenAI image upstream error", "details": open_json})
+        return
+
+    images = _extract_generated_images(open_json)
+    if not images:
+        _json_response(handler, 502, {"error": "Image upstream returned no images.", "details": open_json})
+        return
+    _json_response(
+        handler,
+        200,
+        {
+            "ok": True,
+            "model": image_model,
+            "images": images,
+        },
+    )
 
 
 def _handle_magic_wallet(handler: http.server.BaseHTTPRequestHandler, body: bytes) -> None:
@@ -1516,6 +1816,373 @@ def _handle_health(handler: http.server.BaseHTTPRequestHandler, upstream: str) -
     _json_response(handler, 200, {"ok": True, "upstream": upstream, "version": str(payload)})
 
 
+def _normalize_domain_name(value: str) -> str:
+    raw = str(value or "").strip().lower()
+    if not raw:
+        return ""
+    text = re.sub(r"^https?://", "", raw)
+    text = re.sub(r"^www\.", "", text)
+    text = re.split(r"[/?#]", text, maxsplit=1)[0]
+    text = re.sub(r":\d+$", "", text)
+    text = text.rstrip(".")
+    if not text or len(text) > 253:
+        return ""
+    pattern = r"^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9-]{2,63}$"
+    return text if re.match(pattern, text, flags=re.IGNORECASE) else ""
+
+
+def _iso_from_epoch(ts: Optional[float]) -> str:
+    try:
+        value = float(ts)
+    except Exception:
+        return ""
+    if not value or value <= 0:
+        return ""
+    return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(value))
+
+
+def _days_remaining_from_iso(iso: str) -> Optional[int]:
+    text = str(iso or "").strip()
+    if not text:
+        return None
+    try:
+        if text.endswith("Z"):
+            text = text[:-1] + "+00:00"
+        ts = float(__import__("datetime").datetime.fromisoformat(text).timestamp())
+    except Exception:
+        return None
+    return int((ts - time.time()) // 86400)
+
+
+def _fetch_json_http(url: str, timeout_s: float = 10.0, headers: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
+    req = urllib.request.Request(url, method="GET")
+    req.add_header("Accept", "application/json")
+    req.add_header("Cache-Control", "no-cache")
+    for key, value in (headers or {}).items():
+        if value:
+            req.add_header(str(key), str(value))
+    with urllib.request.urlopen(req, timeout=float(timeout_s)) as resp:
+        raw = resp.read()
+    data = json.loads(raw.decode("utf-8", errors="replace"))
+    if not isinstance(data, dict):
+        raise ValueError("Response was not a JSON object.")
+    return data
+
+
+def _rdap_event_date(payload: Dict[str, Any], actions: list[str]) -> str:
+    events = payload.get("events")
+    if not isinstance(events, list):
+        return ""
+    desired = {str(item or "").strip().lower() for item in actions}
+    for event in events:
+        if not isinstance(event, dict):
+            continue
+        action = str(event.get("eventAction") or "").strip().lower()
+        if action not in desired:
+            continue
+        value = str(event.get("eventDate") or "").strip()
+        try:
+            if value.endswith("Z"):
+                value = value[:-1] + "+00:00"
+            epoch = __import__("datetime").datetime.fromisoformat(value).timestamp()
+        except Exception:
+            continue
+        iso = _iso_from_epoch(epoch)
+        if iso:
+            return iso
+    return ""
+
+
+def _rdap_vcard_name(entity: Dict[str, Any]) -> str:
+    vcard_array = entity.get("vcardArray")
+    rows = vcard_array[1] if isinstance(vcard_array, list) and len(vcard_array) > 1 and isinstance(vcard_array[1], list) else []
+    for row in rows:
+        if not isinstance(row, list) or len(row) < 4:
+            continue
+        key = str(row[0] or "").strip().lower()
+        if key not in {"org", "fn"}:
+            continue
+        value = row[3]
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+        if isinstance(value, list):
+            text = ", ".join(str(item or "").strip() for item in value if str(item or "").strip())
+            if text:
+                return text
+    return ""
+
+
+def _fetch_rdap_domain_report(domain: str) -> Dict[str, Any]:
+    endpoint = f"https://rdap.org/domain/{quote(domain)}"
+    try:
+        payload = _fetch_json_http(
+            endpoint,
+            timeout_s=12.0,
+            headers={"Accept": "application/rdap+json, application/json"},
+        )
+    except Exception as e:
+        return {
+            "status": "critical",
+            "source": "rdap.org",
+            "registrar": "",
+            "expiryDate": "",
+            "registrationDate": "",
+            "nameservers": [],
+            "domainStatus": [],
+            "error": str(e),
+        }
+
+    registrar = ""
+    entities = payload.get("entities")
+    if isinstance(entities, list):
+        for entity in entities:
+            if not isinstance(entity, dict):
+                continue
+            roles = entity.get("roles")
+            role_list = [str(item or "").strip().lower() for item in roles] if isinstance(roles, list) else []
+            if "registrar" not in role_list:
+                continue
+            registrar = _rdap_vcard_name(entity)
+            if registrar:
+                break
+
+    nameservers = []
+    ns_rows = payload.get("nameservers")
+    if isinstance(ns_rows, list):
+        for row in ns_rows:
+            if not isinstance(row, dict):
+                continue
+            name = str(row.get("ldhName") or row.get("unicodeName") or "").strip().lower()
+            if name:
+                nameservers.append(name)
+    nameservers = list(dict.fromkeys(nameservers))
+
+    domain_status = payload.get("status")
+    status_rows = [str(item or "").strip() for item in domain_status] if isinstance(domain_status, list) else []
+    status_rows = [item for item in status_rows if item]
+
+    return {
+        "status": "good",
+        "source": "rdap.org",
+        "registrar": registrar,
+        "expiryDate": _rdap_event_date(payload, ["expiration", "expiry", "expires"]),
+        "registrationDate": _rdap_event_date(payload, ["registration", "registered"]),
+        "nameservers": nameservers,
+        "domainStatus": status_rows,
+    }
+
+
+def _fetch_dns_domain_report(domain: str) -> Dict[str, Any]:
+    record_types = ["A", "AAAA", "CNAME", "MX", "NS", "TXT"]
+    records: Dict[str, list[str]] = {key: [] for key in record_types}
+    errors: Dict[str, str] = {}
+    total_records = 0
+
+    for record_type in record_types:
+        endpoint = f"https://dns.google/resolve?name={quote(domain)}&type={quote(record_type)}"
+        try:
+            payload = _fetch_json_http(
+                endpoint,
+                timeout_s=7.0,
+                headers={"Accept": "application/dns-json, application/json"},
+            )
+            answers = payload.get("Answer")
+            values: list[str] = []
+            if isinstance(answers, list):
+                for answer in answers:
+                    if not isinstance(answer, dict):
+                        continue
+                    data = str(answer.get("data") or "").strip()
+                    if not data:
+                        continue
+                    if record_type == "TXT":
+                        data = re.sub(r'^"+|"+$', "", data)
+                    else:
+                        data = re.sub(r"\.$", "", data)
+                    if data and data not in values:
+                        values.append(data)
+            records[record_type] = values
+            total_records += len(values)
+        except Exception as e:
+            errors[record_type] = str(e)
+
+    if total_records > 0:
+        status = "good"
+    elif len(errors) == len(record_types):
+        status = "critical"
+    else:
+        status = "warn"
+
+    return {
+        "status": status,
+        "source": "dns.google",
+        "records": records,
+        "totalRecords": total_records,
+        "errors": errors,
+    }
+
+
+def _fetch_ssl_domain_report(domain: str) -> Dict[str, Any]:
+    try:
+        context = ssl.create_default_context()
+        with socket.create_connection((domain, 443), timeout=9.0) as sock:
+            with context.wrap_socket(sock, server_hostname=domain) as tls_sock:
+                cert = tls_sock.getpeercert()
+        if not cert:
+            return {
+                "status": "critical",
+                "valid": False,
+                "source": "tls",
+                "error": "No SSL certificate returned by host.",
+            }
+
+        not_before_raw = str(cert.get("notBefore") or "").strip()
+        not_after_raw = str(cert.get("notAfter") or "").strip()
+        not_before_epoch = ssl.cert_time_to_seconds(not_before_raw) if not_before_raw else 0
+        not_after_epoch = ssl.cert_time_to_seconds(not_after_raw) if not_after_raw else 0
+        valid_from = _iso_from_epoch(not_before_epoch)
+        valid_to = _iso_from_epoch(not_after_epoch)
+        days_remaining = _days_remaining_from_iso(valid_to)
+
+        now = time.time()
+        valid_window = bool(not_before_epoch and not_after_epoch and not_before_epoch <= now < not_after_epoch)
+        if valid_window and days_remaining is not None and days_remaining > 30:
+            status = "good"
+        elif valid_window and days_remaining is not None and days_remaining >= 0:
+            status = "warn"
+        else:
+            status = "critical"
+
+        subject = cert.get("subject")
+        issuer = cert.get("issuer")
+        subject_cn = ""
+        issuer_cn = ""
+        if isinstance(subject, tuple):
+            for row in subject:
+                if not isinstance(row, tuple):
+                    continue
+                for item in row:
+                    if isinstance(item, tuple) and len(item) == 2 and str(item[0]).lower() == "commonname":
+                        subject_cn = str(item[1] or "").strip()
+                        break
+                if subject_cn:
+                    break
+        if isinstance(issuer, tuple):
+            for row in issuer:
+                if not isinstance(row, tuple):
+                    continue
+                for item in row:
+                    if isinstance(item, tuple) and len(item) == 2 and str(item[0]).lower() in {"commonname", "organizationname"}:
+                        issuer_cn = str(item[1] or "").strip()
+                        break
+                if issuer_cn:
+                    break
+
+        return {
+            "status": status,
+            "valid": bool(valid_window),
+            "source": "tls",
+            "subject": subject_cn,
+            "issuer": issuer_cn,
+            "validFrom": valid_from,
+            "validTo": valid_to,
+            "daysRemaining": days_remaining,
+        }
+    except Exception as e:
+        return {
+            "status": "critical",
+            "valid": False,
+            "source": "tls",
+            "error": str(e),
+        }
+
+
+def _expiry_health(expiry_iso: str) -> Dict[str, Any]:
+    days = _days_remaining_from_iso(expiry_iso)
+    if days is None:
+        return {"date": "", "daysRemaining": None, "status": "unknown"}
+    if days < 0:
+        return {"date": expiry_iso, "daysRemaining": days, "status": "critical"}
+    if days <= 30:
+        return {"date": expiry_iso, "daysRemaining": days, "status": "warn"}
+    return {"date": expiry_iso, "daysRemaining": days, "status": "good"}
+
+
+def _status_rank(status: str) -> int:
+    value = str(status or "").strip().lower()
+    if value in {"critical", "error", "bad"}:
+        return 3
+    if value in {"warn", "warning"}:
+        return 2
+    if value in {"good", "healthy", "ok"}:
+        return 1
+    return 0
+
+
+def _overall_health_status(statuses: list[str]) -> str:
+    best = 0
+    for status in statuses:
+        rank = _status_rank(status)
+        if rank > best:
+            best = rank
+    if best >= 3:
+        return "critical"
+    if best >= 2:
+        return "warn"
+    if best >= 1:
+        return "good"
+    return "unknown"
+
+
+def _handle_fasthosts_domain_report(handler: http.server.BaseHTTPRequestHandler, *, body: Optional[bytes] = None) -> None:
+    parsed = urlparse(handler.path)
+    params = parse_qs(parsed.query or "")
+    raw_domain = str((params.get("domain") or [""])[0] or "").strip()
+    if body:
+        try:
+            payload = json.loads(body.decode("utf-8", errors="replace"))
+            if isinstance(payload, dict):
+                from_body = str(payload.get("domain") or "").strip()
+                if from_body:
+                    raw_domain = from_body
+        except Exception:
+            pass
+
+    domain = _normalize_domain_name(raw_domain)
+    if not domain:
+        _json_response(handler, 400, {"ok": False, "error": "A valid domain is required (e.g. example.com)."})
+        return
+
+    whois = _fetch_rdap_domain_report(domain)
+    dns = _fetch_dns_domain_report(domain)
+    ssl_report = _fetch_ssl_domain_report(domain)
+    expiry = _expiry_health(str(whois.get("expiryDate") or ""))
+    indicators = {
+        "whois": str(whois.get("status") or "unknown"),
+        "dns": str(dns.get("status") or "unknown"),
+        "ssl": str(ssl_report.get("status") or "unknown"),
+        "expiry": str(expiry.get("status") or "unknown"),
+    }
+
+    report = {
+        "domain": domain,
+        "generatedAt": _iso_from_epoch(time.time()),
+        "whois": whois,
+        "dns": dns,
+        "ssl": ssl_report,
+        "registrar": {
+            "name": str(whois.get("registrar") or "").strip() or "Unknown",
+            "source": str(whois.get("source") or "rdap.org"),
+        },
+        "expiry": expiry,
+        "health": {
+            "overall": _overall_health_status(list(indicators.values())),
+            "indicators": indicators,
+        },
+    }
+    _json_response(handler, 200, {"ok": True, "domain": domain, "report": report})
+
+
 def _inject_tool_token(html: str, token: str) -> str:
     assigns = [f"window.__MK_TOOL_TOKEN={json.dumps(token)};"]
     magic_pk = os.getenv("MAGIC_PUBLISHABLE_KEY") or os.getenv("MAGIC_API_KEY") or ""
@@ -1748,23 +2415,14 @@ def build_handler(*, upstream: str, tool_token: str):
         def do_GET(self):  # noqa: N802
             parsed = urlparse(self.path)
             path = parsed.path or self.path
+            params = parse_qs(parsed.query or "")
+            force_local = str((params.get("force_local") or [""])[0] or "").strip().lower() in {"1", "true", "yes", "on"}
             host_header = (self.headers.get("Host") or "").strip()
             host_only = host_header
             if host_only.startswith("[") and "]" in host_only:
                 host_only = host_only[1:].split("]", 1)[0]
             else:
                 host_only = host_only.split(":", 1)[0]
-            if host_only in ("127.0.0.1", "::1") and path in ("/", "/Homepage", "/Homepage.html", "/Contents/Resources/Homepage.html"):
-                try:
-                    _, port = self.server.server_address[:2]
-                except Exception:
-                    port = 8000
-                loc = f"http://localhost:{int(port)}/" + (("?" + parsed.query) if parsed.query else "")
-                self.send_response(302)
-                self.send_header("Location", loc)
-                self.send_header("Cache-Control", "no-store")
-                self.end_headers()
-                return
             if path in ("/Homepage.html", "/Homepage", "/Contents/Resources/Homepage.html", "/public/Contents/Resources/Homepage.html"):
                 loc = "/" + (("?" + parsed.query) if parsed.query else "")
                 self.send_response(302)
@@ -1783,6 +2441,10 @@ def build_handler(*, upstream: str, tool_token: str):
 
             if self.path == "/health":
                 _handle_health(self, upstream)
+                return
+
+            if path == "/openclaw/probe":
+                _json_response(self, 200, _openclaw_probe_payload())
                 return
 
             if path == "/browser/probe":
@@ -1960,11 +2622,15 @@ def build_handler(*, upstream: str, tool_token: str):
                 _json_response(self, 200, {"ok": True, "prefs": _read_agentc_defaults()})
                 return
 
-            if path == "/api/tags" and _effective_open_api_key(self):
+            if path == "/api/fasthosts/domain-report":
+                _handle_fasthosts_domain_report(self)
+                return
+
+            if path == "/api/tags" and _effective_open_api_key(self) and not force_local:
                 _handle_gateway_tags(self)
                 return
 
-            if path == "/api/version" and _effective_open_api_key(self):
+            if path == "/api/version" and _effective_open_api_key(self) and not force_local:
                 mode = "gateway" if _gateway_api_key() else "open"
                 _json_response(self, 200, {"ok": True, "version": mode})
                 return
@@ -1991,7 +2657,12 @@ def build_handler(*, upstream: str, tool_token: str):
 
         def do_POST(self):  # noqa: N802
             body = _read_request_body(self)
-            path = self.path.split("?", 1)[0]
+            parsed = urlparse(self.path)
+            path = parsed.path or self.path.split("?", 1)[0]
+            params = parse_qs(parsed.query or "")
+            force_local_query = str((params.get("force_local") or [""])[0] or "").strip().lower() in {"1", "true", "yes", "on"}
+            force_local_header = str(self.headers.get("X-AgentC-Force-Local") or "").strip().lower() in {"1", "true", "yes", "on"}
+            force_local = bool(force_local_query or force_local_header)
 
             if path == "/server/magic/wallet":
                 _handle_magic_wallet(self, body)
@@ -2067,20 +2738,28 @@ def build_handler(*, upstream: str, tool_token: str):
                 _handle_tool(self, tool_token, tool_name, body)
                 return
 
+            if path == "/api/fasthosts/domain-report":
+                _handle_fasthosts_domain_report(self, body=body)
+                return
+
             open_key_for_request = _effective_open_api_key(self)
 
-            if path == "/api/chat" and open_key_for_request:
+            if path == "/api/chat" and open_key_for_request and not force_local:
                 if _gateway_api_key():
                     _handle_gateway_chat(self, body, open_key=open_key_for_request)
                 else:
                     _handle_open_chat(self, body, open_key=open_key_for_request)
                 return
 
-            if path == "/api/prompt" and open_key_for_request:
+            if path == "/api/prompt" and open_key_for_request and not force_local:
                 if _gateway_api_key():
                     _handle_gateway_prompt(self, body, open_key=open_key_for_request)
                 else:
                     _handle_open_prompt(self, body, open_key=open_key_for_request)
+                return
+
+            if path in ("/api/images/generate", "/api/images") and open_key_for_request:
+                _handle_open_image_generate(self, body, open_key=open_key_for_request)
                 return
 
             if path == "/api/pull" and open_key_for_request:

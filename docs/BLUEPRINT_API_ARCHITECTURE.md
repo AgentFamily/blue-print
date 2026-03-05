@@ -70,6 +70,7 @@ tests/
 - `GET /api/connectors/:connectorId/requirements`
 - `GET|POST /api/connectors/:connectorId/authorize`
 - `GET|POST /api/connectors/:connectorId/test`
+- `GET|POST /api/fasthosts/alerts`
 - `GET|POST|PUT|DELETE /api/vault/secrets`
 - `GET|POST|PUT|DELETE /api/widgets/manifests`
 - `POST /api/widgets/:widgetId/run`
@@ -87,7 +88,10 @@ tests/
 ## Connector and manifest contracts
 
 - Connector interface: `id`, `label`, `authType`, `requirements()`, `authorize()`, `test()`, `request()`
-- Sample connector implemented: `FasthostsConnector` (`apiKey` auth)
+- Sample connector implemented: `FasthostsConnector` (hybrid: dashboard-first + optional CloudNX `apiKey`)
+- Fasthosts connector stores dashboard/webmail access links so domain/DNS and domain-email operations can be routed through the FastHosts control panel when public API coverage is unavailable
+- Fasthosts request contract now supports access-focused paths (`/domains/access`, `/emails/access`) in addition to widget-run paths
+- Dashboard FastHosts manager now supports alert management + notifications for upcoming invoices, renewals, domain expiry, SSL expiry, and health warnings
 - Additional strategic connectors: `namecheap`, `autotrader`, `myclickdealer`, `booking`, `skyscanner`, `openai`, `meta_ads`, `zillow`, `rightmove`
 - Widget manifest validation (zod if installed, strict manual fallback otherwise)
 - Widget run enforcement returns `authorizationPlan` when required connectors/scopes are missing

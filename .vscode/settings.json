@@ -1,0 +1,21 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^python3 - <<'PY'\nfrom pathlib import Path\nimport re\n\nhtml_path = Path\\('/Applications/AgentC \\.app/Contents/Resources/Homepage\\.html'\\)\napp_core = Path\\('/Applications/AgentC \\.app/Contents/Resources/app_core\\.js'\\)\n\nhtml = html_path\\.read_text\\(encoding='utf-8'\\)\njs = ''\nif app_core\\.exists\\(\\):\n    js = app_core\\.read_text\\(encoding='utf-8'\\)\n\nbutton_ids = re\\.findall\\(r'<button\\[\\^>\\]\\*\\\\sid=\\[\"\\\\\"\\]\\(\\[\\^\"\\\\\"\\]\\+\\)\\[\"\\\\\"\\]', html, flags=re\\.IGNORECASE\\)\ncombined = html \\+ '\\\\n' \\+ js\n\nmissing = \\[\\]\nfor bid in sorted\\(set\\(button_ids\\)\\):\n    patterns = \\[\n        fr'getElementById\\\\\\(\\[\"\\\\\"\\]\\{re\\.escape\\(bid\\)\\}\\[\"\\\\\"\\]\\\\\\)',\n        fr'el\\\\\\(\\[\"\\\\\"\\]\\{re\\.escape\\(bid\\)\\}\\[\"\\\\\"\\]\\\\\\)',\n        fr'querySelector\\\\\\(\\[\\^\\\\\\)\\]\\*#\\{re\\.escape\\(bid\\)\\}',\n        fr'#\\[\"\\\\'\\]\\{re\\.escape\\(bid\\)\\}',\n    \\]\n    if not any\\(re\\.search\\(p, combined\\) for p in patterns\\):\n        missing\\.append\\(bid\\)\n\nprint\\('Button IDs:', len\\(set\\(button_ids\\)\\)\\)\nprint\\('Possibly unwired button IDs:', len\\(missing\\)\\)\nprint\\('\\\\n'\\.join\\(missing\\)\\)\nPY$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^python3 /Applications/AgentC\\\\ \\.app/Contents/Resources/dev_server\\.py --port 1010$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^python3 /Applications/AgentC\\\\ \\.app/Contents/Resources/dev_server\\.py --port 8010$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "git config": true,
+        "/^python3 << 'EOF'\nimport os\nimport glob\n\n# Search for misslead related files\npatterns = \\[\n    os\\.path\\.expanduser\\(\"~/misslead\\.svg\"\\),\n    os\\.path\\.expanduser\\(\"~/Downloads/misslead\\.svg\"\\),\n    \"/tmp/misslead\\.svg\",\n    os\\.path\\.expanduser\\(\"~/Desktop/misslead\\.svg\"\\)\n\\]\n\nfor pattern in patterns:\n    if os\\.path\\.exists\\(pattern\\):\n        print\\(f\"Found: \\{pattern\\}\"\\)\n\n# Also check the current working directory\nif os\\.path\\.exists\\(\"misslead\\.svg\"\\):\n    print\\(f\"Found in CWD: \\{os\\.getcwd\\(\\)\\}/misslead\\.svg\"\\)\nEOF\n$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}

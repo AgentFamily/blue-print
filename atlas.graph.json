@@ -1,0 +1,303 @@
+{
+  "$schema": "./atlas.graph.schema.json",
+  "graph_id": "automation_blueprint_atlas",
+  "version": "1.0.0",
+  "nodes": [
+    {
+      "id": "intake_form_port",
+      "label": "Intake Form Port",
+      "district": "Acquisition",
+      "zone": "01",
+      "inputs": [
+        "web forms",
+        "chat events",
+        "voice events"
+      ],
+      "outputs": [
+        "normalized request"
+      ],
+      "dependencies": [],
+      "fallbacks": [
+        "ops_alert_center"
+      ],
+      "criticality": "high",
+      "status": "stable"
+    },
+    {
+      "id": "ai_qualifier",
+      "label": "AI Qualifier",
+      "district": "Acquisition",
+      "zone": "01",
+      "inputs": [
+        "normalized request"
+      ],
+      "outputs": [
+        "urgency tag",
+        "intent tag",
+        "budget band"
+      ],
+      "dependencies": [
+        "intake_form_port"
+      ],
+      "fallbacks": [
+        "ops_alert_center"
+      ],
+      "criticality": "high",
+      "status": "stable"
+    },
+    {
+      "id": "crm_sync_hub",
+      "label": "CRM Sync Hub",
+      "district": "Operations",
+      "zone": "02",
+      "inputs": [
+        "qualified request",
+        "customer context"
+      ],
+      "outputs": [
+        "contact record",
+        "deal record",
+        "timeline update"
+      ],
+      "dependencies": [
+        "ai_qualifier"
+      ],
+      "fallbacks": [
+        "ops_alert_center"
+      ],
+      "criticality": "high",
+      "status": "stable"
+    },
+    {
+      "id": "job_scheduler",
+      "label": "Job Scheduler",
+      "district": "Operations",
+      "zone": "02",
+      "inputs": [
+        "deal record",
+        "capacity signals",
+        "location signals"
+      ],
+      "outputs": [
+        "scheduled slot"
+      ],
+      "dependencies": [
+        "crm_sync_hub"
+      ],
+      "fallbacks": [
+        "ops_alert_center"
+      ],
+      "criticality": "high",
+      "status": "stable"
+    },
+    {
+      "id": "dispatch_router",
+      "label": "Dispatch Router",
+      "district": "Operations",
+      "zone": "03",
+      "inputs": [
+        "scheduled slot",
+        "technician availability",
+        "geo constraints"
+      ],
+      "outputs": [
+        "dispatch assignment"
+      ],
+      "dependencies": [
+        "job_scheduler"
+      ],
+      "fallbacks": [
+        "ops_alert_center"
+      ],
+      "criticality": "high",
+      "status": "stable"
+    },
+    {
+      "id": "quote_engine",
+      "label": "Quote Engine",
+      "district": "Revenue",
+      "zone": "03",
+      "inputs": [
+        "dispatch assignment",
+        "job scope",
+        "inventory rates"
+      ],
+      "outputs": [
+        "customer quote"
+      ],
+      "dependencies": [
+        "dispatch_router"
+      ],
+      "fallbacks": [
+        "invoice_bot",
+        "ops_alert_center"
+      ],
+      "criticality": "high",
+      "status": "degraded"
+    },
+    {
+      "id": "invoice_bot",
+      "label": "Invoice Bot",
+      "district": "Revenue",
+      "zone": "04",
+      "inputs": [
+        "customer quote",
+        "job completion signal"
+      ],
+      "outputs": [
+        "invoice",
+        "charge codes"
+      ],
+      "dependencies": [
+        "quote_engine"
+      ],
+      "fallbacks": [
+        "ops_alert_center"
+      ],
+      "criticality": "high",
+      "status": "stable"
+    },
+    {
+      "id": "payment_reconcile",
+      "label": "Payment Reconcile",
+      "district": "Revenue",
+      "zone": "04",
+      "inputs": [
+        "invoice",
+        "capture events",
+        "payout events"
+      ],
+      "outputs": [
+        "reconciliation ledger",
+        "exception flags"
+      ],
+      "dependencies": [
+        "invoice_bot"
+      ],
+      "fallbacks": [
+        "ops_alert_center"
+      ],
+      "criticality": "high",
+      "status": "stable"
+    },
+    {
+      "id": "review_trigger",
+      "label": "Review Trigger",
+      "district": "Experience",
+      "zone": "05",
+      "inputs": [
+        "service completion",
+        "customer contact channel"
+      ],
+      "outputs": [
+        "review request",
+        "sentiment signal"
+      ],
+      "dependencies": [
+        "payment_reconcile"
+      ],
+      "fallbacks": [
+        "intake_form_port"
+      ],
+      "criticality": "med",
+      "status": "degraded"
+    },
+    {
+      "id": "ops_alert_center",
+      "label": "Ops Alert Center",
+      "district": "Experience",
+      "zone": "05",
+      "inputs": [
+        "delay alerts",
+        "retry alerts",
+        "sla drift alerts"
+      ],
+      "outputs": [
+        "human escalation",
+        "retry directive"
+      ],
+      "dependencies": [
+        "review_trigger",
+        "payment_reconcile"
+      ],
+      "fallbacks": [],
+      "criticality": "high",
+      "status": "stable"
+    }
+  ],
+  "routes": [
+    {
+      "id": "route_acquisition_primary",
+      "name": "Acquisition to Dispatch Primary",
+      "path": [
+        "intake_form_port",
+        "ai_qualifier",
+        "crm_sync_hub",
+        "job_scheduler",
+        "dispatch_router"
+      ],
+      "type": "primary",
+      "reliability": 99.5,
+      "avg_handoff_ms": 204
+    },
+    {
+      "id": "route_revenue_primary",
+      "name": "Dispatch to Experience Primary",
+      "path": [
+        "dispatch_router",
+        "quote_engine",
+        "invoice_bot",
+        "payment_reconcile",
+        "review_trigger"
+      ],
+      "type": "primary",
+      "reliability": 99.1,
+      "avg_handoff_ms": 218
+    },
+    {
+      "id": "route_review_loopback_fallback",
+      "name": "Review Loopback Fallback",
+      "path": [
+        "review_trigger",
+        "intake_form_port"
+      ],
+      "type": "fallback",
+      "reliability": 97.8,
+      "avg_handoff_ms": 245
+    },
+    {
+      "id": "route_exception_alert_fallback",
+      "name": "Invoice to Alert Fallback",
+      "path": [
+        "invoice_bot",
+        "ops_alert_center"
+      ],
+      "type": "fallback",
+      "reliability": 99.7,
+      "avg_handoff_ms": 176
+    },
+    {
+      "id": "route_crm_to_invoice_secondary",
+      "name": "CRM to Invoice Secondary",
+      "path": [
+        "crm_sync_hub",
+        "invoice_bot"
+      ],
+      "type": "secondary",
+      "reliability": 98.3,
+      "avg_handoff_ms": 229
+    },
+    {
+      "id": "route_qualifier_to_payment_secondary",
+      "name": "Qualifier to Payment Secondary",
+      "path": [
+        "ai_qualifier",
+        "review_trigger",
+        "payment_reconcile"
+      ],
+      "type": "secondary",
+      "reliability": 97.9,
+      "avg_handoff_ms": 262
+    }
+  ]
+}

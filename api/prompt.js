@@ -1,6 +1,7 @@
 const { getMagicJwtFromRequest, magicUserEmailFromJwt, getMagicUserIdFromRequest } = require("../lib/magic_user");
 const { kvSet } = require("../lib/upstash_kv");
 const { creditTokens, spendTokens } = require("../lib/token");
+const { getSecret: vaultBrokerGetSecret, extractSessionTokenFromRequest } = require("../lib/vault_broker");
 
 const emailKey = (email) => `agentc:email_to_user:${String(email || "").trim().toLowerCase()}`;
 
@@ -18,6 +19,100 @@ const kvConfigured = () => {
   return Boolean(url && token);
 };
 
+const normalizeHeaderToken = (raw) => {
+  let value = String(raw || "").trim();
+  if (!value) return "";
+  if (value.includes(",")) value = value.split(",")[0].trim();
+  if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+    value = value.slice(1, -1).trim();
+  }
+  return value.replace(/^bearer\s+/i, "").trim();
+};
+
+const normalizeOpenAIKey = (raw) => {
+  const value = normalizeHeaderToken(raw);
+  if (!value) return "";
+  const match = value.match(/sk-(?:proj-)?[a-z0-9._-]+/i);
+  if (match && match[0]) return String(match[0]).trim();
+  return value;
+};
+
+const looksLikeOpenAIKey = (apiKey) => {
+  const k = normalizeOpenAIKey(apiKey);
+  if (!k) return false;
+  return /^sk-(proj-)?/i.test(k);
+};
+
+const buildChatCompletionsUrl = (baseUrl) => {
+  let cleanBase = String(baseUrl || "").trim().replace(/\/+$/, "");
+  if (!cleanBase) return "";
+  if (/\/chat\/completions$/i.test(cleanBase)) return cleanBase;
+  if (!/\/v1$/i.test(cleanBase)) cleanBase = `${cleanBase}/v1`;
+  return `${cleanBase}/chat/completions`;
+};
+
+const safeJsonParse = (text) => {
+  try {
+    return JSON.parse(String(text || ""));
+  } catch {
+    return null;
+  }
+};
+
+const clip = (text, maxChars) => {
+  const s = String(text || "");
+  return s.length > maxChars ? s.slice(0, maxChars) + "…" : s;
+};
+
+const extractUpstreamMessage = (json, fallbackText) => {
+  const direct =
+    json?.error?.message ||
+    json?.message ||
+    json?.error ||
+    (typeof json === "string" ? json : null) ||
+    "";
+  const msg = String(direct || fallbackText || "").trim();
+  return msg || "Upstream error";
+};
+
+const callChatCompletions = async ({ provider, baseUrl, apiKey, model, messages, temperature }) => {
+  const url = buildChatCompletionsUrl(baseUrl);
+  if (!url) {
+    const err = new Error(`Upstream (${provider || "unknown"}) misconfigured: missing base URL`);
+    err.status = 500;
+    err.provider = provider || "unknown";
+    err.details = { baseUrl };
+    throw err;
+  }
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model,
+      messages,
+      temperature,
+    }),
+  });
+
+  const text = await res.text().catch(() => "");
+  const json = safeJsonParse(text);
+  if (!res.ok) {
+    const msg = extractUpstreamMessage(json, text);
+    const err = new Error(`Upstream (${provider || "unknown"}) HTTP ${res.status}: ${clip(msg, 320)}`);
+    err.status = res.status;
+    err.provider = provider || "unknown";
+    err.details = json ?? { raw: clip(text, 1400) };
+    throw err;
+  }
+
+  const content = json?.choices?.[0]?.message?.content ?? "";
+  return { content: String(content), raw: json };
+};
+
 module.exports = async (req, res) => {
   if (req.method !== "POST") {
     res.statusCode = 405;
@@ -26,19 +121,51 @@ module.exports = async (req, res) => {
     return;
   }
 
-  const openKey = firstEnv("open", "OPEN", "OPENAI_API_KEY", "OPEN_AI_API_KEY", "OPEN_API_KEY", "OPENAI_KEY", "OPENAI_APIKEY");
-  const gatewayKey = firstEnv("AI_GATEWAY_API_KEY", "AI_GATEWAY_KEY");
-
-  if (!openKey) {
-    res.statusCode = 500;
-    res.setHeader("Content-Type", "application/json");
-    res.end(JSON.stringify({ error: "Missing OpenAI key env (expected `open` or `OPENAI_API_KEY`)" }));
-    return;
+  const botIdForBroker = String(req?.headers?.["x-agentc-bot-id"] || "chat-assistant").trim() || "chat-assistant";
+  const headerOpenKey = normalizeOpenAIKey(req?.headers?.["x-agentc-openai-key"]);
+  const vaultSessionToken = extractSessionTokenFromRequest(req);
+  let brokerOpenKey = "";
+  let brokerOpenKeyError = null;
+  if (!headerOpenKey && vaultSessionToken) {
+    try {
+      brokerOpenKey = normalizeOpenAIKey(
+        await vaultBrokerGetSecret("OPENAI_API_KEY", vaultSessionToken, {
+          botId: botIdForBroker,
+        })
+      );
+    } catch (err) {
+      brokerOpenKeyError = err;
+    }
   }
-  if (!gatewayKey) {
+  const envOpenKey = normalizeOpenAIKey(
+    firstEnv("open", "OPEN", "OPENAI_API_KEY", "OPEN_AI_API_KEY", "OPEN_API_KEY", "OPENAI_KEY", "OPENAI_APIKEY")
+  );
+  const openKey = headerOpenKey || brokerOpenKey || envOpenKey;
+  const gatewayKey = normalizeHeaderToken(
+    req?.headers?.["x-agentc-gateway-key"] || firstEnv("AI_GATEWAY_API_KEY", "AI_GATEWAY_KEY", "VERCEL_AI_GATEWAY_API_KEY")
+  );
+
+  if (!openKey && !gatewayKey) {
+    if (vaultSessionToken && brokerOpenKeyError) {
+      res.statusCode = brokerOpenKeyError?.status || 401;
+      res.setHeader("Content-Type", "application/json");
+      res.end(
+        JSON.stringify({
+          error: brokerOpenKeyError?.message || "Vault Broker session rejected.",
+          status: brokerOpenKeyError?.status,
+          details: brokerOpenKeyError?.details,
+        })
+      );
+      return;
+    }
     res.statusCode = 500;
     res.setHeader("Content-Type", "application/json");
-    res.end(JSON.stringify({ error: "Missing AI_GATEWAY_API_KEY" }));
+    res.end(
+      JSON.stringify({
+        error:
+          "Missing upstream API key. Provide `X-AgentC-OpenAI-Key` from Vault, or set `OPENAI_API_KEY`/`open`, and/or `AI_GATEWAY_API_KEY`.",
+      })
+    );
     return;
   }
 
@@ -91,20 +218,7 @@ module.exports = async (req, res) => {
     }
   }
 
-  const looksLikeOpenAIKey = (apiKey) => {
-    const k = String(apiKey || "").trim();
-    if (!k) return false;
-    return /^sk-(proj-)?/i.test(k);
-  };
-
-  const buildChatCompletionsUrl = (baseUrl) => {
-    let cleanBase = String(baseUrl || "").trim().replace(/\/+$/, "");
-    if (!cleanBase) return "";
-    if (/\/chat\/completions$/i.test(cleanBase)) return cleanBase;
-    if (!/\/v1$/i.test(cleanBase)) cleanBase = `${cleanBase}/v1`;
-    return `${cleanBase}/chat/completions`;
-  };
-
+  const requestedModel = String(body?.model || body?.open_model || "").trim();
   const openBaseUrl = String(process.env.OPEN_BASE_URL || process.env.OPENAI_BASE_URL || "https://api.openai.com/v1").replace(
     /\/+$/,
     ""
@@ -114,95 +228,129 @@ module.exports = async (req, res) => {
       (looksLikeOpenAIKey(gatewayKey) ? "https://api.openai.com/v1" : "https://gateway.ai.vercel.com/v1")
   ).replace(/\/+$/, "");
 
-  const openModel = process.env.OPEN_MODEL || process.env.OPENAI_MODEL || process.env.AI_MODEL || "gpt-4o-mini";
+  const openModel = requestedModel || process.env.OPEN_MODEL || process.env.OPENAI_MODEL || process.env.AI_MODEL || "gpt-4o-mini";
   const gatewayModelEnv = process.env.AI_GATEWAY_MODEL;
-  let gatewayModel = gatewayModelEnv || process.env.AI_MODEL || "gpt-4o-mini";
-  if (!gatewayModelEnv && !looksLikeOpenAIKey(gatewayKey) && !String(gatewayModel).includes("/")) {
+  let gatewayModel = requestedModel || gatewayModelEnv || process.env.AI_MODEL || "gpt-4o-mini";
+  if (!requestedModel && !gatewayModelEnv && !looksLikeOpenAIKey(gatewayKey) && !String(gatewayModel).includes("/")) {
     gatewayModel = `openai/${gatewayModel}`;
   }
 
-  try {
-    const openRes = await fetch(buildChatCompletionsUrl(openBaseUrl), {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${String(openKey).trim()}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: openModel,
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are a concise assistant. Return a short, direct answer with no markdown unless asked.",
-          },
-          { role: "user", content: prompt },
-        ],
-        temperature: 0.2,
-      }),
-    });
+  const promptMessages = [
+    {
+      role: "system",
+      content:
+        "You are a concise assistant. Return a short, direct answer with no markdown unless asked.",
+    },
+    { role: "user", content: prompt.trim() },
+  ];
 
-    const openData = await openRes.json().catch(() => null);
-    if (!openRes.ok) {
-      res.statusCode = openRes.status || 502;
-      res.setHeader("Content-Type", "application/json");
-      res.end(
-        JSON.stringify({
-          error: "OpenAI upstream error",
-          details: openData,
-        })
-      );
-      return;
+  try {
+    let openResult = null;
+    let openErr = null;
+    if (openKey) {
+      try {
+        openResult = await callChatCompletions({
+          provider: "open",
+          baseUrl: openBaseUrl,
+          apiKey: openKey,
+          model: openModel,
+          messages: promptMessages,
+          temperature: 0.2,
+        });
+      } catch (err) {
+        openErr = err;
+      }
     }
 
-    const openText = String(openData?.choices?.[0]?.message?.content ?? "");
+    if (openResult) {
+      const openText = String(openResult.content || "");
+      if (!gatewayKey) {
+        res.statusCode = 200;
+        res.setHeader("Content-Type", "application/json");
+        res.end(JSON.stringify({ text: openText, open_text: openText, ...(tokens == null ? {} : { tokens }) }));
+        return;
+      }
 
-    const gatewayRes = await fetch(buildChatCompletionsUrl(gatewayBaseUrl), {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${String(gatewayKey).trim()}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+      const evaluatorMessages = [
+        {
+          role: "system",
+          content:
+            "You are AI Gateway. Evaluate the candidate assistant response for correctness, safety, and usefulness; then provide a best-possible final answer. Output plain text only in this exact format:\nEVAL:\n- <bullets>\n\nFINAL:\n<answer>",
+        },
+        {
+          role: "user",
+          content: `User prompt:\n${prompt}\n\nCandidate assistant response:\n${openText}`,
+        },
+      ];
+
+      try {
+        const gatewayEval = await callChatCompletions({
+          provider: "gateway",
+          baseUrl: gatewayBaseUrl,
+          apiKey: gatewayKey,
+          model: gatewayModel,
+          messages: evaluatorMessages,
+          temperature: 0.2,
+        });
+        const evalText = String(gatewayEval.content || "");
+        res.statusCode = 200;
+        res.setHeader("Content-Type", "application/json");
+        res.end(JSON.stringify({ text: evalText, open_text: openText, ...(tokens == null ? {} : { tokens }) }));
+        return;
+      } catch (gatewayErr) {
+        // Fail-open: return the OpenAI candidate if evaluator is unavailable.
+        res.statusCode = 200;
+        res.setHeader("Content-Type", "application/json");
+        res.end(
+          JSON.stringify({
+            text: openText,
+            open_text: openText,
+            gateway_error: {
+              error: gatewayErr?.message || "Gateway evaluator failed",
+              status: gatewayErr?.status,
+              provider: gatewayErr?.provider,
+              details: gatewayErr?.details,
+            },
+            ...(tokens == null ? {} : { tokens }),
+          })
+        );
+        return;
+      }
+    }
+
+    if (gatewayKey) {
+      const gatewayResult = await callChatCompletions({
+        provider: "gateway",
+        baseUrl: gatewayBaseUrl,
+        apiKey: gatewayKey,
         model: gatewayModel,
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are AI Gateway. Evaluate the candidate assistant response for correctness, safety, and usefulness; then provide a best-possible final answer. Output plain text only in this exact format:\nEVAL:\n- <bullets>\n\nFINAL:\n<answer>",
-          },
-          {
-            role: "user",
-            content: `User prompt:\n${prompt}\n\nCandidate assistant response:\n${openText}`,
-          },
-        ],
+        messages: promptMessages,
         temperature: 0.2,
-      }),
-    });
-
-    const gatewayData = await gatewayRes.json().catch(() => null);
-    if (!gatewayRes.ok) {
-      // Fail-open: return the OpenAI candidate if the evaluator is misconfigured or down.
+      });
+      const gatewayText = String(gatewayResult.content || "");
       res.statusCode = 200;
       res.setHeader("Content-Type", "application/json");
       res.end(
         JSON.stringify({
-          text: openText,
-          open_text: openText,
-          gateway_error: {
-            status: gatewayRes.status || 502,
-            details: gatewayData,
-          },
+          text: gatewayText,
+          gateway_text: gatewayText,
+          ...(openErr
+            ? {
+                open_error: {
+                  error: openErr?.message || "OpenAI failed",
+                  status: openErr?.status,
+                  provider: openErr?.provider,
+                  details: openErr?.details,
+                },
+              }
+            : {}),
           ...(tokens == null ? {} : { tokens }),
         })
       );
       return;
     }
 
-    const evalText = String(gatewayData?.choices?.[0]?.message?.content ?? "");
-    res.statusCode = 200;
-    res.setHeader("Content-Type", "application/json");
-    res.end(JSON.stringify({ text: evalText, open_text: openText, ...(tokens == null ? {} : { tokens }) }));
+    throw openErr || new Error("No upstream provider available");
   } catch (err) {
     if (tokenCharged && magicUserId) {
       try {
@@ -211,12 +359,14 @@ module.exports = async (req, res) => {
         // ignore refund failures
       }
     }
-    res.statusCode = 502;
+    res.statusCode = err?.status || 502;
     res.setHeader("Content-Type", "application/json");
     res.end(
       JSON.stringify({
-        error: "Request failed",
-        details: err?.message || String(err),
+        error: err?.message || "Request failed",
+        status: err?.status,
+        provider: err?.provider,
+        details: err?.details ?? err?.message ?? String(err),
         ...(tokens == null ? {} : { tokens }),
       })
     );
