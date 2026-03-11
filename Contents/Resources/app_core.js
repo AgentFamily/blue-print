@@ -83,11 +83,16 @@
       embeddedAddress: "",
       chain: "ETH",
       providerId: "",
-      lastError: ""
+      lastError: "",
+      otpPending: false,
+      otpCode: "",
+      otpEmail: "",
+      otpStatus: ""
     };
 
     let el = null;
     let magic = null;
+    let otpSession = null;
     let suppressNextStatusClick = false;
     let toastTimer = null;
     let toastHideTimer = null;
@@ -404,17 +409,39 @@
 	        </div>
 		        <div class="mk-magic-grid">
 		          <div class="mk-magic-section">
-		            <div class="mk-magic-h">Email Sign-in (Magic Link)</div>
+		            <div class="mk-magic-h">Email Sign-in (Magic)</div>
 	            <div class="mk-magic-row" style="margin-bottom:10px">
 	              <input id="mkMagicEmail" class="mk-magic-input" type="email" placeholder="Enter your email address" autocomplete="email" />
 	            </div>
 	            <div id="mkMagicPublishableKeyRow" class="mk-magic-row" style="margin-bottom:10px">
 	              <input id="mkMagicPublishableKey" class="mk-magic-input" type="text" placeholder="Magic publishable key (pk_…)" autocomplete="off" autocapitalize="none" spellcheck="false" />
 	            </div>
-	            <button id="mkMagicOtpRegular" class="mk-magic-bigbtn" type="button">Send Magic Link</button>
+	            <button id="mkMagicOtpRegular" class="mk-magic-bigbtn" type="button">Send Sign-in Code</button>
 	            <button id="mkMagicOtpWhitelabel" class="mk-magic-bigbtn" type="button" style="display:none">Whitelabel OTP</button>
+              <div id="mkMagicOtpInline" class="mk-magic-section" style="display:none;margin-top:10px">
+                <div class="mk-magic-h">Enter Verification Code</div>
+                <div id="mkMagicOtpStatus" class="mk-magic-sub" style="margin-bottom:10px">
+                  Enter the verification code from your email.
+                </div>
+                <div class="mk-magic-row" style="margin-bottom:10px">
+                  <input
+                    id="mkMagicOtpCode"
+                    class="mk-magic-input"
+                    type="text"
+                    inputmode="numeric"
+                    autocomplete="one-time-code"
+                    autocapitalize="none"
+                    spellcheck="false"
+                    placeholder="One-time code"
+                  />
+                </div>
+                <div class="mk-magic-actions">
+                  <button id="mkMagicOtpVerify" class="mk-magic-action" type="button">Verify Code</button>
+                  <button id="mkMagicOtpCancel" class="mk-magic-action secondary" type="button">Cancel</button>
+                </div>
+              </div>
 	            <div class="mk-magic-sub">
-	              Requires <span class="mk-magic-pill">MAGIC_PUBLISHABLE_KEY</span> (or paste <span class="mk-magic-pill">pk_…</span> above).
+	              Requires <span class="mk-magic-pill">MAGIC_PUBLISHABLE_KEY</span> (or paste <span class="mk-magic-pill">pk_…</span> above). If OTP is unavailable for this key, Magic link fallback is attempted automatically.
 	            </div>
 	          </div>
 		          <div class="mk-magic-section">
@@ -791,6 +818,11 @@
 	      const logoutBtn = panel.querySelector("#mkMagicLogout");
 	      const otpRegularBtn = panel.querySelector("#mkMagicOtpRegular");
 		      const otpWhiteBtn = panel.querySelector("#mkMagicOtpWhitelabel");
+	      const otpInline = panel.querySelector("#mkMagicOtpInline");
+	      const otpCodeInput = panel.querySelector("#mkMagicOtpCode");
+	      const otpVerifyBtn = panel.querySelector("#mkMagicOtpVerify");
+	      const otpCancelBtn = panel.querySelector("#mkMagicOtpCancel");
+	      const otpStatus = panel.querySelector("#mkMagicOtpStatus");
 		      const oauthRedirectBtn = panel.querySelector("#mkMagicOAuthRedirect");
 		      const oauthPopupBtn = panel.querySelector("#mkMagicOAuthPopup");
 		      const oauthTelegramBtn = panel.querySelector("#mkMagicOAuthTelegram");
@@ -826,6 +858,22 @@
 	      otpWhiteBtn?.addEventListener("click", async () => {
 	        await loginWithEmailOtp({ showUI: false });
 	      });
+        otpCodeInput?.addEventListener("input", (e) => {
+          state.otpCode = String(e?.target?.value || "").trim();
+          if (state.lastError && state.lastError.toLowerCase().includes("verification code")) setError("");
+          render();
+        });
+        otpCodeInput?.addEventListener("keydown", (event) => {
+          if (event.key !== "Enter") return;
+          event.preventDefault();
+          void submitOtpCode();
+        });
+        otpVerifyBtn?.addEventListener("click", () => {
+          void submitOtpCode();
+        });
+        otpCancelBtn?.addEventListener("click", () => {
+          cancelOtpSession("Login canceled.");
+        });
 		      oauthRedirectBtn?.addEventListener("click", async () => {
 		        await loginWithOAuth({ flow: "redirect" });
 		      });
@@ -871,10 +919,15 @@
 		        logoutBtn,
 		        address: panel.querySelector("#mkMagicAddress"),
 		        embedded: embeddedSpan,
-		        providerId: providerIdInput,
+	        providerId: providerIdInput,
 	        chain: chainSelect,
 	        otpRegularBtn,
 		        otpWhiteBtn,
+            otpInline,
+            otpCode: otpCodeInput,
+            otpVerifyBtn,
+            otpCancelBtn,
+            otpStatus,
 		        oauthRedirectBtn,
 		        oauthPopupBtn,
 		        oauthTelegramBtn,
@@ -895,6 +948,64 @@
       }
       el.error.style.display = "block";
       el.error.textContent = state.lastError;
+    }
+
+    function clearOtpState() {
+      otpSession = null;
+      state.otpPending = false;
+      state.otpCode = "";
+      state.otpEmail = "";
+      state.otpStatus = "";
+    }
+
+    function cancelOtpSession(message) {
+      const reason = String(message || "Login canceled.");
+      try {
+        otpSession?.reject?.(new Error(reason));
+      } catch {
+        // ignore
+      }
+      try {
+        otpSession?.handle?.emit?.("cancel");
+      } catch {
+        // ignore
+      }
+      clearOtpState();
+      state.loading = false;
+      if (reason) setError(reason);
+      render();
+    }
+
+    async function submitOtpCode() {
+      ensureDom();
+      const code = String(state.otpCode || "").trim();
+      if (!otpSession?.handle) {
+        clearOtpState();
+        setError("Magic verification is not active. Start sign-in again.");
+        render();
+        return;
+      }
+      if (!code) {
+        setError("Enter the verification code from your email.");
+        render();
+        try {
+          el?.otpCode?.focus?.();
+        } catch {
+          // ignore
+        }
+        return;
+      }
+      setError("");
+      state.loading = true;
+      state.otpStatus = `Verifying the code sent to ${state.otpEmail || "your email"}...`;
+      render();
+      try {
+        otpSession.handle.emit?.("verify-email-otp", code);
+      } catch (err) {
+        state.loading = false;
+        setError(formatMagicError(err));
+        render();
+      }
     }
 
 			    function render() {
@@ -929,6 +1040,18 @@
 				      if (el.oauthPopupBtn) el.oauthPopupBtn.disabled = state.loading || !hasPk;
 				      if (el.oauthTelegramBtn) el.oauthTelegramBtn.disabled = state.loading || !hasPk;
 				      if (el.getServerWalletBtn) el.getServerWalletBtn.disabled = walletDisabled || state.loading || !signedIn;
+              if (el.otpInline && el.otpInline.style) el.otpInline.style.display = state.otpPending ? "block" : "none";
+              if (el.otpCode && typeof el.otpCode.value === "string" && el.otpCode.value !== state.otpCode) {
+                el.otpCode.value = state.otpCode;
+              }
+              if (el.otpStatus) {
+                const fallbackStatus = state.otpEmail
+                  ? `Enter the verification code sent to ${state.otpEmail}.`
+                  : "Enter the verification code from your email.";
+                el.otpStatus.textContent = state.otpStatus || fallbackStatus;
+              }
+              if (el.otpVerifyBtn) el.otpVerifyBtn.disabled = state.loading || !String(state.otpCode || "").trim();
+              if (el.otpCancelBtn) el.otpCancelBtn.disabled = state.loading;
 		      if (el.chain && typeof el.chain.value === "string" && el.chain.value !== state.chain) el.chain.value = state.chain;
 		      if (el.providerId && typeof el.providerId.value === "string" && el.providerId.value !== state.providerId)
 		        el.providerId.value = state.providerId;
@@ -1060,6 +1183,7 @@
 	        if (magic?.user?.onUserLoggedOut) {
 	          magic.user.onUserLoggedOut((isLoggedOut) => {
 	            if (!isLoggedOut) return;
+              clearOtpState();
 	            state.jwt = "";
 	            state.address = "";
 	            state.embeddedAddress = "";
@@ -1112,100 +1236,120 @@
 	      }
 	    }
 
-			    async function loginWithEmailOtp({ showUI }) {
-			      ensureDom();
-			      setError("");
-			      state.loading = true;
-		      render();
+      async function runInlineOtpLogin(sdk, email) {
+        const handle = sdk.auth?.loginWithEmailOTP?.({ email, showUI: false, deviceCheckUI: false });
+        if (!handle || typeof handle?.on !== "function" || typeof handle?.emit !== "function") {
+          throw new Error("Magic inline OTP is unavailable in this SDK build.");
+        }
 
-			      try {
-			        const sdk = await ensureMagicSdk();
-			        if (!sdk) throw new Error("Missing MAGIC_PUBLISHABLE_KEY (or Magic SDK failed to load).");
-			        if (!looksLikePublishableKey()) throw new Error("Invalid Magic publishable key (expected pk_…).");
-			        const email = String(state.email || "").trim();
-			        if (!email) throw new Error("Enter an email address.");
-			        const doMagicLink = async () => {
-			          if (!sdk.auth?.loginWithMagicLink) throw new Error("Magic Link login not available in this SDK build.");
-			          await sdk.auth.loginWithMagicLink({ email, showUI: Boolean(showUI) });
-			        };
-			        if (sdk.auth?.loginWithEmailOTP) {
-			          try {
-			            if (showUI === false) {
-			              // Minimal whitelabel flow: prompt for OTP and emit events if supported.
-			              const handle = sdk.auth.loginWithEmailOTP({ email, showUI: false, deviceCheckUI: false });
-			              const result = await new Promise((resolve, reject) => {
-			                let settled = false;
-			                const done = (v) => {
-			                  if (settled) return;
-			                  settled = true;
-			                  resolve(v);
-			                };
-			                const fail = (e) => {
-			                  if (settled) return;
-			                  settled = true;
-			                  reject(e);
-			                };
-			                try {
-			                  handle?.on?.("email-otp-sent", () => {
-			                    try {
-			                      const otp = window.prompt("Enter the code from your email");
-			                      if (!otp) {
-			                        handle?.emit?.("cancel");
-			                        fail(new Error("Login canceled."));
-			                        return;
-			                      }
-			                      handle?.emit?.("verify-email-otp", otp);
-			                    } catch (e) {
-			                      fail(e);
-			                    }
-			                  });
-			                  handle?.on?.("invalid-email-otp", () => {
-			                    try {
-			                      const otp = window.prompt("Invalid code. Try again:");
-			                      if (!otp) {
-			                        handle?.emit?.("cancel");
-			                        fail(new Error("Login canceled."));
-			                        return;
-			                      }
-			                      handle?.emit?.("verify-email-otp", otp);
-			                    } catch (e) {
-			                      fail(e);
-			                    }
-			                  });
-			                  handle?.on?.("done", done);
-			                  handle?.on?.("error", fail);
-			                  if (typeof handle?.then === "function") handle.then(done).catch(fail);
-			                } catch (e) {
-			                  fail(e);
-			                }
-			              });
-			              void result;
-			            } else {
-			              await sdk.auth.loginWithEmailOTP({ email, showUI: true });
-			            }
-			          } catch (otpErr) {
-			            try {
-			              await doMagicLink();
-			            } catch (mlErr) {
-			              const otpMsg = String(otpErr?.message || otpErr?.reason || "").trim();
-			              const mlMsg = String(mlErr?.message || mlErr?.reason || "").trim();
-		              throw new Error(
-		                `Email OTP failed${otpMsg ? `: ${otpMsg}` : ""}. Magic Link also failed${mlMsg ? `: ${mlMsg}` : ""}.`
-		              );
-		            }
-		          }
-			        } else {
-			          await doMagicLink();
-			        }
-					        await refreshFromMagic();
-					        saveToStorage();
-			      } catch (e) {
-			        setError(formatMagicError(e));
-			      } finally {
-			        state.loading = false;
-			        render();
-			      }
-			    }
+        clearOtpState();
+        state.otpPending = true;
+        state.otpEmail = email;
+        state.otpStatus = `Sending a verification code to ${email}...`;
+        state.otpCode = "";
+        render();
+
+        return new Promise((resolve, reject) => {
+          let settled = false;
+          const done = (value) => {
+            if (settled) return;
+            settled = true;
+            resolve(value);
+          };
+          const fail = (error) => {
+            if (settled) return;
+            settled = true;
+            reject(error);
+          };
+
+          otpSession = { handle, email, reject: fail };
+          try {
+            handle.on("email-otp-sent", () => {
+              state.loading = false;
+              state.otpPending = true;
+              state.otpEmail = email;
+              state.otpStatus = `Enter the verification code sent to ${email}.`;
+              state.otpCode = "";
+              render();
+              try {
+                el?.otpCode?.focus?.();
+              } catch {
+                // ignore
+              }
+            });
+            handle.on("invalid-email-otp", () => {
+              state.loading = false;
+              state.otpPending = true;
+              state.otpStatus = "That code was rejected. Enter the latest email code and try again.";
+              state.otpCode = "";
+              render();
+              try {
+                el?.otpCode?.focus?.();
+              } catch {
+                // ignore
+              }
+            });
+            handle.on("done", done);
+            handle.on("error", fail);
+            if (typeof handle?.then === "function") handle.then(done).catch(fail);
+          } catch (err) {
+            fail(err);
+          }
+        });
+      }
+
+      async function loginWithEmailOtp({ showUI }) {
+        ensureDom();
+        try {
+          otpSession?.handle?.emit?.("cancel");
+        } catch {
+          // ignore
+        }
+        clearOtpState();
+        setError("");
+        state.loading = true;
+        render();
+
+        try {
+          const sdk = await ensureMagicSdk();
+          if (!sdk) throw new Error("Missing MAGIC_PUBLISHABLE_KEY (or Magic SDK failed to load).");
+          if (!looksLikePublishableKey()) throw new Error("Invalid Magic publishable key (expected pk_…).");
+          const email = String(state.email || "").trim();
+          if (!email) throw new Error("Enter an email address.");
+          const doMagicLink = async () => {
+            if (!sdk.auth?.loginWithMagicLink) throw new Error("Magic Link login not available in this SDK build.");
+            await sdk.auth.loginWithMagicLink({ email, showUI: false });
+          };
+
+          void showUI;
+          if (sdk.auth?.loginWithEmailOTP) {
+            try {
+              await runInlineOtpLogin(sdk, email);
+            } catch (otpErr) {
+              try {
+                await doMagicLink();
+              } catch (mlErr) {
+                const otpMsg = String(otpErr?.message || otpErr?.reason || "").trim();
+                const mlMsg = String(mlErr?.message || mlErr?.reason || "").trim();
+                throw new Error(
+                  `Email OTP failed${otpMsg ? `: ${otpMsg}` : ""}. Magic Link also failed${mlMsg ? `: ${mlMsg}` : ""}.`
+                );
+              }
+            }
+          } else {
+            await doMagicLink();
+          }
+          await refreshFromMagic();
+          clearOtpState();
+          saveToStorage();
+        } catch (e) {
+          if (!state.otpPending) clearOtpState();
+          setError(formatMagicError(e));
+        } finally {
+          state.loading = false;
+          render();
+        }
+      }
 
     function showSavedToast(text = "Saved", durationMs = 2000) {
       ensureDom();
@@ -1417,13 +1561,14 @@
 	      state.loading = true;
       render();
       try {
-        if (magic) {
-          try {
-            await magic.user.logout();
-          } catch {
-            // ignore
-          }
+	        if (magic) {
+	          try {
+	            await magic.user.logout();
+	          } catch {
+	            // ignore
+	          }
 	        }
+        clearOtpState();
 	        state.jwt = "";
 	        state.address = "";
 	        state.embeddedAddress = "";
@@ -1465,7 +1610,8 @@
 		        state.open = true;
 		        render();
 		        try {
-		          el?.panel?.querySelector?.("#mkMagicEmail")?.focus?.();
+		          const selector = state.otpPending ? "#mkMagicOtpCode" : "#mkMagicEmail";
+		          el?.panel?.querySelector?.(selector)?.focus?.();
 		        } catch {
 		          // ignore
 		        }

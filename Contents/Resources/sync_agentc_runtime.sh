@@ -13,18 +13,30 @@ CONTAINER_ROOT="$HOME/Library/Containers/Ai.AgentC/Data/Library/Application Supp
 CONTAINER_BIN="$CONTAINER_ROOT/bin"
 CONTAINER_SITE="$CONTAINER_ROOT/site"
 PYTHON_BIN="${PYTHON_BIN:-$(command -v python3 || echo /usr/bin/python3)}"
+NODE_BIN="${NODE_BIN:-$(command -v node 2>/dev/null || true)}"
+if [[ -z "$NODE_BIN" || ! -x "$NODE_BIN" ]]; then
+  for candidate in /usr/local/bin/node /opt/homebrew/bin/node; do
+    if [[ -x "$candidate" ]]; then
+      NODE_BIN="$candidate"
+      break
+    fi
+  done
+fi
+NODE_BIN="${NODE_BIN:-node}"
 SYNC_RESTART_LOG="/tmp/agentc_sync_restart.log"
 
 echo "Syncing UI + servers…"
 
 mkdir -p "$GLOBAL_BIN" "$GLOBAL_SITE"
 cp -f "$RES_DIR/Homepage.html" "$GLOBAL_SITE/Homepage.html"
+cp -f "$RES_DIR/app_core.js" "$GLOBAL_SITE/app_core.js"
 cp -f "$RES_DIR/dev_server.py" "$GLOBAL_BIN/dev_server.py"
 cp -f "$RES_DIR/ollama_proxy.py" "$GLOBAL_ROOT/ollama_proxy.py"
 chmod 755 "$GLOBAL_BIN/dev_server.py" "$GLOBAL_ROOT/ollama_proxy.py" || true
 
 mkdir -p "$CONTAINER_BIN" "$CONTAINER_SITE"
 cp -f "$RES_DIR/Homepage.html" "$CONTAINER_SITE/Homepage.html"
+cp -f "$RES_DIR/app_core.js" "$CONTAINER_SITE/app_core.js"
 cp -f "$RES_DIR/dev_server.py" "$CONTAINER_BIN/dev_server.py"
 cp -f "$RES_DIR/ollama_proxy.py" "$CONTAINER_ROOT/ollama_proxy.py"
 chmod 755 "$CONTAINER_BIN/dev_server.py" "$CONTAINER_ROOT/ollama_proxy.py" || true
@@ -39,12 +51,13 @@ for asset in "${SITE_ASSETS[@]}"; do
 done
 
 ensure_browser_route_on_8000() {
-  local pid http_code cmd
+  local pid browser_code stove_code cmd
   pid="$(/usr/sbin/lsof -t -nP -iTCP:8000 -sTCP:LISTEN 2>/dev/null | head -n 1 || true)"
   [[ -n "$pid" ]] || return 0
 
-  http_code="$(curl -sS -o /dev/null -m 3 -w "%{http_code}" "http://localhost:8000/browser/read?url=https%3A%2F%2Fexample.com" || true)"
-  if [[ "$http_code" == "200" ]]; then
+  browser_code="$(curl -sS -o /dev/null -m 3 -w "%{http_code}" "http://localhost:8000/browser/read?url=https%3A%2F%2Fexample.com" || true)"
+  stove_code="$(curl -sS -o /dev/null -m 3 -w "%{http_code}" -X POST -H 'Content-Type: application/json' -d '{}' "http://localhost:8000/api/stove/session" || true)"
+  if [[ "$browser_code" == "200" && "$stove_code" != "404" ]]; then
     return 0
   fi
 
@@ -53,13 +66,13 @@ ensure_browser_route_on_8000() {
     return 0
   fi
 
-  echo "Refreshing homepage server on :8000 (missing /browser/read route)..."
+  echo "Refreshing homepage server on :8000 (stale route surface detected)..."
   kill "$pid" >/dev/null 2>&1 || true
   sleep 0.2
   if [[ -x "$GLOBAL_BIN/start-homepage-server.sh" ]]; then
-    nohup "$GLOBAL_BIN/start-homepage-server.sh" >"$SYNC_RESTART_LOG" 2>&1 &
+    nohup env AGENTC_APP_ROOT="$APP_BUNDLE" NODE_BIN="$NODE_BIN" "$GLOBAL_BIN/start-homepage-server.sh" >"$SYNC_RESTART_LOG" 2>&1 &
   else
-    nohup "$PYTHON_BIN" "$GLOBAL_BIN/dev_server.py" --port 8000 --host 127.0.0.1 --upstream http://127.0.0.1:11434 >"$SYNC_RESTART_LOG" 2>&1 &
+    nohup env AGENTC_APP_ROOT="$APP_BUNDLE" NODE_BIN="$NODE_BIN" "$PYTHON_BIN" "$GLOBAL_BIN/dev_server.py" --port 8000 --host 127.0.0.1 --upstream http://127.0.0.1:11434 >"$SYNC_RESTART_LOG" 2>&1 &
   fi
 }
 

@@ -10,6 +10,7 @@ import mimetypes
 import os
 import re
 import secrets
+import shutil
 import socket
 import subprocess
 import sys
@@ -27,6 +28,16 @@ SCRIPT_DIR = SCRIPT_PATH.parent
 # Support both repo layout (`scripts/dev_server.py`) and macOS app bundle layout
 # (`Contents/Resources/dev_server.py`).
 RUNTIME_ROOT = SCRIPT_DIR.parent if SCRIPT_DIR.name in {"scripts", "bin"} else SCRIPT_DIR
+APP_ROOT_OVERRIDE = os.getenv("AGENTC_APP_ROOT") or os.getenv("MK_APP_ROOT") or ""
+APP_ROOT = (
+    Path(APP_ROOT_OVERRIDE).expanduser().resolve()
+    if APP_ROOT_OVERRIDE
+    else (
+        RUNTIME_ROOT.parent.parent
+        if RUNTIME_ROOT.name == "Resources" and RUNTIME_ROOT.parent.name == "Contents"
+        else RUNTIME_ROOT.parent
+    )
+)
 
 SITE_ROOT = RUNTIME_ROOT
 if not (SITE_ROOT / "Homepage.html").is_file() and (RUNTIME_ROOT / "site" / "Homepage.html").is_file():
@@ -49,6 +60,8 @@ SERVER_CONFIG_PATH = Path(
     os.getenv("MK_SERVER_CONFIG_PATH")
     or (Path.home() / "Library" / "Application Support" / "LocalLLM" / "server_config.json")
 ).expanduser()
+TELEMETRY_ROOT = (APP_ROOT / "tmp" / "blueprint-telemetry").resolve()
+TELEMETRY_FILE = (TELEMETRY_ROOT / "events.jsonl").resolve()
 
 
 def _first_env(*names: str) -> str:
@@ -57,6 +70,149 @@ def _first_env(*names: str) -> str:
         if value and str(value).strip():
             return str(value).strip()
     return ""
+
+
+def _node_bin() -> str:
+    explicit = _first_env("NODE_BIN", "AGENTC_NODE_BIN")
+    if explicit:
+        return explicit
+
+    detected = shutil.which("node")
+    if detected:
+        return detected
+
+    for candidate in ("/usr/local/bin/node", "/opt/homebrew/bin/node"):
+        if Path(candidate).is_file():
+            return candidate
+
+    return "node"
+
+
+def _telemetry_now_iso() -> str:
+    return time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime()) + f".{int((time.time() % 1) * 1000):03d}Z"
+
+
+def _telemetry_trim(value: Any, max_len: int = 240) -> str:
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    return text[:max_len]
+
+
+def _telemetry_safe_json(value: Any, depth: int = 0) -> Any:
+    if value is None:
+        return None
+    if depth > 4:
+        return None
+    if isinstance(value, (str, int, float, bool)):
+        if isinstance(value, str) and len(value) > 4000:
+            return value[:4000]
+        return value
+    if isinstance(value, (list, tuple)):
+        return [_telemetry_safe_json(item, depth + 1) for item in list(value)[:50]]
+    if isinstance(value, dict):
+        out: Dict[str, Any] = {}
+        for key in list(value.keys())[:50]:
+            out[str(key)] = _telemetry_safe_json(value.get(key), depth + 1)
+        return out
+    return str(value)
+
+
+def _telemetry_route_id_from_path(path: str) -> str:
+    text = _telemetry_trim(path, 400).split("?", 1)[0].strip()
+    if not text or text == "/":
+        return "root"
+    return text.strip("/").replace("/", ".")
+
+
+def _telemetry_ensure_store() -> None:
+    TELEMETRY_ROOT.mkdir(parents=True, exist_ok=True)
+    if not TELEMETRY_FILE.exists():
+        TELEMETRY_FILE.write_text("", encoding="utf-8")
+
+
+def _telemetry_emit(event: Dict[str, Any]) -> None:
+    try:
+        payload = {
+            "schemaVersion": "blueprint.telemetry.v1",
+            "eventId": _telemetry_trim(event.get("eventId") or secrets.token_hex(16), 120),
+            "eventType": _telemetry_trim(event.get("eventType") or "api.request", 120),
+            "source": _telemetry_trim(event.get("source") or "browser_proxy", 80),
+            "occurredAt": _telemetry_trim(event.get("occurredAt") or _telemetry_now_iso(), 80),
+            "verified": False if event.get("verified") is False else True,
+        }
+        for field in (
+            "routeId",
+            "routeRunId",
+            "taskId",
+            "taskState",
+            "widgetId",
+            "workspaceId",
+            "userId",
+            "laneId",
+            "tabId",
+            "host",
+            "url",
+            "method",
+            "outcome",
+            "reason",
+            "status",
+        ):
+            value = _telemetry_trim(event.get(field), 1000 if field == "url" else 240)
+            if value:
+                payload[field] = value
+        for field in ("httpStatus", "durationMs", "sampleSize"):
+            try:
+                raw = event.get(field)
+                if raw is None or raw == "":
+                    continue
+                num = int(raw)
+                if num >= 0:
+                    payload[field] = num
+            except Exception:
+                continue
+        meta = _telemetry_safe_json(event.get("meta"))
+        if isinstance(meta, dict) and meta:
+            payload["meta"] = meta
+
+        _telemetry_ensure_store()
+        with TELEMETRY_FILE.open("a", encoding="utf-8") as fh:
+            fh.write(json.dumps(payload, ensure_ascii=False) + "\n")
+    except Exception:
+        return
+
+
+def _emit_handler_telemetry(
+    handler: http.server.BaseHTTPRequestHandler,
+    status: int,
+    *,
+    content_type: str,
+    meta: Optional[Dict[str, Any]] = None,
+) -> None:
+    try:
+        started_at = float(getattr(handler, "_blueprint_started_at", time.time()))
+    except Exception:
+        started_at = time.time()
+    try:
+        raw_path = str(getattr(handler, "path", "") or "")
+    except Exception:
+        raw_path = ""
+    _telemetry_emit(
+        {
+            "eventType": "api.request",
+            "source": "browser_proxy",
+            "routeId": _telemetry_route_id_from_path(raw_path),
+            "method": str(getattr(handler, "command", "") or ""),
+            "httpStatus": int(status),
+            "outcome": "failure" if int(status) >= 400 else "success",
+            "durationMs": max(0, int((time.time() - started_at) * 1000)),
+            "url": raw_path,
+            "meta": {
+                "contentType": content_type,
+                **(meta or {}),
+            },
+        }
+    )
 
 
 def _open_api_key() -> str:
@@ -1337,6 +1493,12 @@ def _json_response(handler: http.server.BaseHTTPRequestHandler, status: int, pay
     handler.send_header("Cache-Control", "no-store")
     handler.end_headers()
     handler.wfile.write(body)
+    _emit_handler_telemetry(
+        handler,
+        status,
+        content_type="application/json; charset=utf-8",
+        meta={"payloadKeys": list(payload.keys())[:20] if isinstance(payload, dict) else []},
+    )
 
 
 def _text_response(handler: http.server.BaseHTTPRequestHandler, status: int, text: str, content_type: str) -> None:
@@ -1347,6 +1509,7 @@ def _text_response(handler: http.server.BaseHTTPRequestHandler, status: int, tex
     handler.send_header("Cache-Control", "no-store")
     handler.end_headers()
     handler.wfile.write(body)
+    _emit_handler_telemetry(handler, status, content_type=content_type)
 
 
 def _read_request_body(handler: http.server.BaseHTTPRequestHandler) -> bytes:
@@ -1412,6 +1575,12 @@ def _proxy_request(
     handler.send_header("Cache-Control", "no-store")
     handler.end_headers()
     handler.wfile.write(data)
+    _emit_handler_telemetry(
+        handler,
+        status,
+        content_type=headers.get("Content-Type", "application/json"),
+        meta={"proxied": True, "target": target},
+    )
 
 
 def _proxy_request_stream(
@@ -1450,6 +1619,12 @@ def _proxy_request_stream(
     handler.send_header("Cache-Control", "no-store")
     handler.send_header("Transfer-Encoding", "chunked")
     handler.end_headers()
+    _emit_handler_telemetry(
+        handler,
+        status,
+        content_type=headers.get("Content-Type", "application/json"),
+        meta={"proxied": True, "stream": True, "target": target},
+    )
     try:
         handler.wfile.flush()
     except Exception:
@@ -1730,6 +1905,166 @@ def _handle_tool(handler: http.server.BaseHTTPRequestHandler, tool_token: str, t
         _json_response(handler, 500, {"error": str(e)})
 
 
+def _handle_blueprint_stove_session(handler: http.server.BaseHTTPRequestHandler, tool_token: str, body: bytes) -> None:
+    client_host = ""
+    try:
+        client_host = str(handler.client_address[0] if handler.client_address else "")
+    except Exception:
+        client_host = ""
+    if not _is_loopback_addr(client_host):
+        _json_response(handler, 403, {"ok": False, "error": "Stove compile is only available from this machine."})
+        return
+
+    if not _require_tool_token(handler, tool_token):
+        return
+
+    node_script = (APP_ROOT / "lib" / "blueprint" / "bin" / "compile_widget_session.js").resolve()
+    if not node_script.is_file():
+        _json_response(handler, 404, {"ok": False, "error": "Local Stove compiler is unavailable."})
+        return
+
+    try:
+        payload = json.loads(body.decode("utf-8") if body else "{}")
+    except Exception:
+        _json_response(handler, 400, {"ok": False, "error": "Invalid JSON body."})
+        return
+
+    try:
+        proc = subprocess.run(
+            [_node_bin(), str(node_script)],
+            input=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=30,
+            cwd=str(APP_ROOT),
+        )
+    except subprocess.TimeoutExpired:
+        _json_response(handler, 504, {"ok": False, "error": "Local Stove compile timed out."})
+        return
+    except FileNotFoundError:
+        _json_response(handler, 500, {"ok": False, "error": "Node runtime is unavailable for Stove compile."})
+        return
+
+    raw = proc.stdout.decode("utf-8", "replace").strip()
+    try:
+        result = json.loads(raw or "{}")
+    except Exception:
+        stderr_text = proc.stderr.decode("utf-8", "replace").strip()
+        _json_response(
+            handler,
+            500,
+            {
+                "ok": False,
+                "error": "Invalid Stove compiler response.",
+                "details": stderr_text[:800],
+            },
+        )
+        return
+
+    status = int(result.get("status") or (200 if result.get("ok") else 500))
+    if proc.returncode != 0 and status < 400:
+        status = 500
+    _json_response(handler, status, result)
+
+
+def _handle_local_node_api(handler: http.server.BaseHTTPRequestHandler, *, body: bytes, method: str) -> bool:
+    node_script = (APP_ROOT / "lib" / "blueprint" / "bin" / "invoke_api_route.js").resolve()
+    if not node_script.is_file():
+        return False
+
+    try:
+        body_text = body.decode("utf-8", "replace") if body else ""
+    except Exception:
+        body_text = ""
+
+    content_type = ""
+    try:
+        content_type = str(handler.headers.get("Content-Type") or "").strip().lower()
+    except Exception:
+        content_type = ""
+
+    parsed_body: Any = None
+    if body_text:
+        if content_type.startswith("application/json"):
+            try:
+                parsed_body = json.loads(body_text)
+            except Exception:
+                parsed_body = None
+        else:
+            parsed_body = body_text
+
+    payload = {
+        "method": str(method or "GET").upper(),
+        "path": str(handler.path.split("?", 1)[0] if getattr(handler, "path", "") else ""),
+        "url": str(getattr(handler, "path", "") or ""),
+        "headers": {str(k).lower(): str(v) for k, v in handler.headers.items()},
+        "body": parsed_body,
+        "bodyRaw": body_text,
+    }
+
+    try:
+        proc = subprocess.run(
+            [_node_bin(), str(node_script)],
+            input=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=30,
+            cwd=str(APP_ROOT),
+        )
+    except subprocess.TimeoutExpired:
+        _json_response(handler, 504, {"ok": False, "error": "Local API route timed out."})
+        return True
+    except FileNotFoundError:
+        _json_response(handler, 500, {"ok": False, "error": "Node runtime is unavailable for local API routes."})
+        return True
+
+    raw = proc.stdout.decode("utf-8", "replace").strip()
+    try:
+        result = json.loads(raw or "{}")
+    except Exception:
+        _json_response(
+            handler,
+            500,
+            {
+                "ok": False,
+                "error": "Invalid local API bridge response.",
+                "details": proc.stderr.decode("utf-8", "replace").strip()[:800],
+            },
+        )
+        return True
+
+    if not result.get("handled"):
+        return False
+
+    status = int(result.get("statusCode") or (200 if result.get("ok") else 500))
+    headers = result.get("headers") if isinstance(result.get("headers"), dict) else {}
+    handler.send_response(status)
+    for key, value in headers.items():
+        if value is None:
+            continue
+        header_name = "-".join(part.capitalize() for part in str(key).split("-") if part)
+        if isinstance(value, list):
+            for item in value:
+                handler.send_header(header_name, str(item))
+        else:
+            handler.send_header(header_name, str(value))
+    if "cache-control" not in {str(k).lower() for k in headers.keys()}:
+        handler.send_header("Cache-Control", "no-store")
+    body_out = result.get("body")
+    if body_out is None:
+        body_bytes = b""
+    elif isinstance(body_out, str):
+        body_bytes = body_out.encode("utf-8")
+    else:
+        body_bytes = json.dumps(body_out, ensure_ascii=False).encode("utf-8")
+    if "content-length" not in {str(k).lower() for k in headers.keys()}:
+        handler.send_header("Content-Length", str(len(body_bytes)))
+    handler.end_headers()
+    if body_bytes:
+        handler.wfile.write(body_bytes)
+    return True
+
+
 def build_handler(*, upstream: str, tool_token: str):
     class Handler(http.server.BaseHTTPRequestHandler):
         protocol_version = "HTTP/1.1"
@@ -1746,6 +2081,7 @@ def build_handler(*, upstream: str, tool_token: str):
             self.end_headers()
 
         def do_GET(self):  # noqa: N802
+            self._blueprint_started_at = time.time()
             parsed = urlparse(self.path)
             path = parsed.path or self.path
             host_header = (self.headers.get("Host") or "").strip()
@@ -1970,6 +2306,8 @@ def build_handler(*, upstream: str, tool_token: str):
                 return
 
             if self.path.startswith("/api/"):
+                if _handle_local_node_api(self, body=b"", method="GET"):
+                    return
                 _proxy_request(upstream=upstream, handler=self, method="GET", path=self.path, body=b"", timeout_s=60)
                 return
 
@@ -1990,6 +2328,7 @@ def build_handler(*, upstream: str, tool_token: str):
             _text_response(self, 404, "not found\n", "text/plain; charset=utf-8")
 
         def do_POST(self):  # noqa: N802
+            self._blueprint_started_at = time.time()
             body = _read_request_body(self)
             path = self.path.split("?", 1)[0]
 
@@ -2062,6 +2401,10 @@ def build_handler(*, upstream: str, tool_token: str):
                 _json_response(self, 200, out)
                 return
 
+            if path == "/api/stove/session":
+                _handle_blueprint_stove_session(self, tool_token, body)
+                return
+
             if path.startswith("/tool/"):
                 tool_name = path.removeprefix("/tool/").strip("/")
                 _handle_tool(self, tool_token, tool_name, body)
@@ -2088,6 +2431,8 @@ def build_handler(*, upstream: str, tool_token: str):
                 return
 
             if path.startswith("/api/"):
+                if _handle_local_node_api(self, body=body, method="POST"):
+                    return
                 if path.startswith("/api/pull"):
                     _proxy_request_stream(upstream=upstream, handler=self, method="POST", path=path, body=body, timeout_s=300)
                 else:

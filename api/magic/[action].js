@@ -61,9 +61,18 @@ const sendJson = (res, status, payload) => {
 };
 
 const getAction = (req) => {
-  const raw = req?.query?.action;
-  if (Array.isArray(raw)) return String(raw[0] || "").trim().toLowerCase();
-  return String(raw || "").trim().toLowerCase();
+  const rawQuery = req?.query?.action;
+  if (Array.isArray(rawQuery)) {
+    const queryAction = String(rawQuery[0] || "").trim().toLowerCase();
+    if (queryAction) return queryAction;
+  } else {
+    const queryAction = String(rawQuery || "").trim().toLowerCase();
+    if (queryAction) return queryAction;
+  }
+
+  const rawParam = req?.params?.action;
+  if (Array.isArray(rawParam)) return String(rawParam[0] || "").trim().toLowerCase();
+  return String(rawParam || "").trim().toLowerCase();
 };
 
 const ADMIN_COOKIE = "mk_admin";
