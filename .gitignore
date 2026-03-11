@@ -9,3 +9,14 @@
 
 .Spotlight-V100
 .Trashes
+
+.vscode/
+Blue/
+the-agent-family/
+tmp/
+test-results/
+supabase-notes-next/.next/
+supabase-notes-next/node_modules/
+supabase-notes-next/
+Untitled-*.n8n
+*.tar.gz

@@ -14,7 +14,7 @@ const connectorIdFromReq = (req) => {
 };
 
 module.exports = async (req, res) => {
-  await handleRoute(res, async () => {
+  await handleRoute(res, { routeId: "api.connectors.test" }, async () => {
     const method = String(req?.method || "GET").toUpperCase();
     const auth = requireAuthFromRequest(req);
     const connectorId = connectorIdFromReq(req);

@@ -15,7 +15,7 @@ const { SESSION_COOKIE, CSRF_COOKIE, randomToken, ensureCsrf, checkRateLimit } =
 const { BlueprintError } = require("../../lib/blueprint/errors");
 
 module.exports = async (req, res) => {
-  await handleRoute(res, async () => {
+  await handleRoute(res, { routeId: "api.auth.login" }, async () => {
     const method = String(req?.method || "GET").toUpperCase();
     if (method === "GET") {
       const csrfToken = randomToken(24);

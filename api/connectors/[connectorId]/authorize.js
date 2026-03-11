@@ -27,7 +27,7 @@ const escapeHtml = (value) =>
     .replace(/'/g, "&#39;");
 
 module.exports = async (req, res) => {
-  await handleRoute(res, async () => {
+  await handleRoute(res, { routeId: "api.connectors.authorize" }, async () => {
     const method = String(req?.method || "GET").toUpperCase();
     const auth = requireAuthFromRequest(req);
     const connectorId = connectorIdFromReq(req);
@@ -57,34 +57,38 @@ module.exports = async (req, res) => {
         .join("\n");
 
       const fields = Array.isArray(requirements.fields) ? requirements.fields : [];
-      const fieldRows = fields
-        .map(
-          (field) => `<label style=\"display:block;margin:10px 0 4px;font-weight:600;\">${field.name}${
-            field.required ? " *" : ""
-          }</label>
-<input name=\"${field.name}\" type=\"${field.type === "password" || field.type === "token" ? "password" : "text"}\" placeholder=\"${
-            field.help || field.name
-          }\" style=\"width:100%;padding:8px;border:1px solid #d1d5db;border-radius:8px;\" />`
-        )
-        .join("\n");
-
-      const html = `<!doctype html>
-<html><body style=\"font-family: ui-sans-serif, -apple-system, Segoe UI, Roboto, sans-serif; margin: 24px; background:#f7fafc; color:#111827;\">
-<div style=\"max-width:760px;margin:0 auto;background:#fff;padding:20px 22px;border:1px solid #e5e7eb;border-radius:14px;\">
-<header style=\"border:1px solid #dbeafe;border-radius:12px;padding:12px;background:#eff6ff;margin:0 0 14px;\">
-<p style=\"margin:0 0 8px;color:#1d4ed8;font-weight:700;\">Header Install APIs</p>
-<div style=\"display:flex;flex-wrap:wrap;gap:8px;\">${headerButtons}</div>
-</header>
-<h1 style=\"margin:0 0 6px;\">Authorize ${requirements.label}</h1>
-<p style=\"margin:0 0 12px;color:#4b5563;\">Workspace: <strong>${workspaceId || "(select workspaceId)"}</strong></p>
-<p style=\"margin:0 0 12px;color:#1f2937;\">Required scopes: ${(requirements.scopes || []).join(", ") || "none"}</p>
-<p style=\"margin:0 0 14px;\"><a href=\"${requirements.docsUrl || "#"}\" target=\"_blank\" rel=\"noreferrer\">Connector docs</a></p>
-<form id=\"install-form\" style=\"margin:0 0 10px;\">
+      const oauthCard = requirements.oauthStartSupported
+        ? `<div style="border:1px solid #dbeafe;border-radius:12px;padding:14px;background:#eff6ff;margin:0 0 12px;">
+<p style="margin:0 0 8px;color:#1d4ed8;font-weight:700;">OAuth2 connection</p>
+<p style="margin:0 0 12px;color:#1f2937;">This connector uses a browser redirect. Click below to connect the authorized Outlook mailbox for this workspace.</p>
+<a id="oauth-connect" href="${escapeHtml(
+            requirements.actions.oauthStartUrl
+          )}" style="display:inline-block;background:#0f766e;color:#fff;text-decoration:none;padding:10px 14px;border-radius:10px;font-weight:700;">Connect ${escapeHtml(
+            requirements.label
+          )}</a>
+</div>`
+        : "";
+      const fieldRows = requirements.oauthStartSupported
+        ? ""
+        : fields
+            .map(
+              (field) => `<label style=\"display:block;margin:10px 0 4px;font-weight:600;\">${field.name}${
+                field.required ? " *" : ""
+              }</label>
+<input name=\"${field.name}\" type=\"${
+                field.type === "password" || field.type === "token" ? "password" : "text"
+              }\" placeholder=\"${field.help || field.name}\" style=\"width:100%;padding:8px;border:1px solid #d1d5db;border-radius:8px;\" />`
+            )
+            .join("\n");
+      const formMarkup = requirements.oauthStartSupported
+        ? oauthCard
+        : `<form id=\"install-form\" style=\"margin:0 0 10px;\">
 ${fieldRows || "<p>No credential fields required.</p>"}
 <button type=\"submit\" style=\"margin-top:14px;background:#0f766e;color:#fff;border:none;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer;\">Install Connector</button>
-</form>
-<pre id=\"result\" style=\"background:#0b1020;color:#d1fae5;padding:12px;border-radius:10px;min-height:72px;overflow:auto;\">Waiting for install...</pre>
-<script>
+</form>`;
+      const scriptMarkup = requirements.oauthStartSupported
+        ? ""
+        : `<script>
   const form = document.getElementById('install-form');
   const result = document.getElementById('result');
   const getCookie = (name) => document.cookie.split(';').map(x=>x.trim()).find(x=>x.startsWith(name + '='))?.split('=')[1] || '';
@@ -112,7 +116,22 @@ ${fieldRows || "<p>No credential fields required.</p>"}
       result.textContent = JSON.stringify({ ok: false, error: String(err && err.message || err) }, null, 2);
     }
   });
-</script>
+</script>`;
+
+      const html = `<!doctype html>
+<html><body style=\"font-family: ui-sans-serif, -apple-system, Segoe UI, Roboto, sans-serif; margin: 24px; background:#f7fafc; color:#111827;\">
+<div style=\"max-width:760px;margin:0 auto;background:#fff;padding:20px 22px;border:1px solid #e5e7eb;border-radius:14px;\">
+<header style=\"border:1px solid #dbeafe;border-radius:12px;padding:12px;background:#eff6ff;margin:0 0 14px;\">
+<p style=\"margin:0 0 8px;color:#1d4ed8;font-weight:700;\">Header Install APIs</p>
+<div style=\"display:flex;flex-wrap:wrap;gap:8px;\">${headerButtons}</div>
+</header>
+<h1 style=\"margin:0 0 6px;\">Authorize ${requirements.label}</h1>
+<p style=\"margin:0 0 12px;color:#4b5563;\">Workspace: <strong>${workspaceId || "(select workspaceId)"}</strong></p>
+<p style=\"margin:0 0 12px;color:#1f2937;\">Required scopes: ${(requirements.scopes || []).join(", ") || "none"}</p>
+<p style=\"margin:0 0 14px;\"><a href=\"${requirements.docsUrl || "#"}\" target=\"_blank\" rel=\"noreferrer\">Connector docs</a></p>
+${formMarkup}
+<pre id=\"result\" style=\"background:#0b1020;color:#d1fae5;padding:12px;border-radius:10px;min-height:72px;overflow:auto;\">Waiting for install...</pre>
+${scriptMarkup}
 </div>
 </body></html>`;
       sendHtml(res, 200, html);
@@ -130,6 +149,13 @@ ${fieldRows || "<p>No credential fields required.</p>"}
     const bodyWorkspaceId = String(body?.workspaceId || queryValue(req, "workspaceId") || "").trim();
     if (!bodyWorkspaceId) {
       throw new BlueprintError(400, "invalid_workspace", "workspaceId is required");
+    }
+    if (requirements.oauthStartSupported) {
+      throw new BlueprintError(
+        400,
+        "connector_oauth_required",
+        "This connector must be authorized through the OAuth start route"
+      );
     }
 
     const credentials = body?.credentials && typeof body.credentials === "object" ? body.credentials : body;

@@ -1,4 +1,4 @@
-# Strategic Design Plan: Character Upload & Header Optimization
+# OLD Last **MONTH** check *Recent* Strategic Design Plan: Character Upload & Header Optimization
 
 ## Current State Analysis
 

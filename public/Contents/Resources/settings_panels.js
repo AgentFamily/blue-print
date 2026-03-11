@@ -131,11 +131,11 @@ async function renderPipelinesPanel() {
       container.innerHTML = `<div class="row" style="margin-bottom:8px;">` +
                             `<button id="newPipelineRunBtn" class="btn tiny green">New run</button>` +
                             `</div>` +
-                            `<div class="hint">No pipeline runs yet.</div>`;
+                            `<div class="hint">No pipeline runs yet. Try <code>kpi-pipeline</code>.</div>`;
       const btn = el("newPipelineRunBtn");
       if (btn) {
         btn.addEventListener("click", async () => {
-          const pipeline = prompt("Pipeline ID to run (e.g. lead-to-invoice)");
+          const pipeline = prompt("Pipeline ID to run (e.g. kpi-pipeline)", "kpi-pipeline");
           if (!pipeline) return;
           const inputStr = prompt("JSON input (or leave blank)", "{}");
           let input = {};
@@ -150,7 +150,10 @@ async function renderPipelinesPanel() {
       }
       return;
     }
-    let html = `<div class="row"><strong>Run ID</strong><strong>Pipeline</strong><strong>Status</strong></div>`;
+    let html = `<div class="row" style="margin-bottom:8px;">` +
+               `<button id="newPipelineRunBtn" class="btn tiny green">New run</button>` +
+              `</div>` +
+              `<div class="row"><strong>Run ID</strong><strong>Pipeline</strong><strong>Status</strong></div>`;
     for (const r of runs) {
       html += `<div class="row" style="gap:8px;align-items:center;">` +
               `<span>${r.runId}</span>` +
@@ -162,7 +165,7 @@ async function renderPipelinesPanel() {
     const newBtn = el("newPipelineRunBtn");
     if (newBtn) {
       newBtn.addEventListener("click", async () => {
-        const pipeline = prompt("Pipeline ID to run (e.g. lead-to-invoice)");
+        const pipeline = prompt("Pipeline ID to run (e.g. kpi-pipeline)", "kpi-pipeline");
         if (!pipeline) return;
         const inputStr = prompt("JSON input (or leave blank)", "{}");
         let input = {};
@@ -180,7 +183,6 @@ async function renderPipelinesPanel() {
   }
 }
 
-const VAULT_PANEL_PASSWORD = "ThisisnotMK";
 const VAULT_PASS_HEADER = "X-AgentC-Vault-Pass";
 const VAULT_RECORD_VERSION = 1;
 
@@ -476,9 +478,9 @@ async function vaultSaveFromEditor() {
 
 async function vaultUnlockFromInput() {
   const input = el("vaultPassphraseInput");
-  const passphrase = String(input?.value || "");
-  if (!passphrase || passphrase !== VAULT_PANEL_PASSWORD) {
-    vaultSetStatus("Vault password rejected.", true);
+  const passphrase = String(input?.value || "").trim();
+  if (!passphrase) {
+    vaultSetStatus("Enter the configured vault password.", true);
     input?.focus?.();
     return;
   }
@@ -518,7 +520,7 @@ async function renderVaultPanel() {
           <input id="vaultPassphraseInput" type="password" autocomplete="off" placeholder="Enter vault password" />
           <button id="vaultUnlockBtn" class="btn tiny green" type="button">Unlock</button>
         </div>
-        <div class="hint">Vault stores usernames/passwords, API keys, and tokens. Password: <code>${vaultEscapeHTML(VAULT_PANEL_PASSWORD)}</code></div>
+        <div class="hint">Vault stores usernames/passwords, API keys, and tokens. Enter the configured server password.</div>
       </div>
     `;
     el("vaultUnlockBtn")?.addEventListener("click", vaultUnlockFromInput);

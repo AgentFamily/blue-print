@@ -10,6 +10,8 @@ const authorizeHandler = require("../api/connectors/[connectorId]/authorize.js")
 
 const EXPECTED_CONNECTOR_IDS = [
   "fasthosts",
+  "mailbox",
+  "outlook",
   "namecheap",
   "autotrader",
   "myclickdealer",
@@ -97,4 +99,22 @@ test("connector authorize page includes explicit Install Connector button", asyn
   }
   assert.equal(html.includes("Install Connector"), true);
   assert.equal(html.includes("Authorize Namecheap"), true);
+});
+
+test("outlook authorize page shows OAuth connect button", async () => {
+  resetBlueprintDb();
+  const cookie = authCookie();
+
+  const res = await callHandler(authorizeHandler, {
+    method: "GET",
+    url: "/api/connectors/outlook/authorize?workspaceId=ws_core",
+    query: { connectorId: "outlook", workspaceId: "ws_core" },
+    headers: { cookie },
+  });
+
+  assert.equal(res.statusCode, 200);
+  const html = String(res.body || "");
+  assert.equal(html.includes("Authorize Outlook"), true);
+  assert.equal(html.includes('id="oauth-connect"'), true);
+  assert.equal(html.includes("/api/connectors/outlook/oauth/start?workspaceId=ws_core"), true);
 });

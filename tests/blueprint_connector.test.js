@@ -18,6 +18,14 @@ test("fasthosts connector requirements shape is available", () => {
   assert.ok(reqs.fields.some((field) => field.name === "apiKey"));
 });
 
+test("outlook connector requirements expose oauth2 without credential fields", () => {
+  const reqs = getConnectorRequirements({ connectorId: "outlook" });
+  assert.equal(reqs.id, "outlook");
+  assert.equal(reqs.authType, "oauth2");
+  assert.equal(reqs.oauthStartSupported, true);
+  assert.deepEqual(reqs.fields, []);
+});
+
 test("fasthosts authorize + test succeeds for valid-looking key", async () => {
   resetBlueprintDb();
 

@@ -7,7 +7,7 @@ const { sendJson, parseCookies, appendSetCookie, clearCookie, isSecureRequest } 
 const { SESSION_COOKIE, CSRF_COOKIE, ensureCsrf } = require("../../lib/blueprint/security");
 
 module.exports = async (req, res) => {
-  await handleRoute(res, async () => {
+  await handleRoute(res, { routeId: "api.auth.logout" }, async () => {
     if (String(req?.method || "GET").toUpperCase() !== "POST") {
       methodNotAllowed(res, "POST");
       return;

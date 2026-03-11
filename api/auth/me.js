@@ -7,7 +7,7 @@ const { CSRF_COOKIE, randomToken } = require("../../lib/blueprint/security");
 const { BlueprintError } = require("../../lib/blueprint/errors");
 
 module.exports = async (req, res) => {
-  await handleRoute(res, async () => {
+  await handleRoute(res, { routeId: "api.auth.me" }, async () => {
     if (String(req?.method || "GET").toUpperCase() !== "GET") {
       methodNotAllowed(res, "GET");
       return;

@@ -16,7 +16,7 @@ const escapeHtml = (value) =>
     .replace(/'/g, "&#39;");
 
 module.exports = async (req, res) => {
-  await handleRoute(res, async () => {
+  await handleRoute(res, { routeId: "api.connectors.index" }, async () => {
     if (String(req?.method || "GET").toUpperCase() !== "GET") {
       methodNotAllowed(res, "GET");
       return;

@@ -14,7 +14,7 @@ const widgetIdFromReq = (req) => {
 };
 
 module.exports = async (req, res) => {
-  await handleRoute(res, async () => {
+  await handleRoute(res, { routeId: "api.widgets.run" }, async () => {
     if (String(req?.method || "GET").toUpperCase() !== "POST") {
       methodNotAllowed(res, "POST");
       return;

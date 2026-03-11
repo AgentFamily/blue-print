@@ -6,7 +6,7 @@ const { handleRoute, methodNotAllowed } = require("../lib/blueprint/route_helper
 const { sendJson } = require("../lib/blueprint/http");
 
 module.exports = async (req, res) => {
-  await handleRoute(res, async () => {
+  await handleRoute(res, { routeId: "api.workspaces" }, async () => {
     if (String(req?.method || "GET").toUpperCase() !== "GET") {
       methodNotAllowed(res, "GET");
       return;

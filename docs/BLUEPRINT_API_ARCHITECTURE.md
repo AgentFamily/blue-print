@@ -22,6 +22,8 @@ api/
     manifests.js
     [widgetId]/
       run.js
+  stove/
+    session.js
 
 lib/blueprint/
   types.js
@@ -73,6 +75,7 @@ tests/
 - `GET|POST|PUT|DELETE /api/vault/secrets`
 - `GET|POST|PUT|DELETE /api/widgets/manifests`
 - `POST /api/widgets/:widgetId/run`
+- `POST /api/stove/session`
 
 ## Security and enforcement
 
@@ -91,6 +94,12 @@ tests/
 - Additional strategic connectors: `namecheap`, `autotrader`, `myclickdealer`, `booking`, `skyscanner`, `openai`, `meta_ads`, `zillow`, `rightmove`
 - Widget manifest validation (zod if installed, strict manual fallback otherwise)
 - Widget run enforcement returns `authorizationPlan` when required connectors/scopes are missing
+- Widget Rendering Stove compiles task intent into a renderable session manifest with:
+  - registered widget selection only
+  - workspace role checks
+  - connector dependency validation
+  - reviewer gating for multi-agent or high-risk sessions
+  - layout metadata for frontend renderer handoff
 - Strategic widget manifests auto-seeded:
   - Domain Valuator (Fasthosts + Namecheap)
   - Car Valuator (Autotrader + MyClickDealer)

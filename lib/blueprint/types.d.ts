@@ -31,6 +31,8 @@ export interface Connector {
   label: string;
   authType: ConnectorAuthType;
   requirements(): ConnectorRequirements;
+  supportsOauthStart(): boolean;
+  beginAuthorize(ctx: unknown): Promise<{ redirect: string }>;
   authorize(input: unknown, ctx: unknown): Promise<{ connectionId: string }>;
   test(connectionId: string, ctx: unknown): Promise<ConnectorTestResult>;
   request(connectionId: string, opts: ConnectorRequestOptions, ctx: unknown): Promise<unknown>;

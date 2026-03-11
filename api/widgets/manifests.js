@@ -12,7 +12,7 @@ const { ensureCsrf } = require("../../lib/blueprint/security");
 const { BlueprintError } = require("../../lib/blueprint/errors");
 
 module.exports = async (req, res) => {
-  await handleRoute(res, async () => {
+  await handleRoute(res, { routeId: "api.widgets.manifests" }, async () => {
     const method = String(req?.method || "GET").toUpperCase();
     const auth = requireAuthFromRequest(req);
 

@@ -10,6 +10,8 @@ const { listWidgetManifests } = require("../lib/blueprint/services/manifest_serv
 
 const EXPECTED_CONNECTORS = [
   "fasthosts",
+  "mailbox",
+  "outlook",
   "namecheap",
   "autotrader",
   "myclickdealer",
